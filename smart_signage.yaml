@@ -1,0 +1,38 @@
+esphome:
+  name: smart-signage
+
+esp32:
+  board: seeed_xiao_esp32s3
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  - platform: esphome
+    password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none 
+  ap:
+    ssid: "smart-signage"
+    password: "ss123456"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+external_components:
+  - source: components
+
+smart_signage:
+  id: smart_signage_1
