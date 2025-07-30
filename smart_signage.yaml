@@ -6,7 +6,6 @@ esp32:
   framework:
     type: esp-idf
 
-# Enable logging
 logger:
   level: DEBUG
 
@@ -31,8 +30,68 @@ captive_portal:
 web_server:
   port: 80
 
+# ───── Dashboard knobs/sliders (stored in NVS) ─────
+number:
+  - platform: template
+    name: "Presence Radius (m)"
+    id: radius_num
+    optimistic: true
+    restore_value: true
+    min_value: 0.1
+    max_value: 10
+    step: 0.1
+    on_value:
+      # x = new float value
+      - lambda: "id(ss1)->set_radius(x);"
+
+  - platform: template
+    name: "Presence Duration (s)"
+    id: duration_num
+    optimistic: true
+    restore_value: true
+    min_value: 1
+    max_value: 30
+    step: 1
+    on_value:
+      - lambda: "id(ss1)->set_duration(x);"
+
+  - platform: template
+    name: "Volume (%)"
+    id: volume_num
+    optimistic: true
+    restore_value: true
+    min_value: 0
+    max_value: 100
+    step: 1
+    on_value:
+      - lambda: "id(ss1)->set_volume(x);"
+
+  - platform: template
+    name: "Brightness (%)"
+    id: brightness_num
+    optimistic: true
+    restore_value: true
+    min_value: 0
+    max_value: 100
+    step: 1
+    on_value:
+      - lambda: "id(ss1)->set_brightness(x);"
+
+# ───── Dashboard start push-button (momentary) ─────
+button:
+  - platform: template
+    name: "Signage Start"
+    id: start_button
+    on_press:
+      - lambda: "id(ss1)->on_start_button();"
+
 external_components:
-  - source: components
+  - source: components        # your smart_signage folder
 
 smart_signage:
-  id: smart_signage_1
+  id: ss1
+  radius_number: radius_num
+  duration_number: duration_num
+  volume_number: volume_num
+  brightness_number: brightness_num
+  start_button: start_button

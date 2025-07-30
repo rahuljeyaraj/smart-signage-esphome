@@ -38,7 +38,7 @@ namespace esphome
         void SmartSignage::loop()
         {
             // ESPHome will call this, but all work is in FreeRTOS tasks
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            // vTaskDelay(pdMS_TO_TICKS(1000));
         }
 
         void SmartSignage::dump_config()
@@ -95,6 +95,14 @@ namespace esphome
                 self->speaker_fsm_.process();
                 vTaskDelay(pdMS_TO_TICKS(1000));
             }
+        }
+
+        void SmartSignage::on_start_button()
+        {
+            LOGI(TAG, "Start button pressed — radius=%.2f m, duration=%u s, vol=%u, bri=%u",
+                 settings_.radius_m, settings_.duration_s,
+                 settings_.volume, settings_.brightness);
+            // dispatch start event to FSM here...
         }
 
     } // namespace smart_signage

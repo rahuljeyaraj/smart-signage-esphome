@@ -34,14 +34,46 @@ namespace esphome
       void process();
     };
 
+    struct Settings
+    {
+      float radius_m = 2.0f;
+      uint32_t duration_s = 5;
+      uint8_t volume = 80;
+      uint8_t brightness = 50;
+    };
+
     class SmartSignage : public Component
     {
     public:
+      // these setters are invoked by the Number callbacks
+      void set_radius(float v)
+      {
+        settings_.radius_m = v;
+        LOGI(TAG, "radius %.2f", v);
+      }
+      void set_duration(float v)
+      {
+        settings_.duration_s = static_cast<uint32_t>(v);
+        LOGI(TAG, "duration %u", settings_.duration_s);
+      }
+      void set_volume(float v)
+      {
+        settings_.volume = static_cast<uint8_t>(v);
+        LOGI(TAG, "volume %u", settings_.volume);
+      }
+      void set_brightness(float v)
+      {
+        settings_.brightness = static_cast<uint8_t>(v);
+        LOGI(TAG, "brightness %u", settings_.brightness);
+      }
+
+      void on_start_button();
       void setup() override;
       void loop() override;
       void dump_config() override;
 
     private:
+      Settings settings_;
       // One FreeRTOS message buffer per task
       MessageBufferHandle_t radar_buffer_;
       MessageBufferHandle_t imu_buffer_;
