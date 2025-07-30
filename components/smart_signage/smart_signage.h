@@ -74,12 +74,6 @@ namespace esphome
 
     private:
       Settings settings_;
-      // One FreeRTOS message buffer per task
-      MessageBufferHandle_t radar_buffer_;
-      MessageBufferHandle_t imu_buffer_;
-      MessageBufferHandle_t controller_buffer_;
-      MessageBufferHandle_t led_buffer_;
-      MessageBufferHandle_t speaker_buffer_;
 
       // FSM instances
       RadarFsm radar_fsm_;
@@ -90,10 +84,14 @@ namespace esphome
 
       // Task entry points
       static void radar_task_entry(void *pv);
-      static void imu_task_entry(void *pv);
+
       static void controller_task_entry(void *pv);
       static void led_task_entry(void *pv);
       static void speaker_task_entry(void *pv);
+
+      QueueHandle_t controller_queue_{};
+      QueueHandle_t led_queue_{};
+      QueueHandle_t speaker_queue_{};
     };
 
   } // namespace smart_signage
