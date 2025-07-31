@@ -1,43 +1,39 @@
 #pragma once
+#include <etl/message.h>
+#include <etl/string.h>
 
-#include <cstdint>
-#include <etl/variant.h>
-
-namespace esphome
+namespace esphome::smart_signage
 {
-    namespace smart_signage
+
+    // ─── Message IDs ────────────────────────────────────────────────────────────
+    enum : uint16_t
     {
+        MSG_PRESENCE = 1,
+        MSG_FALL,
+        MSG_LED_ON,
+        MSG_PLAY_AUDIO
+    };
 
-        // ─── Event Protocol (sensor → controller) ─────────────────
-        enum class EventId : uint8_t
-        {
-            PresenceDetected,
-            FallDetected,
-        };
+    // ─── Sensor-side events (Radar / IMU) ───────────────────────────────────────
+    struct PresenceMsg : etl::message<MSG_PRESENCE>
+    {
+    };
+    struct FallMsg : etl::message<MSG_FALL>
+    {
+    };
 
-        using EventData = etl::variant<etl::monostate, bool, uint16_t>;
+    // ─── Actuator commands (Controller → LED / Speaker) ─────────────────────────
+    struct LedOnMsg : etl::message<MSG_LED_ON>
+    {
+        uint8_t brightness{};
+        LedOnMsg(uint8_t bri = 80) : brightness(bri) {}
+    };
 
-        struct Event
-        {
-            EventId id;
-            uint32_t timestamp; // xTaskGetTickCount()
-            EventData data;     // unused in this stub
-        };
+    struct PlayAudioMsg : etl::message<MSG_PLAY_AUDIO>
+    {
+        etl::string<64> path;
+        PlayAudioMsg() = default;
+        explicit PlayAudioMsg(const char *p) { path.assign(p); }
+    };
 
-        // ─── Command Protocol (controller → actuator) ───────────────
-        enum class CmdId : uint8_t
-        {
-            LedOn,
-            PlayAudio,
-        };
-
-        using CmdParam = etl::variant<etl::monostate, uint8_t, uint16_t>;
-
-        struct Command
-        {
-            CmdId id;
-            CmdParam param;
-        };
-
-    } // namespace smart_signage
-} // namespace esphome
+} // namespace esphome::smart_signage

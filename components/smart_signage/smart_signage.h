@@ -1,98 +1,107 @@
 #pragma once
-
 #include "esphome.h"
 #include "logger.h"
-#include <freertos/message_buffer.h>
 
-namespace esphome
+namespace esphome::smart_signage
 {
-  namespace smart_signage
-  {
-
-    // Log tag
-    static constexpr char TAG[] = "ss";
-
-    // Stub FSM declarations (one per task)
-    struct RadarFsm
-    {
-      void process();
-    };
-    struct ImuFsm
-    {
-      void process();
-    };
-    struct ControllerFsm
-    {
-      void process();
-    };
-    struct LedFsm
-    {
-      void process();
-    };
-    struct SpeakerFsm
-    {
-      void process();
-    };
-
-    struct Settings
-    {
-      float radius_m = 2.0f;
-      uint32_t duration_s = 5;
-      uint8_t volume = 80;
-      uint8_t brightness = 50;
-    };
 
     class SmartSignage : public Component
     {
     public:
-      // these setters are invoked by the Number callbacks
-      void set_radius(float v)
-      {
-        settings_.radius_m = v;
-        LOGI(TAG, "radius %.2f", v);
-      }
-      void set_duration(float v)
-      {
-        settings_.duration_s = static_cast<uint32_t>(v);
-        LOGI(TAG, "duration %u", settings_.duration_s);
-      }
-      void set_volume(float v)
-      {
-        settings_.volume = static_cast<uint8_t>(v);
-        LOGI(TAG, "volume %u", settings_.volume);
-      }
-      void set_brightness(float v)
-      {
-        settings_.brightness = static_cast<uint8_t>(v);
-        LOGI(TAG, "brightness %u", settings_.brightness);
-      }
+        // ── YAML-bound setters ───────────────────────────────
+        void set_radius(float m);     // slider “radius”
+        void set_duration(float s);   // slider “duration”
+        void set_volume(float v);     // slider “volume”
+        void set_brightness(float b); // slider “brightness”
+        void on_start_button();       // binary_sensor / button
 
-      void on_start_button();
-      void setup() override;
-      void loop() override;
-      void dump_config() override;
+        // ── ESPHome lifecycle ────────────────────────────────
+        void setup() override;
+        void loop() override;
+        void dump_config() override;
 
     private:
-      Settings settings_;
+        static constexpr char TAG[] = "ss";
 
-      // FSM instances
-      RadarFsm radar_fsm_;
-      ImuFsm imu_fsm_;
-      ControllerFsm controller_fsm_;
-      LedFsm led_fsm_;
-      SpeakerFsm speaker_fsm_;
-
-      // Task entry points
-      static void radar_task_entry(void *pv);
-
-      static void controller_task_entry(void *pv);
-      static void led_task_entry(void *pv);
-      static void speaker_task_entry(void *pv);
-
-      QueueHandle_t controller_queue_{};
-      QueueHandle_t led_queue_{};
-      QueueHandle_t speaker_queue_{};
+        struct Settings
+        {
+            float radius_m = 2.0f;
+            uint32_t duration_s = 30;
+            uint8_t volume = 80;
+            uint8_t brightness = 50;
+        } settings_;
     };
 
-  } // namespace smart_signage
-} // namespace esphome
+} // namespace esphome::smart_signage
+
+// #pragma once
+
+// #include "esphome.h"
+// #include "logger.h"
+// #include "message_protocol.h"
+// #include "controller_fsm.h"
+// #include <freertos/FreeRTOS.h>
+// #include <freertos/queue.h>
+// #include <memory>
+
+// namespace esphome::smart_signage
+// {
+//     static constexpr char TAG[] = "ss";
+
+//     struct Settings
+//     {
+//         float radius_m = 2.0f;
+//         uint32_t duration_s = 5;
+//         uint8_t volume = 80;
+//         uint8_t brightness = 50;
+//     };
+
+//     class SmartSignage : public Component
+//     {
+//     public:
+//         // these setters are invoked by the Number callbacks
+//         void set_radius(float v)
+//         {
+//             settings_.radius_m = v;
+//             LOGI(TAG, "radius %.2f", v);
+//         }
+//         void set_duration(float v)
+//         {
+//             settings_.duration_s = static_cast<uint32_t>(v);
+//             LOGI(TAG, "duration %u", settings_.duration_s);
+//         }
+//         void set_volume(float v)
+//         {
+//             settings_.volume = static_cast<uint8_t>(v);
+//             LOGI(TAG, "volume %u", settings_.volume);
+//         }
+//         void set_brightness(float v)
+//         {
+//             settings_.brightness = static_cast<uint8_t>(v);
+//             LOGI(TAG, "brightness %u", settings_.brightness);
+//         }
+//         void on_start_button()
+//         {
+//             LOGI(TAG, "Start button pressed — radius=%.2f m, duration=%u s, vol=%u, bri=%u",
+//                  settings_.radius_m, settings_.duration_s,
+//                  settings_.volume, settings_.brightness);
+//             // dispatch start event to FSM here...
+//         }
+//         void setup() override;
+//         void loop() override;
+//         void dump_config() override;
+
+//     private:
+//         Settings settings_;
+
+//         QueueHandle_t controller_queue_{};
+//         QueueHandle_t led_queue_{};
+//         QueueHandle_t speaker_queue_{};
+
+//         // Task entry points
+//         static void radar_task_entry(void *pv);
+//         static void led_task_entry(void *pv);
+//         static void speaker_task_entry(void *pv);
+//     };
+
+// } // namespace esphome::smart_signage

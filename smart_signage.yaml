@@ -12,12 +12,12 @@ logger:
   level: DEBUG
 
 # Enable Home Assistant API
-api:
-  password: ""
+# api:
+#   password: ""
 
-ota:
-  - platform: esphome
-    password: ""
+# ota:
+#   - platform: esphome
+#     password: ""
 
 wifi:
   ssid: !secret wifi_ssid
