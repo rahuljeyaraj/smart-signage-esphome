@@ -57,154 +57,152 @@ namespace esphome::smart_signage
     namespace sml = boost::sml;
     using namespace sml::literals;
 
-    namespace
+    struct Presence
     {
-        // events
-        // struct release
-        // {
-        // };
-        // struct ack
-        // {
-        // };
-        // struct fin
-        // {
-        // };
-        // struct timeout
-        // {
-        // };
-        // // guards
-        // const auto is_ack_valid = [](const ack &)
-        // { return true; };
-        // const auto is_fin_valid = [](const fin &)
-        // { return true; };
-        // // actions
-        // const auto send_fin = [] {};
-        // const auto send_ack = [] {};
-        // // states
-        // class established;
-        // class fin_wait_1;
-        // class fin_wait_2;
-        // class timed_wait;
-        // struct hello_world
-        // {
-        //     auto operator()() const
-        //     {
-        //         using namespace sml;
-        //         // clang-format off
-        //         return make_transition_table(
-        //         *state<established> + event<release> / send_fin = state<fin_wait_1>,
-        //         state<fin_wait_1> + event<ack> [ is_ack_valid ] = state<fin_wait_2>,
-        //         state<fin_wait_2> + event<fin> [ is_fin_valid ] / send_ack = state<timed_wait>,
-        //         state<timed_wait> + event<timeout> / send_ack = X
-        //         );
-        //         // clang-format on
-        //     }
-        // };
-
-        /*----------------------------------------------------------------------------*/
-        /* Event                                                                      */
-        /*----------------------------------------------------------------------------*/
-        // struct init
-        // {
-        // };
-        // struct deinit
-        // {
-        // };
-
-        // Define your structs
-        struct init
+        bool detected; // true = somebody near sensor
+        void message() const
         {
-            void message() const
-            {
-                LOGI("SS", "Initialization event occurred.");
-            }
-        };
+            LOGI("EVENT", "Radar says: %s", detected ? "PRESENT" : "CLEAR");
+        }
+    };
 
-        struct deinit
-        {
-            void message() const
-            {
-                LOGI("SS", "Deinitialization event occurred.");
-            }
-        };
+    /* Add more events later … */
+    using Event = etl::variant<Presence>;
 
-        /*----------------------------------------------------------------------------*/
-        /* States                                                                     */
-        /*----------------------------------------------------------------------------*/
-        class idle;  // initial state tag
-        class ready; // final / running state tag
+    /***********************************************************************/
+    /* 2.  Controller FSM                                                  */
+    /***********************************************************************/
+    namespace sml = boost::sml;
 
-        /*----------------------------------------------------------------------------*/
-        /* Finite-state machine                                                       */
-        /*----------------------------------------------------------------------------*/
-        struct simple_fsm
-        {
-            auto operator()() const
-            {
-                using namespace sml;
-                const auto log_init = []
-                { ESP_LOGI("FSM", "transition: idle → ready"); };
-                const auto log_deinit = []
-                { ESP_LOGI("FSM", "transition: ready → idle"); };
-                // clang-format off
-                return make_transition_table(
-                    *state<idle>  + event<init> / log_init= state<ready>,
-                    state<ready>  + event<deinit>/ log_deinit = state<idle>
-                );
-                // clang-format on
-            }
-        };
-    }
-
-    using EventVariant = etl::variant<init, deinit>;
-
-    static QueueHandle_t g_event_q = nullptr;
-
-    static void fsm_task(void *arg)
+    struct ControllerFsm
     {
-        sml::sm<simple_fsm> sm;
-        EventVariant event;
-
-        while (true)
+        using self = ControllerFsm;
+        /* state tags */
+        struct idle
         {
+        };
+        struct busy
+        {
+        };
+        // const bool presence_detected = [](const Presence &e)
+        // {
+        //     return (e.detected);
+        // };
+        // const bool presence_cleared = [](const Presence &e)
+        // {
+        //     return !e.detected;
+        // };
 
-            if (xQueueReceive(g_event_q, &event, portMAX_DELAY) == pdPASS)
+        auto operator()() const
+        {
+            using namespace sml;
+
+            const auto log_enter_idle = []
+            { LOGI("FSM", "→ idle"); };
+            const auto log_enter_busy = []
+            { LOGI("FSM", "→ busy"); };
+
+            // clang-format off
+            return make_transition_table(
+                *state<idle>  + event<Presence> [ ([](const Presence& e){ return e.detected; } )]
+                                / log_enter_busy = state<busy>,
+
+                state<busy>  + event<Presence> [ ([](const Presence& e){ return !e.detected; } )]
+                                / log_enter_idle = state<idle>
+            );
+            // clang-format on
+        }
+    };
+
+    /***********************************************************************/
+    /* 3.  Controller active object                                        */
+    /***********************************************************************/
+    class ControllerAO
+    {
+    public:
+        explicit ControllerAO(size_t qlen = 8)
+        {
+            queue_ = xQueueCreate(qlen, sizeof(Event));
+        }
+
+        QueueHandle_t queue() const { return queue_; }
+
+        void start(UBaseType_t prio = 5, uint32_t stack = 4096, BaseType_t core = 1)
+        {
+            xTaskCreatePinnedToCore(taskThunk, "ctrl_task", stack, this, prio, &task_, core);
+        }
+
+    private:
+        static void taskThunk(void *arg) { static_cast<ControllerAO *>(arg)->run(); }
+
+        void run()
+        {
+            sml::sm<ControllerFsm> sm;
+            Event ev;
+
+            while (true)
             {
-                etl::visit(
-                    [&sm](auto &ev) // capture the FSM by reference
-                    {
-                        ev.message(); // your per-event print/log
-                        sm.process_event(ev);
-                    },
-                    event);
+                if (xQueueReceive(queue_, &ev, portMAX_DELAY) == pdPASS)
+                {
+                    etl::visit([&](auto &e)
+                               {
+                                   e.message();         // generic per-event print
+                                   sm.process_event(e); // feed FSM
+                               },
+                               ev);
+                }
             }
         }
-    }
+
+        QueueHandle_t queue_{nullptr};
+        TaskHandle_t task_{nullptr};
+    };
+
+    /***********************************************************************/
+    /* 4.  Radar active object                                             */
+    /***********************************************************************/
+    class RadarAO
+    {
+    public:
+        explicit RadarAO(ControllerAO &ctrl) : ctrlQ_{ctrl.queue()} {}
+
+        void start(UBaseType_t prio = 4, uint32_t stack = 2048, BaseType_t core = 1)
+        {
+            xTaskCreatePinnedToCore(taskThunk, "radar_task", stack, this, prio, &task_, core);
+        }
+
+    private:
+        static void taskThunk(void *arg) { static_cast<RadarAO *>(arg)->run(); }
+
+        void run()
+        {
+            const TickType_t period = pdMS_TO_TICKS(2000);
+            bool detected = false;
+
+            for (;;)
+            {
+                Event ev = Presence{detected};
+                xQueueSend(ctrlQ_, &ev, 0); // never block; controller must be fast
+                detected = !detected;       // toggle every cycle
+                vTaskDelay(period);
+            }
+        }
+
+        QueueHandle_t ctrlQ_;
+        TaskHandle_t task_{nullptr};
+    };
+
+    ControllerAO controller; // lifetime = whole program
+    RadarAO radar(controller);
 
     void SmartSignage::setup()
     {
-        g_event_q = xQueueCreate(/*length*/ 8, sizeof(EventVariant));
-
-        // 2. Spawn tasks
-        xTaskCreatePinnedToCore(fsm_task, "fsm_task", 4096, nullptr, 5, nullptr, 1);
-        // xTaskCreatePinnedToCore(producer_task, "producer_task", 2048, nullptr, 4, nullptr, 1);
+        controller.start();
+        radar.start();
     }
 
     void SmartSignage::loop()
     {
-        vTaskDelay(pdMS_TO_TICKS(100));
-        EventVariant myEvent;
-
-        myEvent = init{}; // Assign an init event
-        // processEvent(myEvent);
-        xQueueSend(g_event_q, &myEvent, portMAX_DELAY);
-
-        myEvent = deinit{}; // Assign a deinit event
-        // processEvent(myEvent);
-        xQueueSend(g_event_q, &myEvent, portMAX_DELAY);
-
-        // xQueueSend(g_event_q, &e1, portMAX_DELAY);
-        // xQueueSend(g_event_q, &e2, portMAX_DELAY);
     }
     void SmartSignage::dump_config() { LOGI(TAG, "component loaded"); }
 
