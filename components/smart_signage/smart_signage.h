@@ -9,11 +9,36 @@ namespace esphome::smart_signage
     {
     public:
         // ── YAML-bound setters ───────────────────────────────
-        void set_radius(float m);     // slider “radius”
-        void set_duration(float s);   // slider “duration”
-        void set_volume(float v);     // slider “volume”
-        void set_brightness(float b); // slider “brightness”
-        void on_start_button();       // binary_sensor / button
+        // void set_radius(float m);     // slider “radius”
+        // void set_duration(float s);   // slider “duration”
+        // void set_volume(float v);     // slider “volume”
+        // void set_brightness(float b); // slider “brightness”
+        // void on_start_button();       // binary_sensor / button
+
+        void set_radius(float v)
+        {
+            settings_.radius_m = v;
+            LOGI(TAG, "radius %.2f", v);
+        }
+        void set_duration(float v)
+        {
+            settings_.duration_s = v;
+            LOGI(TAG, "duration %u", settings_.duration_s);
+        }
+        void set_volume(float v)
+        {
+            settings_.volume = v;
+            LOGI(TAG, "volume %u", settings_.volume);
+        }
+        void set_brightness(float v)
+        {
+            settings_.brightness = v;
+            LOGI(TAG, "brightness %u", settings_.brightness);
+        }
+        void on_start_button()
+        {
+            LOGI(TAG, "Start btn pressed"); /* later: g_fsm.receive(StartBtnMsg{}) */
+        }
 
         // ── ESPHome lifecycle ────────────────────────────────
         void setup() override;
