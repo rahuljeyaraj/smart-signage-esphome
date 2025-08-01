@@ -1,7 +1,6 @@
 #pragma once
-
 #include "log.h"
-#include "queue.h"
+// #include "queue.h"
 #include "sml.hpp"
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
@@ -17,15 +16,24 @@ namespace sml = boost::sml;
  *  - creates its own FreeRTOS task in the ctor,
  *  - and pushes Events (std::variant) into the FSM.
  */
-template <typename Functor, typename Event> class ActiveObject {
+template <typename Functor, typename QueueType> class ActiveObject {
   public:
-    ActiveObject(Functor &functor, Queue &queue, const char *taskName, uint32_t stackSize = 2048,
-                 UBaseType_t priority = tskIDLE_PRIORITY + 1, BaseType_t coreId = 0)
+    // deduce Event from the QueueType
+    using Event = typename QueueType::EventType;
+
+    ActiveObject(Functor &functor, QueueType &queue, const char *taskName,
+                 uint32_t stackSize = 2048, UBaseType_t priority = tskIDLE_PRIORITY + 1,
+                 BaseType_t coreId = 0)
         : fsm_{functor}, queue_{queue} {
         if (xTaskCreatePinnedToCore(&ActiveObject::taskEntry, taskName, stackSize, this, priority,
                                     &taskHandle_, coreId) != pdPASS) {
             LOGE("AO", "Task creation failed");
         }
+    }
+
+    bool post(const Event &e, TickType_t wait = 0) {
+        // forward to the queue’s own post
+        return queue_.post(e, wait);
     }
 
   private:
@@ -41,7 +49,7 @@ template <typename Functor, typename Event> class ActiveObject {
     }
 
     sml::sm<Functor> fsm_;
-    Queue &queue_;
+    QueueType &queue_;
     TaskHandle_t taskHandle_{nullptr};
 };
 

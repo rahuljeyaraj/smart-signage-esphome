@@ -1,59 +1,54 @@
 #pragma once
+
 #include <cstddef>
-#include <cstdint>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
 namespace esphome::smart_signage {
 
-class Queue {
+/**
+ * A fixed‐length FreeRTOS queue for exactly one Event type.
+ *
+ * @tparam Event     The type of object you’ll store (e.g. radar::Event)
+ * @tparam QueueLen  Number of slots in the queue
+ */
+template <typename Event, size_t QueueLen> class Queue {
   public:
-    // Constructor: specify event size (bytes) and length
-    Queue(size_t queueLen, size_t eventSize) : eventSize_(eventSize) {
-        queue_ = xQueueCreate(queueLen, eventSize_);
-    }
-
+    Queue() { queue_ = xQueueCreate(QueueLen, sizeof(Event)); }
     ~Queue() {
-        if (queue_)
+        if (queue_) {
             vQueueDelete(queue_);
+        }
     }
 
     // Non-copyable
     Queue(const Queue &) = delete;
     Queue &operator=(const Queue &) = delete;
 
-    // Movable (optional)
-    Queue(Queue &&other) noexcept : queue_(other.queue_), eventSize_(other.eventSize_) {
-        other.queue_ = nullptr;
-    }
-    Queue &operator=(Queue &&other) noexcept {
-        if (this != &other) {
-            queue_ = other.queue_;
-            eventSize_ = other.eventSize_;
-            other.queue_ = nullptr;
+    // Movable
+    Queue(Queue &&o) noexcept : queue_(o.queue_) { o.queue_ = nullptr; }
+    Queue &operator=(Queue &&o) noexcept {
+        if (this != &o) {
+            queue_ = o.queue_;
+            o.queue_ = nullptr;
         }
         return *this;
     }
 
-    // Type-erased post: pass pointer to event (copied)
-    bool post(const void *event, TickType_t wait = 0) const {
-        if (queue_ == nullptr)
-            return false;
-        return xQueueSend(queue_, event, wait) == pdPASS;
+    /** Enqueue one Event (copied). */
+    bool post(const Event &e, TickType_t wait = 0) const {
+        return queue_ && xQueueSend(queue_, &e, wait) == pdPASS;
     }
 
-    // Get the queue handle for raw API use
+    /** Access the raw FreeRTOS handle. */
     QueueHandle_t handle() const { return queue_; }
 
-    // Size in bytes of one event
-    size_t event_size() const { return eventSize_; }
+    /** Compile-time constants: */
+    static constexpr size_t event_size = sizeof(Event);
+    static constexpr size_t queue_length = QueueLen;
 
   private:
     QueueHandle_t queue_{nullptr};
-    size_t eventSize_;
 };
-
-extern Queue radarQ;
-extern Queue ctrlQ;
 
 } // namespace esphome::smart_signage

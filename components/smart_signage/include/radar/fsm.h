@@ -1,12 +1,12 @@
 #pragma once
-#include "active_object.h"
-#include "events.h"
+#include "radar/event.h"
+// #include "ctrl/q.h"
 #include "log.h"
-#include "queue.h"
 #include "sml.hpp"
 #include <etl/variant.h>
 
-namespace esphome::smart_signage::radar {
+namespace esphome::smart_signage {
+namespace radar {
 
 class FSM {
     using Self = FSM;
@@ -24,7 +24,7 @@ class FSM {
             ,state<Ready>   + event<Start>      / &Self::onStart    = state<Active>
             ,state<Active>  + event<Stop>       / &Self::onStop     = state<Ready>
             ,state<Ready>   + event<Teardown>   / &Self::onTeardown = state<Idle>
-            
+
             ,state<Active>  + event<TimerPoll>      / &Self::onPoll
             ,state<_>       + event<SetDistCm>      / &Self::onSetDist
             ,state<_>       + event<SetSampleInt>   / &Self::onSampleInt
@@ -40,8 +40,8 @@ class FSM {
             return false;
         }
         LOGI(TAG, "onSetup: success");
-        ctrl::RxEvent setupDone(radar::SetupDone{});
-        ctrlQ.post(&setupDone);
+        // ctrl::RxEvent setupDone(radar::SetupDone{});
+        // ctrlQ.post(&setupDone);
         return true;
     }
 
@@ -78,7 +78,7 @@ class FSM {
 
     uint16_t detDistCm_{0};
     uint32_t sampleIntMs_{0};
-    void *ctrlAo_{nullptr};
+    // void *ctrlAo_{nullptr};
 
     // state tags (no data)
     struct Idle {};
@@ -87,4 +87,5 @@ class FSM {
     struct Error {};
 };
 
-} // namespace esphome::smart_signage::radar
+} // namespace radar
+} // namespace esphome::smart_signage
