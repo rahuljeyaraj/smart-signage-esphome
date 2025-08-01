@@ -1,11 +1,7 @@
 #pragma once
 #include "esphome.h"
 #include "log.h"
-#include "radar_fsm.h"
 
-#include <freertos/FreeRTOS.h>
-#include <freertos/queue.h>
-#include <freertos/task.h>
 
 namespace esphome::smart_signage {
 

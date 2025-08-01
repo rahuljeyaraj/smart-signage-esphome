@@ -1,4 +1,9 @@
 #include "smart_signage.h"
+#include "radar_fsm.h"
+
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+#include <freertos/task.h>
 
 namespace esphome::smart_signage {
 
@@ -11,11 +16,11 @@ void SmartSignage::setup() {}
 void SmartSignage::loop() {
     // drive through states
 
-    radarAO.post(Setup{});
-    radarAO.post(Start{});
-    radarAO.post(Stop{});
-    radarAO.post(Teardown{});
-    vTaskDelay(pdMS_TO_TICKS(100));
+    // radarAO.post(Setup{});
+    // radarAO.post(Start{});
+    // radarAO.post(Stop{});
+    // radarAO.post(Teardown{});
+    // vTaskDelay(pdMS_TO_TICKS(100));
 }
 
 void SmartSignage::dump_config() { LOGI(TAG, "SmartSignage component loaded"); }

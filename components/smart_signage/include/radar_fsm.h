@@ -4,10 +4,12 @@
 #include "sml.hpp"
 #include <etl/variant.h>
 
-namespace esphome::smart_signage {
+namespace esphome::smart_signage::radar {
 
 // Events
-struct Setup {};
+struct Setup {
+    void *ctrlAo;
+};
 struct Start {};
 struct Stop {};
 struct Teardown {};
@@ -18,12 +20,16 @@ struct SetDistCm {
 struct SetSampleInt {
     uint32_t ms;
 };
-struct SetCtrlAO {
-    void *CtrlAO;
-};
 
-using RadarEvent =
-    etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, SetSampleInt, SetCtrlAO>;
+using RadarEvent = etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, SetSampleInt>;
+
+struct RadarError {};
+struct RadarReady {};
+struct RadarData {
+    bool detected = false;
+    uint16_t distanceCm = 0;
+    TickType_t timestampTicks = 0;
+};
 
 // FSM
 class RadarFSM {
@@ -46,13 +52,15 @@ class RadarFSM {
             ,state<Active>  + event<TimerPoll>      / &Self::onPoll
             ,state<_>       + event<SetDistCm>      / &Self::onSetDist
             ,state<_>       + event<SetSampleInt>   / &Self::onSampleInt
-            ,state<_>       + event<SetCtrlAO>      / &Self::onSetCtrlAO
+            ,state<_>       + event<SetCtrlAO>      / &Self::onSetCtrlAo
             // clang-format on
         );
     }
 
     // Actions
-    bool onSetup(const Setup &) {
+    bool onSetup(const Setup &e) {
+        ctrlAo_ = e.ctrlAo;
+        LOGI(TAG, "CtrlAoconfigured: %p", ctrlAo_);
         LOGI(TAG, "onSetup: initializing hardware...");
         if (!stubHardwareInit()) {
             LOGE(TAG, "onSetup: hardware init failed, throwing");
@@ -89,18 +97,13 @@ class RadarFSM {
         LOGI(TAG, "onSampleInt: set sample interval to %u ms", sampleIntMs_);
     }
 
-    void onSetCtrlAO(const SetCtrlAO &e) {
-        ctrlAO_ = e.CtrlAO;
-        LOGI(TAG, "CtrlAOconfigured: %p", ctrlAO_);
-    }
-
   private:
     static constexpr char TAG[] = "ss";
     bool stubHardwareInit() { return true; }
 
     uint16_t detDistCm_{0};
     uint32_t sampleIntMs_{0};
-    void *ctrlAO_{nullptr};
+    void *ctrlAo_{nullptr};
 
     // state tags (no data)
     struct Idle {};
