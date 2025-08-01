@@ -3,14 +3,11 @@
 #include "log.h"
 #include "sml.hpp"
 #include <etl/variant.h>
-// #include <stdexcept>
-
-namespace sml = boost::sml;
 
 namespace esphome::smart_signage {
 
-// ––– Events –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-struct Setup {}; // command to initialize
+// Events
+struct Setup {};
 struct Start {};
 struct Stop {};
 struct Teardown {};
@@ -28,7 +25,7 @@ struct SetCtrlAO {
 using RadarEvent =
     etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, SetSampleInt, SetCtrlAO>;
 
-// ––– FSM –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+// FSM
 class RadarFSM {
     using Self = RadarFSM;
 
@@ -37,24 +34,25 @@ class RadarFSM {
 
     auto operator()() noexcept {
         using namespace boost::sml;
-        auto setupGuard = wrap(&Self::onSetupGuard);
+        auto onSetupGuard = wrap(&Self::onSetup);
         return make_transition_table(
             // clang-format off
-            *state<Idle>    + event<Setup>          [setupGuard]            = state<Ready>,
-            state<Idle>     + event<Setup>          [!setupGuard]           = state<Error>,
-            state<Ready>    + event<Start>          / &Self::onStart        = state<Running>,
-            state<Running>  + event<Stop>           / &Self::onStop         = state<Ready>,
-            state<Ready>    + event<Teardown>       / &Self::onTeardown     = state<Idle>,
-            state<Running>  + event<TimerPoll>      / &Self::onPoll,
-            state<_>        + event<SetDistCm>      / &Self::onSetDist,
-            state<_>        + event<SetSampleInt>   / &Self::onSampleInt,
-            state<_>        + event<SetCtrlAO>      / &Self::onSetCtrlAO
+            *state<Idle>    + event<Setup>      [ !onSetupGuard ]   = state<Error>
+            ,state<Idle>    + event<Setup>      [  onSetupGuard ]   = state<Ready>
+            ,state<Ready>   + event<Start>      / &Self::onStart    = state<Active>
+            ,state<Active>  + event<Stop>       / &Self::onStop     = state<Ready>
+            ,state<Ready>   + event<Teardown>   / &Self::onTeardown = state<Idle>
+            
+            ,state<Active>  + event<TimerPoll>      / &Self::onPoll
+            ,state<_>       + event<SetDistCm>      / &Self::onSetDist
+            ,state<_>       + event<SetSampleInt>   / &Self::onSampleInt
+            ,state<_>       + event<SetCtrlAO>      / &Self::onSetCtrlAO
             // clang-format on
         );
     }
 
-    // ––– Actions ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    bool onSetupGuard(const Setup &) {
+    // Actions
+    bool onSetup(const Setup &) {
         LOGI(TAG, "onSetup: initializing hardware...");
         if (!stubHardwareInit()) {
             LOGE(TAG, "onSetup: hardware init failed, throwing");
@@ -63,6 +61,7 @@ class RadarFSM {
         LOGI(TAG, "onSetup: success");
         return true;
     }
+
     void onStart(const Start &) { LOGI(TAG, "onStart"); }
 
     void onStop(const Stop &) {
@@ -95,18 +94,9 @@ class RadarFSM {
         LOGI(TAG, "CtrlAOconfigured: %p", ctrlAO_);
     }
 
-    void onError(const std::exception &e) { LOGE(TAG, "ERROR state entered: %s", e.what()); }
-
-    void onUnexpected(auto /*evt*/) { LOGE(TAG, "ERROR: unexpected event received"); }
-
   private:
     static constexpr char TAG[] = "ss";
-    // stub routines — replace these with real hardware calls
     bool stubHardwareInit() { return true; }
-    // void stubHardwareStart();
-    // void stubHardwareStop();
-    // void stubHardwareTeardown();
-    // void stubHardwarePoll();
 
     uint16_t detDistCm_{0};
     uint32_t sampleIntMs_{0};
@@ -115,7 +105,7 @@ class RadarFSM {
     // state tags (no data)
     struct Idle {};
     struct Ready {};
-    struct Running {};
+    struct Active {};
     struct Error {};
 };
 
