@@ -1,13 +1,13 @@
 #pragma once
 
+#include "log.h"
 #include "sml.hpp"
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
 
-namespace esphome {
-namespace smart_signage {
+namespace esphome::smart_signage {
 
 namespace sml = boost::sml;
 
@@ -25,7 +25,7 @@ template <typename Functor, typename Event> class ActiveObject {
         : fsm_{functor}, queue_{queue} {
         if (xTaskCreatePinnedToCore(&ActiveObject::taskEntry, taskName, stackSize, this, priority,
                                     &taskHandle_, coreId) != pdPASS) {
-            // LOGE("AO", "Task creation failed");
+            LOGE("AO", "Task creation failed");
         }
     }
 
@@ -51,5 +51,4 @@ template <typename Functor, typename Event> class ActiveObject {
     TaskHandle_t taskHandle_{nullptr};
 };
 
-} // namespace smart_signage
-} // namespace esphome
+} // namespace esphome::smart_signage

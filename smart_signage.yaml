@@ -2,6 +2,9 @@ esphome:
   name: smart-signage
   libraries:
     - "https://github.com/ETLCPP/etl.git"
+  includes:
+    - components\smart_signage\include\
+
 
 esp32:
   board: seeed_xiao_esp32s3

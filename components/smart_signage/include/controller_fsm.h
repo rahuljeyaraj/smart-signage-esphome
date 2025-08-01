@@ -4,7 +4,7 @@
 // #include <etl/fsm.h> // ETL finite-state-machine core
 // #include <etl/message.h>
 // #include <etl/string.h>
-// #include "logger.h"
+// #include "log.h"
 
 // namespace esphome::smart_signage
 // {
