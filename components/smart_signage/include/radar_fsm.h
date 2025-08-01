@@ -7,30 +7,6 @@
 
 namespace esphome::smart_signage::radar {
 
-// incoming events
-struct Setup {};
-struct Start {};
-struct Stop {};
-struct Teardown {};
-struct TimerPoll {};
-struct SetDistCm {
-    uint16_t cm;
-};
-struct SetSampleInt {
-    uint32_t ms;
-};
-
-using Event = etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, SetSampleInt>;
-
-// outgoing events
-struct Error {};
-struct Ready {};
-struct Data {
-    bool detected = false;
-    uint16_t distanceCm = 0;
-    TickType_t timestampTicks = 0;
-};
-
 class FSM {
     using Self = FSM;
 
@@ -63,6 +39,8 @@ class FSM {
             return false;
         }
         LOGI(TAG, "onSetup: success");
+        
+        ctrlQ.post();
         return true;
     }
 
@@ -92,8 +70,6 @@ class FSM {
         sampleIntMs_ = c.ms;
         LOGI(TAG, "onSampleInt: set sample interval to %u ms", sampleIntMs_);
     }
-
-    // void setCtrlAO(AO *ao) { ao_ = ao; }
 
   private:
     static constexpr char TAG[] = "ss";

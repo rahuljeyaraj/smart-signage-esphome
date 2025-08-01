@@ -54,5 +54,6 @@ class Queue {
 };
 
 extern Queue radarQ;
+extern Queue ctrlQ;
 
 } // namespace esphome::smart_signage
