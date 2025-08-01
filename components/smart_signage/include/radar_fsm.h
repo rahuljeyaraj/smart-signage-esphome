@@ -1,15 +1,14 @@
 #pragma once
 #include "active_object.h"
 #include "log.h"
+#include "queue.h"
 #include "sml.hpp"
 #include <etl/variant.h>
 
 namespace esphome::smart_signage::radar {
 
-// Events
-struct Setup {
-    void *ctrlAo;
-};
+// incoming events
+struct Setup {};
 struct Start {};
 struct Stop {};
 struct Teardown {};
@@ -21,22 +20,22 @@ struct SetSampleInt {
     uint32_t ms;
 };
 
-using RadarEvent = etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, SetSampleInt>;
+using Event = etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, SetSampleInt>;
 
-struct RadarError {};
-struct RadarReady {};
-struct RadarData {
+// outgoing events
+struct Error {};
+struct Ready {};
+struct Data {
     bool detected = false;
     uint16_t distanceCm = 0;
     TickType_t timestampTicks = 0;
 };
 
-// FSM
-class RadarFSM {
-    using Self = RadarFSM;
+class FSM {
+    using Self = FSM;
 
   public:
-    RadarFSM() = default;
+    FSM() = default;
 
     auto operator()() noexcept {
         using namespace boost::sml;
@@ -52,15 +51,12 @@ class RadarFSM {
             ,state<Active>  + event<TimerPoll>      / &Self::onPoll
             ,state<_>       + event<SetDistCm>      / &Self::onSetDist
             ,state<_>       + event<SetSampleInt>   / &Self::onSampleInt
-            ,state<_>       + event<SetCtrlAO>      / &Self::onSetCtrlAo
             // clang-format on
         );
     }
 
     // Actions
     bool onSetup(const Setup &e) {
-        ctrlAo_ = e.ctrlAo;
-        LOGI(TAG, "CtrlAoconfigured: %p", ctrlAo_);
         LOGI(TAG, "onSetup: initializing hardware...");
         if (!stubHardwareInit()) {
             LOGE(TAG, "onSetup: hardware init failed, throwing");
@@ -97,6 +93,8 @@ class RadarFSM {
         LOGI(TAG, "onSampleInt: set sample interval to %u ms", sampleIntMs_);
     }
 
+    // void setCtrlAO(AO *ao) { ao_ = ao; }
+
   private:
     static constexpr char TAG[] = "ss";
     bool stubHardwareInit() { return true; }
@@ -112,6 +110,4 @@ class RadarFSM {
     struct Error {};
 };
 
-using RadarAO = ActiveObject<RadarFSM, RadarEvent>;
-
-} // namespace esphome::smart_signage
+} // namespace esphome::smart_signage::radar
