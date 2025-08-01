@@ -1,3 +1,4 @@
+#pragma once
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
 
@@ -17,15 +18,15 @@ struct SetSampleInt {
 };
 using RxEvent = etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, SetSampleInt>;
 
-struct Error {};
-struct Ready {};
+struct InitError {};
+struct SetupDone {};
 struct Data {
     bool detected = false;
     uint16_t distanceCm = 0;
     TickType_t timestampTicks = 0;
 };
-using TxEvent = etl::variant<Error, Ready, Data>;
-}  // namespace radar
+using TxEvent = etl::variant<InitError, SetupDone, Data>;
+} // namespace radar
 
 namespace imu {
 struct Setup {};
@@ -35,12 +36,12 @@ struct Teardown {};
 struct TimerPoll {};
 using RxEvent = etl::variant<Setup, Start, Stop, Teardown, TimerPoll>;
 
-struct Error {};
-struct Ready {};
+struct InitError {};
+struct SetupDone {};
 struct Fell {};
 struct Rose {};
-using TxEvent = etl::variant<Error, Ready, Fell, Rose>;
-}  // namespace imu
+using TxEvent = etl::variant<InitError, SetupDone, Fell, Rose>;
+} // namespace imu
 
 namespace led {
 struct Setup {};
@@ -58,11 +59,11 @@ struct Breathe {
 struct FadeEnd {};
 using RxEvent = etl::variant<Setup, Teardown, On, Off, Breathe, FadeEnd>;
 
-struct Error {};
-struct Ready {};
+struct InitError {};
+struct SetupDone {};
 struct BreathDone {};
-using TxEvent = etl::variant<Error, Ready, BreathDone>;
-}  // namespace led
+using TxEvent = etl::variant<InitError, SetupDone, BreathDone>;
+} // namespace led
 
 namespace audio {
 static constexpr size_t kLen = 64;
@@ -75,11 +76,11 @@ struct Play {
 struct Stop {};
 using RxEvent = etl::variant<Setup, Teardown, Play, Stop>;
 
-struct Error {};
-struct Ready {};
+struct InitError {};
+struct SetupDone {};
 struct PlayDone {};
-using TxEvent = etl::variant<Error, Ready, PlayDone>;
-}  // namespace audio
+using TxEvent = etl::variant<InitError, SetupDone, PlayDone>;
+} // namespace audio
 
 namespace ctrl {
 struct Setup {};
@@ -89,9 +90,9 @@ struct Start {
 struct Stop {};
 struct Timeout {};
 
-using Ready = etl::variant<radar::Ready, imu::Ready, led::Ready, audio::Ready>;
-using Error = etl::variant<radar::Error, imu::Error, led::Error, audio::Error>;
-using RxEvent = etl::variant<Setup, Start, Ready, Error, Timeout, radar::TxEvent, imu::TxEvent,
-                             led::TxEvent, audio::TxEvent>;
-}  // namespace ctrl
-}  // namespace esphome::smart_signage
+using SetupDone = etl::variant<imu::SetupDone, led::SetupDone, audio::SetupDone>;
+using InitError = etl::variant<radar::InitError, imu::InitError, led::InitError, audio::InitError>;
+using RxEvent = etl::variant<Setup, Start, radar::SetupDone, SetupDone, InitError, Timeout,
+                             radar::TxEvent, imu::TxEvent, led::TxEvent, audio::TxEvent>;
+} // namespace ctrl
+} // namespace esphome::smart_signage

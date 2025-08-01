@@ -11,19 +11,6 @@ namespace sml = boost::sml;
 
 namespace esphome::smart_signage::ctrl {
 
-// enum class IntfId : uint8_t { Radar = 0, /*Imu, Led, Audio,*/ Count };
-// static constexpr size_t kIntfCnt = static_cast<size_t>(IntfId::Count);
-// using AoPtrVariant = etl::variant<radar::AO * /*, ImuAO *, LedAO *, AudioAO **/>;
-// using AoMap = etl::flat_map<IntfId, AoPtrVariant, kIntfCnt>;
-
-// class ImuAO;
-// class LedAO;
-// class AudioAO;
-
-// Events
-
-
-// CtrlFSM
 class FSM {
     using Self = FSM;
 
@@ -33,19 +20,19 @@ class FSM {
     auto operator()() noexcept {
         using namespace boost::sml;
         return make_transition_table(
-            *"idle"_s + event<Setup> / &Self::onSetup = "ready_wait"_s,     //
-            "ready_wait"_s + event<Ready>[&Self::onReadyGuard] = "ready"_s, //
+            *"idle"_s + event<Setup> / &Self::onSetup = "ready_wait"_s,              //
+            "ready_wait"_s + event<radar::SetupDone>[&Self::SetupGuard] = "ready"_s, //
             "ready"_s + event<Start> / &Self::onStart = "active"_s,
             "active"_s + event<Timeout> / &Self::onRunTimeout = "idle"_s,
             "active"_s + event<radar::Data> / &Self::onRadarData = "active"_s,
-            "active"_s + event<Fell> / &Self::onFell = "fallen"_s,
-            "fallen"_s + event<Rose> / &Self::onRose = "active"_s,
-            state<_> + event<Error> = "error"_s // error
+            // "active"_s + event<imu::Fell> / &Self::onFell = "fallen"_s,
+            // "fallen"_s + event<imu::Rose> / &Self::onRose = "active"_s,
+            state<_> + event<InitError> = "error"_s // error
         );
     }
 
     // Guards
-    bool onReadyGuard(const Ready &e) {
+    bool SetupGuard(const radar::SetupDone &e) {
         // readySeen_.insert(e);
         // etl::visit([this](auto const &ev) { readySeen_.insert(ev); }, e);
         // return readySeen_.size() == kIntfCnt;
@@ -54,14 +41,14 @@ class FSM {
 
     // Actions
     void onSetup(const Setup &) {
-        radar::Event radarSetup(radar::Setup{});
+        radar::RxEvent radarSetup(radar::Setup{});
         radarQ.post(&radarSetup);
 
         LOGI(TAG, "onSetup");
     }
 
     void onStart(const Start &e) {
-        radar::Event radarStart(radar::Start{});
+        radar::RxEvent radarStart(radar::Start{});
         radarQ.post(&radarStart);
 
         runTimeMins_ = e.runTimeMins;
@@ -69,21 +56,21 @@ class FSM {
         // schedule Timeout via your automation API...
     }
 
-    void onFell(const Fell &) { LOGI(TAG, "onFell: fall detected"); }
-    void onRose(const Rose &) { LOGI(TAG, "onRose: rise detected"); }
+    // void onFell(const Fell &) { LOGI(TAG, "onFell: fall detected"); }
+    // void onRose(const Rose &) { LOGI(TAG, "onRose: rise detected"); }
 
     void onRunTimeout(const Timeout &) {
-        radar::Event radarStop(radar::Stop{});
+        radar::RxEvent radarStop(radar::Stop{});
         radarQ.post(&radarStop);
 
-        radar::Event radarTeardown(radar::Teardown{});
+        radar::RxEvent radarTeardown(radar::Teardown{});
         radarQ.post(&radarTeardown);
 
         LOGI(TAG, "onRunTimeout: tearing down");
         teardownAll();
     }
 
-    void onError(const Error &) { LOGE(TAG, "Error!"); }
+    void onError(const InitError &) { LOGE(TAG, "InitError!"); }
 
     void onRadarData(const radar::Data &e) {
         LOGI(TAG, "onRadarData: detected=%s dist=%u cm ts=%u", e.detected ? "Y" : "N",

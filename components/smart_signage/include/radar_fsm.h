@@ -1,5 +1,6 @@
 #pragma once
 #include "active_object.h"
+#include "events.h"
 #include "log.h"
 #include "queue.h"
 #include "sml.hpp"
@@ -39,8 +40,8 @@ class FSM {
             return false;
         }
         LOGI(TAG, "onSetup: success");
-        
-        ctrlQ.post();
+        ctrl::RxEvent setupDone(radar::SetupDone{});
+        ctrlQ.post(&setupDone);
         return true;
     }
 
