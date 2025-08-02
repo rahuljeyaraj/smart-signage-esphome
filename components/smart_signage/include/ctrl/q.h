@@ -1,8 +1,8 @@
+#include "ctrl/event.h"
 #include "queue.h"
-#include "radar/event.h"
 
 namespace esphome::smart_signage {
-namespace radar {
+namespace ctrl {
 
 #ifndef RADAR_QUEUE_LEN
 #define RADAR_QUEUE_LEN 8
@@ -10,5 +10,5 @@ namespace radar {
 
 using Q = Queue<Event, RADAR_QUEUE_LEN>;
 
-} // namespace radar
+} // namespace ctrl
 } // namespace esphome::smart_signage

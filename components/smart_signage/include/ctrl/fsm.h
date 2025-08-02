@@ -1,13 +1,9 @@
 #pragma once
-#include "active_object.h"
+#include "ctrl/event.h"
 #include "log.h"
-#include "radar_fsm.h"
+#include "radar/q.h"
 #include "sml.hpp"
-#include <etl/flat_map.h>
-#include <etl/flat_set.h>
 #include <etl/variant.h>
-
-namespace sml = boost::sml;
 
 namespace esphome::smart_signage::ctrl {
 
@@ -15,20 +11,19 @@ class FSM {
     using Self = FSM;
 
   public:
-    FSM() = default;
+    explicit FSM(radar::Q &radarQ) : radarQ_(radarQ) {}
 
     auto operator()() noexcept {
         using namespace boost::sml;
         return make_transition_table(
-            *"idle"_s + event<Setup> / &Self::onSetup = "ready_wait"_s,              //
-            "ready_wait"_s + event<radar::SetupDone>[&Self::SetupGuard] = "ready"_s, //
-            "ready"_s + event<Start> / &Self::onStart = "active"_s,
-            "active"_s + event<Timeout> / &Self::onRunTimeout = "idle"_s,
-            "active"_s + event<radar::Data> / &Self::onRadarData = "active"_s,
-            // "active"_s + event<imu::Fell> / &Self::onFell = "fallen"_s,
-            // "fallen"_s + event<imu::Rose> / &Self::onRose = "active"_s,
-            state<_> + event<InitError> = "error"_s // error
-        );
+            *state<Idle> +          event<Setup> / &Self::onSetup                = state<ReadyWait>,
+            state<ReadyWait> + event<radar::SetupDone>[&Self::SetupGuard] = state<Ready>,
+            state<Ready> + event<Start> / &Self::onStart                = state<Active>,
+            state<Active> + event<Timeout> / &Self::onRunTimeout        = state<Idle>,
+            state<Active> + event<radar::Data> / &Self::onRadarData     = state<Active>,
+            // state<Active> + event<imu::Fell> / &Self::onFell           = state<Fallen>,
+            // state<Fallen> + event<imu::Rose> / &Self::onRose           = state<Active>,
+            state<_> + event<InitError>                                = state<Error>;
     }
 
     // Guards
@@ -41,15 +36,12 @@ class FSM {
 
     // Actions
     void onSetup(const Setup &) {
-        radar::RxEvent radarSetup(radar::Setup{});
-        radarQ.post(&radarSetup);
-
+        radarQ_.post(radar::Setup{});
         LOGI(TAG, "onSetup");
     }
 
     void onStart(const Start &e) {
-        radar::RxEvent radarStart(radar::Start{});
-        radarQ.post(&radarStart);
+        radarQ_.post(radar::Start{});
 
         runTimeMins_ = e.runTimeMins;
         LOGI(TAG, "onStart: runTimeMins=%u", runTimeMins_);
@@ -60,11 +52,8 @@ class FSM {
     // void onRose(const Rose &) { LOGI(TAG, "onRose: rise detected"); }
 
     void onRunTimeout(const Timeout &) {
-        radar::RxEvent radarStop(radar::Stop{});
-        radarQ.post(&radarStop);
-
-        radar::RxEvent radarTeardown(radar::Teardown{});
-        radarQ.post(&radarTeardown);
+        radarQ_.post(radar::Stop{});
+        radarQ_.post(radar::Teardown{});
 
         LOGI(TAG, "onRunTimeout: tearing down");
         teardownAll();
@@ -80,10 +69,8 @@ class FSM {
   private:
     static constexpr char TAG[] = "ctrl";
 
-    // etl::flat_set<Ready, kIntfCnt> readySeen_;
-
-    // runs for this many minutes once started
-    uint32_t runTimeMins_{0};
+    radar::Q &radarQ_;
+    uint32_t  runTimeMins_{0};
 
     // ––– Teardown helper –––––––––––––––––––––––––––––––
     void teardownAll() {
@@ -93,12 +80,12 @@ class FSM {
     }
 
     // ––– State tags –––––––––––––––––––––––––––––––––––––
-    // struct Idle {};
-    // struct ReadyWait {};
-    // struct Ready {};
-    // struct Active {};
-    // struct Fallen {};
-    // struct Error {};
+    struct Idle {};
+    struct ReadyWait {};
+    struct Ready {};
+    struct Active {};
+    struct Fallen {};
+    struct Error {};
 };
 
 } // namespace esphome::smart_signage::ctrl

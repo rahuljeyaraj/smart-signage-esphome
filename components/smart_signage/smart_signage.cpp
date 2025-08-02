@@ -1,6 +1,7 @@
 #include "smart_signage.h"
 // #include "ctrl_fsm.h"
 // #include "events.h"
+#include "ctrl/ao.h"
 #include "radar/ao.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
@@ -12,11 +13,14 @@ namespace esphome::smart_signage {
 // using Q = Queue<RxEvent, 16>; // TODO, get the size from const
 // }
 
+ctrl::Q  ctrlQ;
 radar::Q radarQ;
-radar::FSM radarFsm;
-radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
-// ctrl::FSM ctrlFsm(ctrlQ, radarQ);
 
+ctrl::FSM  ctrlFsm(radarQ);
+radar::FSM radarFsm(ctrlQ);
+
+ctrl::AO  ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
+radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
 
 // using CtrlAO = ActiveObject<ctrl::FSM, ctrl::Q>;
 
@@ -27,11 +31,9 @@ void SmartSignage::setup() {}
 
 void SmartSignage::loop() {
 
-    radarQ.post(radar::Setup{});
-    // evt = ctrl::Start{};
-    // ctrlQ.post(&evt);
-    // evt = ctrl::Timeout{};
-    // ctrlQ.post(&evt);
+    ctrlQ.post(ctrl::Setup{});
+    ctrlQ.post(ctrl::Start{});
+    ctrlQ.post(ctrl::Timeout{});
     vTaskDelay(pdMS_TO_TICKS(100));
 }
 

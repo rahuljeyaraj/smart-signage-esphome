@@ -1,18 +1,17 @@
 #pragma once
-#include "radar/event.h"
-// #include "ctrl/q.h"
+#include "ctrl/q.h"
 #include "log.h"
+#include "radar/event.h"
 #include "sml.hpp"
 #include <etl/variant.h>
 
-namespace esphome::smart_signage {
-namespace radar {
+namespace esphome::smart_signage::radar {
 
 class FSM {
     using Self = FSM;
 
   public:
-    FSM() = default;
+    explicit FSM(ctrl::Q &q) : ctrlQ_(q) {}
 
     auto operator()() noexcept {
         using namespace boost::sml;
@@ -40,8 +39,7 @@ class FSM {
             return false;
         }
         LOGI(TAG, "onSetup: success");
-        // ctrl::RxEvent setupDone(radar::SetupDone{});
-        // ctrlQ.post(&setupDone);
+        ctrlQ_.post(ctrl::radar::SetupDone{});
         return true;
     }
 
@@ -73,7 +71,10 @@ class FSM {
     }
 
   private:
-    static constexpr char TAG[] = "ss";
+    static constexpr char TAG[] = "radar";
+
+    ctrl::Q &ctrlQ_;
+
     bool stubHardwareInit() { return true; }
 
     uint16_t detDistCm_{0};
@@ -87,5 +88,4 @@ class FSM {
     struct Error {};
 };
 
-} // namespace radar
-} // namespace esphome::smart_signage
+} // namespace esphome::smart_signage::radar

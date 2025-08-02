@@ -12,10 +12,6 @@
 // struct TimerPoll {};
 // using RxEvent = etl::variant<Setup, Start, Stop, Teardown, TimerPoll>;
 
-// struct InitError {};
-// struct SetupDone {};
-// struct Fell {};
-// struct Rose {};
 // using TxEvent = etl::variant<InitError, SetupDone, Fell, Rose>;
 // } // namespace imu
 
@@ -35,9 +31,6 @@
 // struct FadeEnd {};
 // using RxEvent = etl::variant<Setup, Teardown, On, Off, Breathe, FadeEnd>;
 
-// struct InitError {};
-// struct SetupDone {};
-// struct BreathDone {};
 // using TxEvent = etl::variant<InitError, SetupDone, BreathDone>;
 // } // namespace led
 

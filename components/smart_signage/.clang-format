@@ -1,0 +1,46 @@
+# Use LLVM style as a base
+BasedOnStyle: LLVM
+
+# Language to format
+Language: Cpp
+
+# Indent width for code
+IndentWidth: 4
+
+# Column limit for lines
+ColumnLimit: 100
+
+# Style for braces in control statements (if/else/for/while)
+BreakBeforeBraces: Attach
+
+# Align consecutive declarations and assignments
+AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: true
+
+# Add a space after C-style casts
+SpaceAfterCStyleCast: true
+
+# Put spaces around pointer and reference operators (false for `int *x`, true for `int* x`)
+PointerAndReferenceBindsToType: false 
+
+# Insert spaces in empty parentheses
+SpaceInEmptyParentheses: false
+
+# Allow short functions to be put on a single line
+AllowShortFunctionsOnASingleLine: All
+
+# Allow short case labels to be on a single line
+AllowShortCaseLabelsOnASingleLine: true
+
+# Enable formatting of macro definitions
+MacroBlockBegin: '{'
+MacroBlockEnd: '}'
+
+# Sort include directives
+SortIncludes: true
+
+NamespaceIndentation: Inner
+
+BinPackParameters: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakBeforeTemplateClosingAngleBracket: true
