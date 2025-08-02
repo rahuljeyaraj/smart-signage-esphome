@@ -16,14 +16,14 @@ class FSM {
     auto operator()() noexcept {
         using namespace boost::sml;
         return make_transition_table(
-            *state<Idle> +          event<Setup> / &Self::onSetup                = state<ReadyWait>,
+            *state<Idle> + event<Setup> / &Self::onSetup                  = state<ReadyWait>,
             state<ReadyWait> + event<radar::SetupDone>[&Self::SetupGuard] = state<Ready>,
-            state<Ready> + event<Start> / &Self::onStart                = state<Active>,
-            state<Active> + event<Timeout> / &Self::onRunTimeout        = state<Idle>,
-            state<Active> + event<radar::Data> / &Self::onRadarData     = state<Active>,
+            state<Ready> + event<Start> / &Self::onStart                  = state<Active>,
+            state<Active> + event<Timeout> / &Self::onRunTimeout          = state<Idle>,
+            state<Active> + event<radar::Data> / &Self::onRadarData       = state<Active>,
             // state<Active> + event<imu::Fell> / &Self::onFell           = state<Fallen>,
             // state<Fallen> + event<imu::Rose> / &Self::onRose           = state<Active>,
-            state<_> + event<InitError>                                = state<Error>;
+            state<_> + event<radar::InitError> = state<Error>);
     }
 
     // Guards

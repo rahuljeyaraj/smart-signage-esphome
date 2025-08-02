@@ -2,7 +2,7 @@
 // #include "ctrl_fsm.h"
 // #include "events.h"
 #include "ctrl/ao.h"
-#include "radar/ao.h"
+// #include "radar/ao.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
@@ -17,10 +17,10 @@ ctrl::Q  ctrlQ;
 radar::Q radarQ;
 
 ctrl::FSM  ctrlFsm(radarQ);
-radar::FSM radarFsm(ctrlQ);
+// radar::FSM radarFsm(ctrlQ);
 
-ctrl::AO  ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
-radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
+// ctrl::AO  ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
+// radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
 
 // using CtrlAO = ActiveObject<ctrl::FSM, ctrl::Q>;
 
@@ -31,9 +31,9 @@ void SmartSignage::setup() {}
 
 void SmartSignage::loop() {
 
-    ctrlQ.post(ctrl::Setup{});
-    ctrlQ.post(ctrl::Start{});
-    ctrlQ.post(ctrl::Timeout{});
+    // ctrlQ.post(ctrl::Setup{});
+    // ctrlQ.post(ctrl::Start{});
+    // ctrlQ.post(ctrl::Timeout{});
     vTaskDelay(pdMS_TO_TICKS(100));
 }
 

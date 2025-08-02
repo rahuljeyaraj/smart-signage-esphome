@@ -21,13 +21,6 @@ namespace imu {
     struct Rose {};
 } // namespace imu
 
-namespace imu {
-    struct InitError {};
-    struct SetupDone {};
-    struct Fell {};
-    struct Rose {};
-} // namespace imu
-
 namespace led {
     struct InitError {};
     struct SetupDone {};
@@ -40,7 +33,18 @@ namespace audio {
     struct PlayDone {};
 } // namespace audio
 
-using Event = etl::variant<radar::InitError,
+struct Setup {};
+struct Start {
+    uint32_t runTimeMins;
+};
+struct Stop {};
+struct Timeout {};
+
+using Event = etl::variant<Setup,
+                           Start,
+                           Stop,
+                           Timeout,
+                           radar::InitError,
                            radar::SetupDone,
                            radar::Data,
                            imu::InitError,
