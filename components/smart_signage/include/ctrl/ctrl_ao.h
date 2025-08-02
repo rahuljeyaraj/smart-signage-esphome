@@ -1,0 +1,8 @@
+#pragma once
+#include "active_object.h"
+#include "ctrl/ctrl_fsm.h"
+#include "ctrl/ctrl_q.h"
+
+namespace esphome::smart_signage::ctrl {
+using AO = ActiveObject<FSM, Q>;
+}

@@ -1,8 +1,8 @@
 #include "smart_signage.h"
 // #include "ctrl_fsm.h"
 // #include "events.h"
-#include "ctrl/ao.h"
-// #include "radar/ao.h"
+// #include "ctrl/ctrl_ao.h"
+// #include "radar/radar_ao.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
@@ -13,10 +13,10 @@ namespace esphome::smart_signage {
 // using Q = Queue<RxEvent, 16>; // TODO, get the size from const
 // }
 
-ctrl::Q  ctrlQ;
-radar::Q radarQ;
+// ctrl::Q  ctrlQ;
+// radar::Q radarQ;
 
-ctrl::FSM  ctrlFsm(radarQ);
+// ctrl::FSM ctrlFsm(radarQ);
 // radar::FSM radarFsm(ctrlQ);
 
 // ctrl::AO  ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);

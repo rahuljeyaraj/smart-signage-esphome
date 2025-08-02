@@ -26,23 +26,19 @@ template <typename ItemT, std::size_t QueueLength> class Queue {
 
     /// Delete the underlying FreeRTOS queue (if any).
     ~Queue() {
-        if (handle_) {
-            vQueueDelete(handle_);
-        }
+        if (handle_) { vQueueDelete(handle_); }
     }
 
     // Non‐copyable
-    Queue(const Queue &) = delete;
+    Queue(const Queue &)            = delete;
     Queue &operator=(const Queue &) = delete;
 
     // Movable
     Queue(Queue &&o) noexcept : handle_(o.handle_) { o.handle_ = nullptr; }
     Queue &operator=(Queue &&o) noexcept {
         if (this != &o) {
-            if (handle_) {
-                vQueueDelete(handle_);
-            }
-            handle_ = o.handle_;
+            if (handle_) { vQueueDelete(handle_); }
+            handle_   = o.handle_;
             o.handle_ = nullptr;
         }
         return *this;
@@ -76,7 +72,7 @@ template <typename ItemT, std::size_t QueueLength> class Queue {
 
     /// @brief Compile‐time constants.
     static constexpr size_type queue_length = QueueLength;
-    static constexpr size_type item_size = sizeof(ItemType);
+    static constexpr size_type item_size    = sizeof(ItemType);
 
   private:
     QueueHandle_t handle_{nullptr};

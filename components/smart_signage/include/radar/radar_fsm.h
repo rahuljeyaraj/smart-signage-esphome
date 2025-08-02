@@ -1,7 +1,7 @@
 #pragma once
-#include "ctrl/q.h"
+#include "ctrl/ctrl_q.h"
 #include "log.h"
-#include "radar/event.h"
+#include "radar/radar_event.h"
 #include "sml.hpp"
 #include <etl/variant.h>
 
@@ -11,52 +11,54 @@ class FSM {
     using Self = FSM;
 
   public:
-    explicit FSM(ctrl::Q &q) : ctrlQ_(q) {}
+    FSM(ctrl::Q &q) : ctrlQ_(q) {}
 
     auto operator()() noexcept {
         using namespace boost::sml;
-        auto onSetupGuard = wrap(&Self::onSetup);
         return make_transition_table(
             // clang-format off
-            *state<Idle>    + event<Setup>      [ !onSetupGuard ]   = state<Error>
-            ,state<Idle>    + event<Setup>      [  onSetupGuard ]   = state<Ready>
-            ,state<Ready>   + event<Start>      / &Self::onStart    = state<Active>
-            ,state<Active>  + event<Stop>       / &Self::onStop     = state<Ready>
-            ,state<Ready>   + event<Teardown>   / &Self::onTeardown = state<Idle>
+            *state<Idle>    + event<CmdSetup>      [ !wrap(&Self::SetupGuard) ]     = state<Error>
+            ,state<Idle>    + event<CmdSetup>      [  wrap(&Self::SetupGuard) ]     = state<Ready>
+            ,state<Ready>   + event<CmdStart>      / &Self::onCmdStart              = state<Active>
+            ,state<Active>  + event<CmdStop>       / &Self::onCmdStop               = state<Ready>
+            ,state<Ready>   + event<CmdTeardown>   / &Self::onCmdTeardown           = state<Idle>
 
-            ,state<Active>  + event<TimerPoll>      / &Self::onPoll
+            ,state<Active>  + event<EvtTimerPoll>   / &Self::onEvtTimerPoll
             ,state<_>       + event<SetDistCm>      / &Self::onSetDist
-            ,state<_>       + event<SetSampleInt>   / &Self::onSampleInt
+            ,state<_>       + event<SetSampleInt>   / &Self::onSetSampleInt
             // clang-format on
         );
     }
 
-    // Actions
-    bool onSetup(const Setup &e) {
+    // Guard
+    bool SetupGuard(const CmdSetup &e) {
         LOGI(TAG, "onSetup: initializing hardware...");
         if (!stubHardwareInit()) {
             LOGE(TAG, "onSetup: hardware init failed, throwing");
+            ctrlQ_.post(ctrl::EvtRadarError{});
             return false;
         }
         LOGI(TAG, "onSetup: success");
-        ctrlQ_.post(ctrl::radar::SetupDone{});
+        ctrlQ_.post(ctrl::EvtRadarReady{});
         return true;
     }
 
-    void onStart(const Start &) { LOGI(TAG, "onStart"); }
+    // Actions
+    void onCmdStart(const CmdStart &) { LOGI(TAG, "onStart"); }
 
-    void onStop(const Stop &) {
+    void onCmdStop(const CmdStop &) {
         LOGI(TAG, "onStop: stopping radar");
         // stubHardwareStop();
     }
 
-    void onTeardown(const Teardown &) {
+    void onCmdTeardown(const CmdTeardown &) {
         LOGI(TAG, "onTeardown: tearing down");
         // stubHardwareTeardown();
     }
 
-    void onPoll(const TimerPoll &) {
+    void onEvtTimerPoll(const EvtTimerPoll &) {
         LOGI(TAG, "onPoll: reading data (maxDist=%u cm, interval=%u ms)", detDistCm_, sampleIntMs_);
+        ctrlQ_.post(ctrl::EvtRadarData{true, 100});
         // stubHardwarePoll();
     }
 
@@ -65,9 +67,9 @@ class FSM {
         LOGI(TAG, "onSetDist: set max distance to %u cm", detDistCm_);
     }
 
-    void onSampleInt(const SetSampleInt &c) {
+    void onSetSampleInt(const SetSampleInt &c) {
         sampleIntMs_ = c.ms;
-        LOGI(TAG, "onSampleInt: set sample interval to %u ms", sampleIntMs_);
+        LOGI(TAG, "onSetSampleInt: set sample interval to %u ms", sampleIntMs_);
     }
 
   private:

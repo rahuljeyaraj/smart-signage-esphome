@@ -2,7 +2,6 @@
 #include "esphome.h"
 #include "log.h"
 
-
 namespace esphome::smart_signage {
 
 class SmartSignage : public Component {
@@ -36,10 +35,10 @@ class SmartSignage : public Component {
     static constexpr char TAG[] = "ss";
 
     struct Settings {
-        float radius_m = 2.0f;
+        float    radius_m   = 2.0f;
         uint32_t duration_s = 30;
-        uint8_t volume = 80;
-        uint8_t brightness = 50;
+        uint8_t  volume     = 80;
+        uint8_t  brightness = 50;
     } settings_;
 };
 

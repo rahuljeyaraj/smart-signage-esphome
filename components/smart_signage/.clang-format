@@ -1,46 +1,34 @@
-# Use LLVM style as a base
+# .clang-format
 BasedOnStyle: LLVM
+Language:        Cpp
 
-# Language to format
-Language: Cpp
+IndentWidth:     4
+ColumnLimit:     100
 
-# Indent width for code
-IndentWidth: 4
-
-# Column limit for lines
-ColumnLimit: 100
-
-# Style for braces in control statements (if/else/for/while)
-BreakBeforeBraces: Attach
-
-# Align consecutive declarations and assignments
-AlignConsecutiveDeclarations: true
-AlignConsecutiveAssignments: true
-
-# Add a space after C-style casts
-SpaceAfterCStyleCast: true
-
-# Put spaces around pointer and reference operators (false for `int *x`, true for `int* x`)
-PointerAndReferenceBindsToType: false 
-
-# Insert spaces in empty parentheses
-SpaceInEmptyParentheses: false
-
-# Allow short functions to be put on a single line
-AllowShortFunctionsOnASingleLine: All
-
-# Allow short case labels to be on a single line
-AllowShortCaseLabelsOnASingleLine: true
-
-# Enable formatting of macro definitions
-MacroBlockBegin: '{'
-MacroBlockEnd: '}'
-
-# Sort include directives
-SortIncludes: true
-
-NamespaceIndentation: Inner
-
-BinPackParameters: false
+BinPackParameters:                         false
+BinPackArguments:                          false
 AllowAllParametersOfDeclarationOnNextLine: false
-BreakBeforeTemplateClosingAngleBracket: true
+
+BreakBeforeBraces:                         Attach
+
+AlignConsecutiveDeclarations:              true
+AlignConsecutiveAssignments:               true
+
+SpaceAfterCStyleCast:                      true
+SpaceInEmptyParentheses:                   false
+
+AllowShortFunctionsOnASingleLine:          All
+AllowShortCaseLabelsOnASingleLine:         true
+AllowShortBlocksOnASingleLine:             true
+AllowShortIfStatementsOnASingleLine:       true
+AllowShortLoopsOnASingleLine:              true
+AllowShortEnumsOnASingleLine:              true
+AllowShortLambdasOnASingleLine:            true
+
+MacroBlockBegin:                           '{'
+MacroBlockEnd:                             '}'
+
+SortIncludes:                              true
+NamespaceIndentation:                      Inner
+FixNamespaceComments:                      true
+AlignAfterOpenBracket:                     DontAlign

@@ -24,7 +24,7 @@
 //             "ready_wait"_s + event<radar::SetupDone>[&Self::SetupGuard] = "ready"_s, //
 //             "ready"_s + event<Start> / &Self::onStart = "active"_s,
 //             "active"_s + event<Timeout> / &Self::onRunTimeout = "idle"_s,
-//             "active"_s + event<radar::Data> / &Self::onRadarData = "active"_s,
+//             "active"_s + event<radar::Data> / &Self::onEvtRadarData = "active"_s,
 //             // "active"_s + event<imu::Fell> / &Self::onFell = "fallen"_s,
 //             // "fallen"_s + event<imu::Rose> / &Self::onRose = "active"_s,
 //             state<_> + event<InitError> = "error"_s // error
@@ -72,8 +72,8 @@
 
 //     void onError(const InitError &) { LOGE(TAG, "InitError!"); }
 
-//     void onRadarData(const radar::Data &e) {
-//         LOGI(TAG, "onRadarData: detected=%s dist=%u cm ts=%u", e.detected ? "Y" : "N",
+//     void onEvtRadarData(const radar::Data &e) {
+//         LOGI(TAG, "onEvtRadarData: detected=%s dist=%u cm ts=%u", e.detected ? "Y" : "N",
 //              static_cast<unsigned>(e.distanceCm), static_cast<unsigned>(e.timestampTicks));
 //     }
 
@@ -94,7 +94,7 @@
 
 //     // ––– State tags –––––––––––––––––––––––––––––––––––––
 //     // struct Idle {};
-//     // struct ReadyWait {};
+//     // struct Setup {};
 //     // struct Ready {};
 //     // struct Active {};
 //     // struct Fallen {};

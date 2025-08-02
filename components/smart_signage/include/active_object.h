@@ -21,12 +21,20 @@ template <typename Functor, typename QueueType> class ActiveObject {
     // deduce Event from the QueueType
     using EventType = QueueType::ItemType;
 
-    ActiveObject(Functor &functor, QueueType &queue, const char *taskName,
-                 uint32_t stackSize = 2048, UBaseType_t priority = tskIDLE_PRIORITY + 1,
-                 BaseType_t coreId = 0)
+    ActiveObject(Functor &functor,
+        QueueType        &queue,
+        const char       *taskName,
+        uint32_t          stackSize = 2048,
+        UBaseType_t       priority  = tskIDLE_PRIORITY + 1,
+        BaseType_t        coreId    = 0)
         : fsm_{functor}, queue_{queue} {
-        if (xTaskCreatePinnedToCore(&ActiveObject::taskEntry, taskName, stackSize, this, priority,
-                                    &taskHandle_, coreId) != pdPASS) {
+        if (xTaskCreatePinnedToCore(&ActiveObject::taskEntry,
+                taskName,
+                stackSize,
+                this,
+                priority,
+                &taskHandle_,
+                coreId) != pdPASS) {
             LOGE("AO", "Task creation failed");
         }
     }
@@ -49,8 +57,8 @@ template <typename Functor, typename QueueType> class ActiveObject {
     }
 
     sml::sm<Functor> fsm_;
-    QueueType &queue_;
-    TaskHandle_t taskHandle_{nullptr};
+    QueueType       &queue_;
+    TaskHandle_t     taskHandle_{nullptr};
 };
 
 } // namespace esphome::smart_signage

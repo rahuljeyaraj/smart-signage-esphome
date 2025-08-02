@@ -3,6 +3,8 @@ esphome:
   libraries:
     - "https://github.com/ETLCPP/etl.git"
   includes:
+    - components\smart_signage\include\radar
+    - components\smart_signage\include\ctrl
     - components\smart_signage\include\
 
 
