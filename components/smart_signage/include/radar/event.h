@@ -27,7 +27,5 @@ using Event = etl::variant<Setup, Start, Stop, Teardown, TimerPoll, SetDistCm, S
 // };
 // using TxEvent = etl::variant<InitError, SetupDone, Data>;
 
-using Q = Queue<Event, 8>;
-
 } // namespace radar
 } // namespace esphome::smart_signage

@@ -1,10 +1,7 @@
 #include "smart_signage.h"
-#include "active_object.h"
 // #include "ctrl_fsm.h"
 // #include "events.h"
-#include "radar/radar.h"
-#include "radar/radar_fsm.h"
-// #include "radar_fsm.h"
+#include "radar/ao.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
@@ -16,9 +13,8 @@ namespace esphome::smart_signage {
 // }
 
 radar::Q radarQ;
-// ctrl::Q ctrlQ;
-
 radar::FSM radarFsm;
+radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
 // ctrl::FSM ctrlFsm(ctrlQ, radarQ);
 
 

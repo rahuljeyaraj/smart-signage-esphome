@@ -19,7 +19,7 @@ namespace sml = boost::sml;
 template <typename Functor, typename QueueType> class ActiveObject {
   public:
     // deduce Event from the QueueType
-    using Event = typename QueueType::EventType;
+    using EventType = QueueType::ItemType;
 
     ActiveObject(Functor &functor, QueueType &queue, const char *taskName,
                  uint32_t stackSize = 2048, UBaseType_t priority = tskIDLE_PRIORITY + 1,
@@ -31,7 +31,7 @@ template <typename Functor, typename QueueType> class ActiveObject {
         }
     }
 
-    bool post(const Event &e, TickType_t wait = 0) {
+    bool post(const EventType &e, TickType_t wait = 0) {
         // forward to the queue’s own post
         return queue_.post(e, wait);
     }
@@ -40,7 +40,7 @@ template <typename Functor, typename QueueType> class ActiveObject {
     static void taskEntry(void *pv) { static_cast<ActiveObject *>(pv)->run(); }
 
     void run() {
-        Event evt;
+        EventType evt;
         for (;;) {
             if (xQueueReceive(queue_.handle(), &evt, portMAX_DELAY) == pdPASS) {
                 etl::visit([this](auto const &ev) { fsm_.process_event(ev); }, evt);
