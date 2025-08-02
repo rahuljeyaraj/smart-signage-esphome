@@ -1,5 +1,6 @@
 #pragma once
 #include <etl/variant.h>
+#include <freertos/FreeRTOS.h>
 
 namespace esphome::smart_signage::ctrl {
 

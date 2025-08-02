@@ -28,7 +28,7 @@ AllowShortLambdasOnASingleLine:            true
 MacroBlockBegin:                           '{'
 MacroBlockEnd:                             '}'
 
-SortIncludes:                              true
+SortIncludes:                              false
 NamespaceIndentation:                      Inner
 FixNamespaceComments:                      true
 AlignAfterOpenBracket:                     DontAlign
