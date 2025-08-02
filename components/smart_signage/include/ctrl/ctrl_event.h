@@ -8,6 +8,7 @@ struct CmdStart {
     uint32_t runTimeMins;
 };
 struct CmdStop {};
+struct CmdTeardown {};
 struct EvtTimeout {};
 struct EvtRadarError {};
 struct EvtRadarReady {};
@@ -33,6 +34,7 @@ using Event = etl::variant<
     CmdSetup,
     CmdStart,
     CmdStop,
+    CmdTeardown,
 
     // timer
     EvtTimeout,
@@ -59,6 +61,6 @@ using Event = etl::variant<
     EvtAudioDone>;
 
 using EvtIntfReady = etl::variant<EvtRadarReady, EvtImuReady, EvtLedReady, EvtAudioReady>;
-using EvtIntfError  = etl::variant<EvtRadarError, EvtImuError, EvtLedError, EvtAudioError>;
+using EvtIntfError = etl::variant<EvtRadarError, EvtImuError, EvtLedError, EvtAudioError>;
 
 } // namespace esphome::smart_signage::ctrl

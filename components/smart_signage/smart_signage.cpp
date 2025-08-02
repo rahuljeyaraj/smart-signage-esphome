@@ -1,40 +1,31 @@
 #include "smart_signage.h"
-// #include "ctrl_fsm.h"
-// #include "events.h"
-// #include "ctrl/ctrl_ao.h"
-// #include "radar/radar_ao.h"
-#include <freertos/FreeRTOS.h>
-#include <freertos/queue.h>
-#include <freertos/task.h>
+#include "ctrl/ctrl_ao.h"
+#include "radar/radar_ao.h"
 
 namespace esphome::smart_signage {
 
-// namespace ctrl {
-// using Q = Queue<RxEvent, 16>; // TODO, get the size from const
-// }
+ctrl::Q  ctrlQ;
+radar::Q radarQ;
 
-// ctrl::Q  ctrlQ;
-// radar::Q radarQ;
+ctrl::FSM  ctrlFsm(radarQ);
+radar::FSM radarFsm(ctrlQ);
 
-// ctrl::FSM ctrlFsm(radarQ);
-// radar::FSM radarFsm(ctrlQ);
+ctrl::AO  ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
+radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
 
-// ctrl::AO  ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
-// radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
-
-// using CtrlAO = ActiveObject<ctrl::FSM, ctrl::Q>;
-
-// RadarAO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
-// CtrlAO ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
-
-void SmartSignage::setup() {}
+void SmartSignage::setup() { LOGI(TAG, "SmartSignage setup"); }
 
 void SmartSignage::loop() {
 
-    // ctrlQ.post(ctrl::Setup{});
-    // ctrlQ.post(ctrl::Start{});
-    // ctrlQ.post(ctrl::Timeout{});
+    LOGI(TAG, "SmartSignage loop");
+    ctrlQ.post(ctrl::CmdSetup{});
     vTaskDelay(pdMS_TO_TICKS(100));
+    ctrlQ.post(ctrl::CmdStart{});
+    vTaskDelay(pdMS_TO_TICKS(100));
+    ctrlQ.post(ctrl::CmdStop{});
+    vTaskDelay(pdMS_TO_TICKS(100));
+    ctrlQ.post(ctrl::CmdTeardown{});
+    vTaskDelay(pdMS_TO_TICKS(500));
 }
 
 void SmartSignage::dump_config() { LOGI(TAG, "SmartSignage component loaded"); }

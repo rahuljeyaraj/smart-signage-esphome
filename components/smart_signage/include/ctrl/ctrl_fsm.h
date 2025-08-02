@@ -21,9 +21,10 @@ class FSM {
         return make_transition_table(
             // clang-format off
             *state<Idle> + event<CmdSetup> / &Self::onCmdSetup           = state<Setup>
-            ,state<Setup> + event<EvtIntfReady>[&Self::ReadyGuard]       = state<Ready>
+            ,state<Setup> + event<EvtRadarReady>[&Self::ReadyGuard]       = state<Ready>
             ,state<Setup> + event<EvtTimeout> / &Self::onSetupTimeout    = state<Error>
             ,state<Ready> + event<CmdStart> / &Self::onCmdStart          = state<Active>
+            ,state<Ready> + event<CmdTeardown>   / &Self::onCmdTeardown           = state<Idle>
             ,state<Active> + event<CmdStop> / &Self::onCmdStop           = state<Ready>
             ,state<Active> + event<EvtTimeout> / &Self::onActiveTimeout  = state<Idle>
             ,state<Active> + event<EvtRadarData> / &Self::onEvtRadarData = state<Active>
@@ -35,7 +36,8 @@ class FSM {
     }
 
     // Guards
-    bool ReadyGuard(const EvtIntfReady &e) {
+    bool ReadyGuard(const EvtRadarReady &e) {
+        LOGI(TAG, "ReadyGuard::EvtRadarReady");
         // readySeen_.insert(e);
         // etl::visit([this](auto const &ev) { readySeen_.insert(ev); }, e);
         // return readySeen_.size() == kIntfCnt;
@@ -59,6 +61,12 @@ class FSM {
     void onCmdStop(const CmdStop &e) {
         radarQ_.post(radar::CmdStop{});
         LOGI(TAG, "onStop");
+    }
+
+    void onCmdTeardown(const CmdTeardown &) {
+        radarQ_.post(radar::CmdTeardown{});
+        LOGI(TAG, "onTeardown: tearing down");
+        // stubHardwareTeardown();
     }
 
     void onEvtRadarData(const EvtRadarData &e) {
