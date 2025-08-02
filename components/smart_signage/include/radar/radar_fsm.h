@@ -25,6 +25,7 @@ class FSM {
             ,state<Active>   + event<EvtTimerPoll>  / &Self::onEvtTimerPoll
             ,state<_>        + event<SetDistCm>     / &Self::onSetDist
             ,state<_>        + event<SetSampleInt>  / &Self::onSetSampleInt
+            ,state<Error>    + on_entry<_>          / &Self::onError
             // clang-format on
         );
     }
@@ -40,6 +41,7 @@ class FSM {
     void onEvtTimerPoll(const EvtTimerPoll &);
     void onSetDist(const SetDistCm &);
     void onSetSampleInt(const SetSampleInt &);
+    void onError();
 
     static constexpr char TAG[] = "radar";
 

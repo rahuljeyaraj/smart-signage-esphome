@@ -61,7 +61,4 @@ using Event = etl::variant<
     EvtAudioReady,
     EvtAudioDone>;
 
-using EvtIntfReady = etl::variant<EvtRadarReady, EvtImuReady, EvtLedReady, EvtAudioReady>;
-using EvtIntfError = etl::variant<EvtRadarError, EvtImuError, EvtLedError, EvtAudioError>;
-
 } // namespace esphome::smart_signage::ctrl

@@ -58,8 +58,6 @@ void FSM::onActiveTimeout(const EvtTimeout &) {
     radarQ_.post(radar::CmdTeardown{});
 }
 
-void FSM::onEvtIntfError(const EvtIntfError &) {
-    LOGE(TAG, "Error: Interface error occurred during initialization!");
-}
+void FSM::onError() { LOGE(TAG, "Entered Error state!"); }
 
 } // namespace esphome::smart_signage::ctrl

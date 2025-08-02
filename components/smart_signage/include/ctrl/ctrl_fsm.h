@@ -23,6 +23,9 @@ class FSM {
             // clang-format off
             *state<Idle>     + event<CmdSetup>      / &Self::onCmdSetup           = state<Setup>
             ,state<Setup>    + event<EvtRadarReady> [ &Self::ReadyGuard ]         = state<Ready>
+            // ,state<Setup>    + event<EvtImuReady>   [ &Self::ReadyGuard ]         = state<Ready>
+            // ,state<Setup>    + event<EvtLedReady>   [ &Self::ReadyGuard ]         = state<Ready>
+            // ,state<Setup>    + event<EvtAudioReady> [ &Self::ReadyGuard ]         = state<Ready>
             ,state<Setup>    + event<EvtTimeout>    / &Self::onSetupTimeout       = state<Error>
             ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart           = state<Active>
             ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown        = state<Idle>
@@ -31,7 +34,11 @@ class FSM {
             ,state<Active>   + event<EvtRadarData>  / &Self::onEvtRadarData       = state<Active>
             ,state<Active>   + event<EvtFell>       / &Self::onEvtFell            = state<Fallen>
             ,state<Fallen>   + event<EvtRose>       / &Self::onEvtRose            = state<Active>
-            ,state<_>        + event<EvtIntfError>  / &Self::onEvtIntfError       = state<Error>
+            ,state<_>        + event<EvtRadarError>                               = state<Error>
+            ,state<_>        + event<EvtImuError>                                 = state<Error>
+            ,state<_>        + event<EvtLedError>                                 = state<Error>
+            ,state<_>        + event<EvtAudioError>                               = state<Error>
+            ,state<Error>    + on_entry<_>          / &Self::onError
             // clang-format on
         );
     }
@@ -50,7 +57,7 @@ class FSM {
     void onEvtRose(const EvtRose &);
     void onSetupTimeout(const EvtTimeout &);
     void onActiveTimeout(const EvtTimeout &);
-    void onEvtIntfError(const EvtIntfError &);
+    void onError();
 
     static constexpr char TAG[] = "ctrl";
 

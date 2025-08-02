@@ -8,7 +8,7 @@ FSM::FSM(ctrl::Q &q) : ctrlQ_(q) {}
 bool FSM::SetupGuard(const CmdSetup &e) {
     LOGI(TAG, "onSetup: initializing hardware...");
     if (!stubHardwareInit()) {
-        LOGE(TAG, "onSetup: hardware init failed, throwing");
+        LOGE(TAG, "onSetup: hardware init failed");
         ctrlQ_.post(ctrl::EvtRadarError{});
         return false;
     }
@@ -48,7 +48,9 @@ void FSM::onSetSampleInt(const SetSampleInt &c) {
 
 bool FSM::stubHardwareInit() {
     // Stub: return true for now.
-    return true;
+    return false;
 }
+
+void FSM::onError() { LOGE(TAG, "Entered Error state!"); }
 
 } // namespace esphome::smart_signage::radar
