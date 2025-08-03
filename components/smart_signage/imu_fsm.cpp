@@ -1,4 +1,4 @@
-#include "imu_fsm.h"
+#include "imu/imu_fsm.h"
 #include "log.h"
 
 namespace esphome::smart_signage::imu {

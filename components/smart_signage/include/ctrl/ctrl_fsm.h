@@ -1,6 +1,8 @@
 #pragma once
 
 #include <etl/variant.h>
+#include <etl/bitset.h> // NEW – readiness tracking
+#include <type_traits>  // NEW – for compile-time dispatch
 #include "sml.hpp"
 #include "log.h"
 
@@ -9,6 +11,7 @@
 #include "imu/imu_q.h"
 
 namespace radar = esphome::smart_signage::radar;
+namespace imu   = esphome::smart_signage::imu;
 
 namespace esphome::smart_signage::ctrl {
 
@@ -18,6 +21,7 @@ class FSM {
   public:
     explicit FSM(radar::Q &radarQ, imu::Q &imuQ);
 
+    /*──────────────────────── State machine ────────────────────────*/
     auto operator()() noexcept {
         using namespace boost::sml;
         return make_transition_table(
@@ -25,32 +29,43 @@ class FSM {
             *state<Idle>     + event<CmdSetup>      / &Self::onCmdSetup           = state<Setup>
 
             ,state<Setup>    + event<EvtTimeout>    / &Self::onSetupTimeout       = state<Error>
-            ,state<Setup>    + event<EvtRadarReady> [ &Self::isAllReadyGuard ]    = state<Ready>
-            ,state<Setup>    + event<EvtImuReady>   [ &Self::isAllReadyGuard ]    = state<Ready>
-            ,state<Setup>    + event<EvtLedReady>   [ &Self::isAllReadyGuard ]    = state<Ready>
-            ,state<Setup>    + event<EvtAudioReady> [ &Self::isAllReadyGuard ]    = state<Ready>
-            
+            ,state<Setup>    + event<EvtRadarReady> [ &Self::guardRadarReady ]    = state<Ready>
+            ,state<Setup>    + event<EvtImuReady>   [ &Self::guardImuReady   ]    = state<Ready>
+            ,state<Setup>    + event<EvtLedReady>   [ &Self::guardLedReady   ]    = state<Ready>
+            ,state<Setup>    + event<EvtAudioReady> [ &Self::guardAudioReady ]    = state<Ready>
+
             ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart           = state<Active>
             ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown        = state<Idle>
+
             ,state<Active>   + event<CmdStop>       / &Self::onCmdStop            = state<Ready>
             ,state<Active>   + event<EvtTimeout>    / &Self::onActiveTimeout      = state<Idle>
             ,state<Active>   + event<EvtRadarData>  / &Self::onEvtRadarData       = state<Active>
             ,state<Active>   + event<EvtImuFell>    / &Self::onEvtImuFell         = state<Fallen>
+
             ,state<Fallen>   + event<EvtImuRose>    / &Self::onEvtImuRose         = state<Active>
+
             ,state<_>        + event<EvtRadarError>                               = state<Error>
             ,state<_>        + event<EvtImuError>                                 = state<Error>
             ,state<_>        + event<EvtLedError>                                 = state<Error>
             ,state<_>        + event<EvtAudioError>                               = state<Error>
+
             ,state<Error>    + on_entry<_>          / &Self::onError
             // clang-format on
         );
     }
 
   private:
-    // Guards
-    bool isAllReadyGuard(const EvtRadarReady &e);
+    /*──────────── Interface bookkeeping ───────────────────────────*/
+    enum class Intf : uint8_t { Radar, Imu, Led, Audio };
+    static constexpr size_t kIntfCnt = 4;
 
-    // Actions
+    /*──────────── Guards ──────────────────────────────────────────*/
+    bool guardRadarReady(const EvtRadarReady &);
+    bool guardImuReady(const EvtImuReady &);
+    bool guardLedReady(const EvtLedReady &);
+    bool guardAudioReady(const EvtAudioReady &);
+
+    /*──────────── Actions ─────────────────────────────────────────*/
     void onCmdSetup(const CmdSetup &);
     void onCmdStart(const CmdStart &);
     void onCmdStop(const CmdStop &);
@@ -64,13 +79,13 @@ class FSM {
 
     static constexpr char TAG[] = "ctrlFSM";
 
-    radar::Q &radarQ_;
-    imu::Q   &imuQ_;
-    uint32_t  runTimeMins_{0};
+    /*──────────── Data ────────────────────────────────────────────*/
+    radar::Q             &radarQ_;
+    imu::Q               &imuQ_;
+    uint32_t              runTimeMins_{0};
+    etl::bitset<kIntfCnt> readyBits_{};
 
-    etl::flat_set<Ready, kIntfCnt> readySeen_;
-
-    // State tags (no data)
+    /*──────────── State tags (no data) ────────────────────────────*/
     struct Idle {};
     struct Setup {};
     struct Ready {};

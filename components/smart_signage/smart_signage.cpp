@@ -14,9 +14,9 @@ ctrl::FSM  ctrlFsm(radarQ, imuQ);
 radar::FSM radarFsm(ctrlQ);
 imu::FSM   imuFsm(ctrlQ);
 
-FsmLogger ctrlFsmLogger("ctrl");
-FsmLogger radarFsmLogger("radar");
-FsmLogger imuFsmLogger("imu");
+FsmLogger ctrlFsmLogger("ctrlFsmLogger");
+FsmLogger radarFsmLogger("radarFsmLogger");
+FsmLogger imuFsmLogger("imuFsmLogger");
 
 ctrl::AO  ctrlAo(ctrlQ, ctrlFsm, ctrlFsmLogger, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
 radar::AO radarAo(radarQ, radarFsm, radarFsmLogger, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
@@ -28,6 +28,9 @@ void SmartSignage::loop() {
 
     LOGI("SmartSignage loop");
     ctrlQ.post(ctrl::CmdSetup{});
+    vTaskDelay(pdMS_TO_TICKS(100));
+    ctrlQ.post(ctrl::EvtLedReady{});
+    ctrlQ.post(ctrl::EvtAudioReady{});
     vTaskDelay(pdMS_TO_TICKS(100));
     ctrlQ.post(ctrl::CmdStart{});
     vTaskDelay(pdMS_TO_TICKS(100));
