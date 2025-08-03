@@ -23,18 +23,20 @@ class FSM {
         return make_transition_table(
             // clang-format off
             *state<Idle>     + event<CmdSetup>      / &Self::onCmdSetup           = state<Setup>
+
+            ,state<Setup>    + event<EvtTimeout>    / &Self::onSetupTimeout       = state<Error>
             ,state<Setup>    + event<EvtRadarReady> [ &Self::isAllReadyGuard ]    = state<Ready>
             ,state<Setup>    + event<EvtImuReady>   [ &Self::isAllReadyGuard ]    = state<Ready>
-            // ,state<Setup>    + event<EvtLedReady>   [ &Self::isAllReadyGuard ]         = state<Ready>
-            // ,state<Setup>    + event<EvtAudioReady> [ &Self::isAllReadyGuard ]         = state<Ready>
-            ,state<Setup>    + event<EvtTimeout>    / &Self::onSetupTimeout       = state<Error>
+            ,state<Setup>    + event<EvtLedReady>   [ &Self::isAllReadyGuard ]    = state<Ready>
+            ,state<Setup>    + event<EvtAudioReady> [ &Self::isAllReadyGuard ]    = state<Ready>
+            
             ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart           = state<Active>
             ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown        = state<Idle>
             ,state<Active>   + event<CmdStop>       / &Self::onCmdStop            = state<Ready>
             ,state<Active>   + event<EvtTimeout>    / &Self::onActiveTimeout      = state<Idle>
             ,state<Active>   + event<EvtRadarData>  / &Self::onEvtRadarData       = state<Active>
-            ,state<Active>   + event<EvtImuFell>    / &Self::onEvtFell            = state<Fallen>
-            ,state<Fallen>   + event<EvtImuRose>    / &Self::onEvtRose            = state<Active>
+            ,state<Active>   + event<EvtImuFell>    / &Self::onEvtImuFell         = state<Fallen>
+            ,state<Fallen>   + event<EvtImuRose>    / &Self::onEvtImuRose         = state<Active>
             ,state<_>        + event<EvtRadarError>                               = state<Error>
             ,state<_>        + event<EvtImuError>                                 = state<Error>
             ,state<_>        + event<EvtLedError>                                 = state<Error>
@@ -54,8 +56,8 @@ class FSM {
     void onCmdStop(const CmdStop &);
     void onCmdTeardown(const CmdTeardown &);
     void onEvtRadarData(const EvtRadarData &);
-    void onEvtFell(const EvtImuFell &);
-    void onEvtRose(const EvtImuRose &);
+    void onEvtImuFell(const EvtImuFell &);
+    void onEvtImuRose(const EvtImuRose &);
     void onSetupTimeout(const EvtTimeout &);
     void onActiveTimeout(const EvtTimeout &);
     void onError();
@@ -65,6 +67,8 @@ class FSM {
     radar::Q &radarQ_;
     imu::Q   &imuQ_;
     uint32_t  runTimeMins_{0};
+
+    etl::flat_set<Ready, kIntfCnt> readySeen_;
 
     // State tags (no data)
     struct Idle {};

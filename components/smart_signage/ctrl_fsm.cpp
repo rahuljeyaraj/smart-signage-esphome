@@ -2,7 +2,7 @@
 
 namespace esphome::smart_signage::ctrl {
 
-FSM::FSM(radar::Q &radarQ) : radarQ_(radarQ) {}
+FSM::FSM(radar::Q &radarQ, imu::Q &imuQ) : radarQ_(radarQ), imuQ_(imuQ) {}
 
 // Guards
 bool FSM::isAllReadyGuard(const EvtRadarReady &e) {
@@ -47,9 +47,9 @@ void FSM::onEvtRadarData(const EvtRadarData &e) {
         static_cast<unsigned>(e.timestampTicks));
 }
 
-void FSM::onEvtFell(const EvtImuFell &) { LOGI("Event: IMU reports a fall detected!"); }
+void FSM::onEvtImuFell(const EvtImuFell &) { LOGI("Event: IMU reports a fall detected!"); }
 
-void FSM::onEvtRose(const EvtImuRose &) {
+void FSM::onEvtImuRose(const EvtImuRose &) {
     LOGI("Event: IMU reports device has been restored (rose)");
 }
 

@@ -8,9 +8,9 @@ namespace esphome::smart_signage {
 
 ctrl::Q  ctrlQ;
 radar::Q radarQ;
-imu::Q   imu;
+imu::Q   imuQ;
 
-ctrl::FSM  ctrlFsm(radarQ, ctrlQ);
+ctrl::FSM  ctrlFsm(radarQ, imuQ);
 radar::FSM radarFsm(ctrlQ);
 imu::FSM   imuFsm(ctrlQ);
 
