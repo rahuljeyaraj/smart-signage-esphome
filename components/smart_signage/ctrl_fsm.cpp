@@ -5,8 +5,8 @@ namespace esphome::smart_signage::ctrl {
 FSM::FSM(radar::Q &radarQ) : radarQ_(radarQ) {}
 
 // Guards
-bool FSM::ReadyGuard(const EvtRadarReady &e) {
-    LOGI("ReadyGuard: Received EvtRadarReady (radar is ready)");
+bool FSM::isAllReadyGuard(const EvtRadarReady &e) {
+    LOGI("isAllReadyGuard: Received EvtRadarReady (radar is ready)");
     // In future: track readiness of all required modules/interfaces.
     return true;
 }
@@ -15,23 +15,28 @@ bool FSM::ReadyGuard(const EvtRadarReady &e) {
 void FSM::onCmdSetup(const CmdSetup &) {
     LOGI("Action: onCmdSetup -> Sending radar setup command");
     radarQ_.post(radar::CmdSetup{});
+    imuQ_.post(imu::CmdSetup{});
 }
 
 void FSM::onCmdStart(const CmdStart &e) {
     LOGI("Action: onCmdStart -> Starting system (runTimeMins=%u)", e.runTimeMins);
-    radarQ_.post(radar::CmdStart{});
     runTimeMins_ = e.runTimeMins;
+    radarQ_.post(radar::CmdStart{});
+    imuQ_.post(imu::CmdStart{});
+
     // Start system runtime timer (to be implemented as needed)
 }
 
 void FSM::onCmdStop(const CmdStop &) {
     LOGI("Action: onCmdStop -> Stopping radar");
     radarQ_.post(radar::CmdStop{});
+    imuQ_.post(imu::CmdStop{});
 }
 
 void FSM::onCmdTeardown(const CmdTeardown &) {
     LOGI("Action: onCmdTeardown -> Tearing down radar and resetting to Idle");
     radarQ_.post(radar::CmdTeardown{});
+    imuQ_.post(imu::CmdTeardown{});
 }
 
 void FSM::onEvtRadarData(const EvtRadarData &e) {
@@ -42,9 +47,11 @@ void FSM::onEvtRadarData(const EvtRadarData &e) {
         static_cast<unsigned>(e.timestampTicks));
 }
 
-void FSM::onEvtFell(const EvtFell &) { LOGI("Event: IMU reports a fall detected!"); }
+void FSM::onEvtFell(const EvtImuFell &) { LOGI("Event: IMU reports a fall detected!"); }
 
-void FSM::onEvtRose(const EvtRose &) { LOGI("Event: IMU reports device has been restored (rose)"); }
+void FSM::onEvtRose(const EvtImuRose &) {
+    LOGI("Event: IMU reports device has been restored (rose)");
+}
 
 void FSM::onSetupTimeout(const EvtTimeout &) {
     LOGI("Timeout: Setup phase timed out! Transitioning to Error state");
@@ -54,6 +61,8 @@ void FSM::onActiveTimeout(const EvtTimeout &) {
     LOGI("Timeout: Active phase timed out, sending stop and teardown to radar");
     radarQ_.post(radar::CmdStop{});
     radarQ_.post(radar::CmdTeardown{});
+    imuQ_.post(imu::CmdStop{});
+    imuQ_.post(imu::CmdTeardown{});
 }
 
 void FSM::onError() { LOGE("Entered Error state!"); }

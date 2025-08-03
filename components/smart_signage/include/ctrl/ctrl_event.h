@@ -20,8 +20,8 @@ struct EvtRadarData {
 };
 struct EvtImuError {};
 struct EvtImuReady {};
-struct EvtFell {};
-struct EvtRose {};
+struct EvtImuFell {};
+struct EvtImuRose {};
 struct EvtLedError {};
 struct EvtLedReady {};
 struct EvtLedDone {};
@@ -48,8 +48,8 @@ using Event = etl::variant<
     // imu events
     EvtImuError,
     EvtImuReady,
-    EvtFell,
-    EvtRose,
+    EvtImuFell,
+    EvtImuRose,
 
     // led events
     EvtLedError,

@@ -5,7 +5,7 @@ namespace esphome::smart_signage::radar {
 FSM::FSM(ctrl::Q &q) : ctrlQ_(q) {}
 
 // Guard
-bool FSM::SetupGuard(const CmdSetup &e) {
+bool FSM::isReadyGuard(const CmdSetup &e) {
     LOGI("onSetup: initializing hardware...");
     if (!stubHardwareInit()) {
         LOGE("onSetup: hardware init failed");

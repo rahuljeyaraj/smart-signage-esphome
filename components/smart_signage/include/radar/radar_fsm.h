@@ -17,7 +17,7 @@ class FSM {
         using namespace boost::sml;
         return make_transition_table(
             // clang-format off
-            *state<Idle>     + event<CmdSetup>      [ &Self::SetupGuard ]            = state<Ready>
+            *state<Idle>     + event<CmdSetup>      [ &Self::isReadyGuard ]            = state<Ready>
             ,state<Idle>     + event<CmdSetup>                                       = state<Error>
             ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart              = state<Active>
             ,state<Active>   + event<CmdStop>       / &Self::onCmdStop               = state<Ready>
@@ -32,7 +32,7 @@ class FSM {
 
   private:
     // Guards
-    bool SetupGuard(const CmdSetup &e);
+    bool isReadyGuard(const CmdSetup &e);
 
     // Actions
     void onCmdStart(const CmdStart &);

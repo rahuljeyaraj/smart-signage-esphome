@@ -1,0 +1,83 @@
+#pragma once
+#include <etl/variant.h>
+#include "sml.hpp"
+#include "log.h"
+#include "ctrl/ctrl_q.h"
+#include "imu/imu_event.h"
+
+namespace esphome::smart_signage::imu {
+
+class FSM {
+    using Self = FSM;
+
+  public:
+    explicit FSM(ctrl::Q &q);
+
+    struct Active {
+        auto operator()() const noexcept {
+            using namespace boost::sml;
+            return make_transition_table(
+                // clang-format off
+                *state<Standing> + event<EvtTimerPoll> [  wrap(&Self::isFallenGuard) ]  = state<Fallen>
+                ,state<Fallen>   + event<EvtTimerPoll> [ !wrap(&Self::isFallenGuard) ]  = state<Standing>
+                ,state<Fallen>   + on_entry<_>         / &Self::onFallenEntry
+                ,state<Fallen>   + on_exit<_>          / &Self::onFallenExit
+                // clang-format on
+            );
+        }
+    };
+
+    auto operator()() noexcept {
+        using namespace boost::sml;
+        return make_transition_table(
+            // clang-format off
+            *state<Idle>     + event<CmdSetup>      [ &Self::isReadyGuard ]          = state<Ready>
+            ,state<Idle>     + event<CmdSetup>                                       = state<Error>
+            ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart              = state<Active>
+            ,state<Active>   + event<CmdStop>       / &Self::onCmdStop               = state<Ready>
+            ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown           = state<Idle>
+            ,state<_>        + event<SetFallAngle>  / &Self::onSetFallAngle
+            ,state<_>        + event<SetConfirmCnt> / &Self::onSetConfirmCnt
+            ,state<_>        + event<SetSampleInt>  / &Self::onSetSampleInt
+            ,state<Error>    + on_entry<_>          / &Self::onError
+            // clang-format on
+        );
+    }
+
+  private:
+    // Guards
+    bool isReadyGuard(const CmdSetup &);
+    bool isFallenGuard(const EvtTimerPoll &);
+
+    // Actions
+    void onCmdStart(const CmdStart &);
+    void onCmdStop(const CmdStop &);
+    void onCmdTeardown(const CmdTeardown &);
+    void onSetFallAngle(const SetFallAngle &);
+    void onSetConfirmCnt(const SetConfirmCnt &);
+    void onSetSampleInt(const SetSampleInt &);
+
+    void onFallenEntry();
+    void onFallenExit();
+    void onError();
+
+    static constexpr char TAG[] = "imu";
+
+    ctrl::Q &ctrlQ_;
+
+    bool stubHardwareInit();
+
+    uint16_t fallAngleDeg_{kDefaultFallAngleDeg};
+    uint32_t confirmCnt_{kDefaultConfirmCount};
+    uint32_t sampleIntMs_{kDefaultSampleIntMs};
+
+    // State tags (no data)
+    struct Idle {};
+    struct Ready {};
+    struct Error {};
+    // struct Active{}; is a sub SM
+    struct Standing {};
+    struct Fallen {};
+};
+
+} // namespace esphome::smart_signage::imu
