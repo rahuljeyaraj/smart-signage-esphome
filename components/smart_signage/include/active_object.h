@@ -1,6 +1,6 @@
 #pragma once
 #include "log.h"
-// #include "queue.h"
+#include "fsm_logger.h"
 #include "sml.hpp"
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
@@ -16,18 +16,20 @@ namespace sml = boost::sml;
  *  - creates its own FreeRTOS task in the ctor,
  *  - and pushes Events (std::variant) into the FSM.
  */
-template <typename Functor, typename QueueType> class ActiveObject {
+template <typename QueueType, typename Functor, const char *TAG>
+class ActiveObject {
   public:
-    // deduce Event from the QueueType
+    // deduce EventType from the QueueType
     using EventType = QueueType::ItemType;
 
-    ActiveObject(Functor &functor,
-        QueueType        &queue,
-        const char       *taskName,
-        uint32_t          stackSize = 2048,
-        UBaseType_t       priority  = tskIDLE_PRIORITY + 1,
-        BaseType_t        coreId    = 0)
-        : fsm_{functor}, queue_{queue} {
+    explicit ActiveObject(QueueType &queue,
+        Functor                     &functor,
+        FsmLogger                   &fsmLogger,
+        const char                  *taskName  = "default_task",
+        uint32_t                     stackSize = 2048,
+        UBaseType_t                  priority  = tskIDLE_PRIORITY + 1,
+        BaseType_t                   coreId    = 0)
+        : queue_(queue), fsm_(functor, fsmLogger) {
         if (xTaskCreatePinnedToCore(&ActiveObject::taskEntry,
                 taskName,
                 stackSize,
@@ -35,7 +37,7 @@ template <typename Functor, typename QueueType> class ActiveObject {
                 priority,
                 &taskHandle_,
                 coreId) != pdPASS) {
-            LOGE("AO", "Task creation failed");
+            LOGE(TAG, "Task creation failed");
         }
     }
 
@@ -56,9 +58,11 @@ template <typename Functor, typename QueueType> class ActiveObject {
         }
     }
 
-    sml::sm<Functor> fsm_;
-    QueueType       &queue_;
-    TaskHandle_t     taskHandle_{nullptr};
+    sml::sm<Functor, sml::logger<FsmLogger>> fsm_;
+    // sml::sm<Functor> fsm_;
+
+    QueueType   &queue_;
+    TaskHandle_t taskHandle_{nullptr};
 };
 
 } // namespace esphome::smart_signage

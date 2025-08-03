@@ -44,7 +44,7 @@
 //         radar::RxEvent radarSetup(radar::Setup{});
 //         radarQ.post(&radarSetup);
 
-//         LOGI(TAG, "onSetup");
+//         LOGI("onSetup");
 //     }
 
 //     void onStart(const Start &e) {
@@ -52,12 +52,12 @@
 //         radarQ.post(&radarStart);
 
 //         runTimeMins_ = e.runTimeMins;
-//         LOGI(TAG, "onStart: runTimeMins=%u", runTimeMins_);
+//         LOGI("onStart: runTimeMins=%u", runTimeMins_);
 //         // schedule Timeout via your automation API...
 //     }
 
-//     // void onFell(const Fell &) { LOGI(TAG, "onFell: fall detected"); }
-//     // void onRose(const Rose &) { LOGI(TAG, "onRose: rise detected"); }
+//     // void onFell(const Fell &) { LOGI("onFell: fall detected"); }
+//     // void onRose(const Rose &) { LOGI("onRose: rise detected"); }
 
 //     void onRunTimeout(const Timeout &) {
 //         radar::RxEvent radarStop(radar::Stop{});
@@ -66,14 +66,14 @@
 //         radar::RxEvent radarTeardown(radar::Teardown{});
 //         radarQ.post(&radarTeardown);
 
-//         LOGI(TAG, "onRunTimeout: tearing down");
+//         LOGI("onRunTimeout: tearing down");
 //         teardownAll();
 //     }
 
-//     void onError(const InitError &) { LOGE(TAG, "InitError!"); }
+//     void onError(const InitError &) { LOGE("InitError!"); }
 
 //     void onEvtRadarData(const radar::Data &e) {
-//         LOGI(TAG, "onEvtRadarData: detected=%s dist=%u cm ts=%u", e.detected ? "Y" : "N",
+//         LOGI("onEvtRadarData: detected=%s dist=%u cm ts=%u", e.detected ? "Y" : "N",
 //              static_cast<unsigned>(e.distanceCm), static_cast<unsigned>(e.timestampTicks));
 //     }
 
@@ -87,7 +87,7 @@
 
 //     // ––– Teardown helper –––––––––––––––––––––––––––––––
 //     void teardownAll() {
-//         LOGI(TAG, "teardownAll: cleaning up all modules");
+//         LOGI("teardownAll: cleaning up all modules");
 //         // e.g. static_cast<RadarAO*>(aos_[IDX_RADAR])->post(Teardown{});
 //         // …and so on for each AO…
 //     }

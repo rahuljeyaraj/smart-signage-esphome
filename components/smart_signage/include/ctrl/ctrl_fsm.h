@@ -59,7 +59,7 @@ class FSM {
     void onActiveTimeout(const EvtTimeout &);
     void onError();
 
-    static constexpr char TAG[] = "ctrl";
+    static constexpr char TAG[] = "ctrlFSM";
 
     radar::Q &radarQ_;
     uint32_t  runTimeMins_{0};

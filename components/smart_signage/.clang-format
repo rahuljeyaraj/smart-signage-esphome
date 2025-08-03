@@ -32,3 +32,4 @@ SortIncludes:                              false
 NamespaceIndentation:                      Inner
 FixNamespaceComments:                      true
 AlignAfterOpenBracket:                     DontAlign
+AlwaysBreakTemplateDeclarations:           Yes

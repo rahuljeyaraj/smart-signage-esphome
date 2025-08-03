@@ -4,5 +4,9 @@
 #include "ctrl/ctrl_q.h"
 
 namespace esphome::smart_signage::ctrl {
-using AO = ActiveObject<FSM, Q>;
-}
+
+static constexpr char AO_TAG[] = "ctrlAo";
+
+using AO = ActiveObject<Q, FSM, AO_TAG>;
+
+} // namespace esphome::smart_signage::ctrl

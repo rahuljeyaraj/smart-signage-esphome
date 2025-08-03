@@ -1,6 +1,7 @@
 #include "smart_signage.h"
 #include "ctrl/ctrl_ao.h"
 #include "radar/radar_ao.h"
+#include "fsm_logger.h"
 
 namespace esphome::smart_signage {
 
@@ -10,14 +11,17 @@ radar::Q radarQ;
 ctrl::FSM  ctrlFsm(radarQ);
 radar::FSM radarFsm(ctrlQ);
 
-ctrl::AO  ctrlAo(ctrlFsm, ctrlQ, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
-radar::AO radarAo(radarFsm, radarQ, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
+FsmLogger ctrlFsmLogger("ctrlFSM");
+FsmLogger radarFsmLogger("radarFsm");
 
-void SmartSignage::setup() { LOGI(TAG, "SmartSignage setup"); }
+ctrl::AO  ctrlAo(ctrlQ, ctrlFsm, ctrlFsmLogger, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1);
+radar::AO radarAo(radarQ, radarFsm, radarFsmLogger, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1);
+
+void SmartSignage::setup() { LOGI("SmartSignage setup"); }
 
 void SmartSignage::loop() {
 
-    LOGI(TAG, "SmartSignage loop");
+    LOGI("SmartSignage loop");
     ctrlQ.post(ctrl::CmdSetup{});
     vTaskDelay(pdMS_TO_TICKS(100));
     ctrlQ.post(ctrl::CmdStart{});
@@ -28,6 +32,6 @@ void SmartSignage::loop() {
     vTaskDelay(pdMS_TO_TICKS(500));
 }
 
-void SmartSignage::dump_config() { LOGI(TAG, "SmartSignage component loaded"); }
+void SmartSignage::dump_config() { LOGI("SmartSignage component loaded"); }
 
 } // namespace esphome::smart_signage

@@ -4,5 +4,9 @@
 #include "radar/radar_q.h"
 
 namespace esphome::smart_signage::radar {
-using AO = ActiveObject<FSM, Q>;
-}
+
+static constexpr char AO_TAG[] = "radarAo";
+
+using AO = ActiveObject<Q, FSM, AO_TAG>;
+
+} // namespace esphome::smart_signage::radar

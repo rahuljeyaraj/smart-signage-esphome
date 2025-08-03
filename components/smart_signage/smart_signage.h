@@ -8,23 +8,21 @@ class SmartSignage : public Component {
   public:
     void set_radius(float v) {
         settings_.radius_m = v;
-        LOGI(TAG, "radius %.2f", v);
+        LOGI("radius %.2f", v);
     }
     void set_duration(float v) {
         settings_.duration_s = v;
-        LOGI(TAG, "duration %u", settings_.duration_s);
+        LOGI("duration %u", settings_.duration_s);
     }
     void set_volume(float v) {
         settings_.volume = v;
-        LOGI(TAG, "volume %u", settings_.volume);
+        LOGI("volume %u", settings_.volume);
     }
     void set_brightness(float v) {
         settings_.brightness = v;
-        LOGI(TAG, "brightness %u", settings_.brightness);
+        LOGI("brightness %u", settings_.brightness);
     }
-    void on_start_button() {
-        LOGI(TAG, "Start btn pressed"); /* later: g_fsm.receive(StartBtnMsg{}) */
-    }
+    void on_start_button() { LOGI("Start btn pressed"); /* later: g_fsm.receive(StartBtnMsg{}) */ }
 
     // ── ESPHome lifecycle ────────────────────────────────
     void setup() override;
