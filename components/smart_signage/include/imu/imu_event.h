@@ -13,10 +13,10 @@ static constexpr uint16_t kMaxConfirmCount     = 50;
 static constexpr uint16_t kDefaultConfirmCount = 5;
 
 static constexpr uint32_t kMinSampleIntMs     = 10;
-static constexpr uint32_t kMaxSampleIntMs     = 10000;
+static constexpr uint32_t kMaxSampleIntMs     = 10000; // 10 sec
 static constexpr uint32_t kDefaultSampleIntMs = 200;
 
-// ── commands sent *to* the imu
+// ── commands sent *to* the imu q
 struct CmdSetup {};
 struct CmdStart {};
 struct CmdStop {};
