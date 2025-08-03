@@ -9,9 +9,12 @@
 #include "ctrl/ctrl_event.h"
 #include "radar/radar_q.h"
 #include "imu/imu_q.h"
+#include "led/led_q.h"
+#include "audio/audio_q.h"
 
 namespace radar = esphome::smart_signage::radar;
 namespace imu   = esphome::smart_signage::imu;
+namespace led   = esphome::smart_signage::led;
 
 namespace esphome::smart_signage::ctrl {
 
@@ -19,7 +22,7 @@ class FSM {
     using Self = FSM;
 
   public:
-    explicit FSM(radar::Q &radarQ, imu::Q &imuQ);
+    explicit FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ);
 
     /*──────────────────────── State machine ────────────────────────*/
     auto operator()() noexcept {
@@ -82,6 +85,8 @@ class FSM {
     /*──────────── Data ────────────────────────────────────────────*/
     radar::Q             &radarQ_;
     imu::Q               &imuQ_;
+    led::Q               &ledQ_;
+    audio::Q             &audioQ_;
     uint32_t              runTimeMins_{0};
     etl::bitset<kIntfCnt> readyBits_{};
 

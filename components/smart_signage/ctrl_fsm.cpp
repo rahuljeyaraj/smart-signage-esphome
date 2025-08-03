@@ -3,7 +3,8 @@
 namespace esphome::smart_signage::ctrl {
 
 /*──────────────────────── Ctor ─────────────────────────*/
-FSM::FSM(radar::Q &radarQ, imu::Q &imuQ) : radarQ_(radarQ), imuQ_(imuQ) {}
+FSM::FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ)
+    : radarQ_(radarQ), imuQ_(imuQ), ledQ_(ledQ), audioQ_(audioQ) {}
 
 /*──────────────────────── Guards ───────────────────────*/
 bool FSM::guardRadarReady(const EvtRadarReady &) {
@@ -52,6 +53,8 @@ void FSM::onCmdSetup(const CmdSetup &) {
     readyBits_.reset(); // fresh round
     radarQ_.post(radar::CmdSetup{});
     imuQ_.post(imu::CmdSetup{});
+    ledQ_.post(led::CmdSetup{});
+    audioQ_.post(audio::CmdSetup{});
 }
 
 void FSM::onCmdStart(const CmdStart &e) {
@@ -71,6 +74,8 @@ void FSM::onCmdTeardown(const CmdTeardown &) {
     LOGI("Action: onCmdTeardown -> broadcast CmdTeardown");
     radarQ_.post(radar::CmdTeardown{});
     imuQ_.post(imu::CmdTeardown{});
+    ledQ_.post(led::CmdTeardown{});
+    audioQ_.post(audio::CmdTeardown{});
 }
 
 void FSM::onEvtRadarData(const EvtRadarData &e) {

@@ -2,103 +2,100 @@
 #include <etl/variant.h>
 #include "sml.hpp"
 #include "log.h"
-#include "ctrl/ctrl_q.h"
-#include "led/led_event.h"
+
+#include "ctrl/ctrl_q.h"   // send notifications back to controller
+#include "led/led_event.h" // CmdOn, CmdOff, CmdBreathe, CmdFadeIn …
+                           // EvtFadeInEnd, EvtFadeOutEnd, …
 
 namespace sml = boost::sml;
 
 namespace esphome::smart_signage::led {
 
+/*──────────────────────────  LED FSM  ──────────────────────────*/
 class FSM {
     using Self = FSM;
 
   public:
     explicit FSM(ctrl::Q &q);
 
+    /*───────── Sub-SM: Breathing (Low ↔ High) ─────────*/
     struct Breathing {
         auto operator()() const noexcept {
             using namespace sml;
             return make_transition_table(
                 // clang-format off
-                *state<Low> + event<CmdFadeIn> / &Self::onCmdFadeIn
-                ,state<Low> + event<EvtFadeInEnd> / &Self::onFadeInEnd = state<High>
-                ,state<High>+ event<CmdFadeOut>/ &Self::onCmdFadeOut
-                ,state<High> + event<EvtFadeOutEnd> / &Self::onFadeOutEnd = state<Low>
+                *state<Low>  + event<EvtFadeEnd>  / &Self::onFadeInEnd  = state<High>,
+                 state<High> + event<EvtFadeEnd> / &Self::onFadeOutEnd = state<Low>
                 // clang-format on
             );
         }
     };
 
+    /*───────── Sub-SM: Ready modes ─────────*/
     struct Ready {
         auto operator()() const noexcept {
             using namespace sml;
             return make_transition_table(
                 // clang-format off
-                *state<Off> + event<CmdOn> / &Self::onCmdOn = state<On>
-                ,state<Off> + event<CmdBreathe> / &Self::onCmdBreathe = state<Breathing>
-                ,state<_> + event<CmdOff> / &Self::onCmdOn = state<Off>
+                *state<Off> + event<CmdOn>      / &Self::onCmdOn      = state<Solid>,
+                state<Off> + event<CmdBreathe> / &Self::onCmdBreathe = state<Breathing>,
+
+                // wildcard handles everything else, but avoids exit/entry when redundant
+                state<_>   + event<CmdOn>      / &Self::onCmdOn      = state<Solid>,
+                state<_>   + event<CmdBreathe> / &Self::onCmdBreathe = state<Breathing>,
+                state<_>   + event<CmdOff>     / &Self::onCmdOff     = state<Off>
                 // clang-format on
             );
         }
     };
 
+    /*───────── Top-level SM ─────────*/
     auto operator()() noexcept {
         using namespace sml;
         return make_transition_table(
             // clang-format off
-            *state<Idle>     + event<CmdSetup>      [ &Self::isReadyGuard ]          = state<Ready>
-            ,state<Idle>     + event<CmdSetup>                                       = state<Error>
-            ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown           = state<Idle>
-
-
-
-            ,state<Ready>    + event<on>      / &Self::onCmdOn              = state<on>
-            ,state<Active>   + event<CmdStop>       / &Self::onCmdOff               = state<Ready>
-            
-            ,state<_>        + event<SetFallAngle>  / &Self::onSetFallAngle
-            ,state<_>        + event<SetConfirmCnt> / &Self::onSetConfirmCnt
-            ,state<_>        + event<SetSampleInt>  / &Self::onSetSampleInt
-            ,state<Error>    + sml::on_entry<_>          / &Self::onError
+            *state<Idle>  + event<CmdSetup>     [ &Self::isReadyGuard ]  = state<Ready>,
+             state<Idle>  + event<CmdSetup>                              = state<Error>,
+             state<Ready> + event<CmdTeardown>  / &Self::onCmdTeardown   = state<Idle>,
+             state<Error> + sml::on_entry<_>    / &Self::onError
             // clang-format on
         );
     }
 
   private:
-    // Guards
+    /*───────── Guards ─────────*/
     bool isReadyGuard(const CmdSetup &);
-    bool isFallenGuard(const EvtTimerPoll &);
 
-    // Actions
-    void onCmdStart(const CmdStart &);
-    void onCmdStop(const CmdStop &);
+    /*───────── Actions ─────────*/
+    void onCmdSetup(const CmdSetup &);
     void onCmdTeardown(const CmdTeardown &);
-    void onSetFallAngle(const SetFallAngle &);
-    void onSetConfirmCnt(const SetConfirmCnt &);
-    void onSetSampleInt(const SetSampleInt &);
 
-    void onFallenEntry();
-    void onFallenExit();
+    void onCmdOn(const CmdOn &);
+    void onCmdOff(const CmdOff &);
+    void onCmdBreathe(const CmdBreathe &);
+
+    void onFadeInEnd(const EvtFadeEnd &);
+    void onFadeOutEnd(const EvtFadeEnd &);
+
+    /*───────── Error handler ─────────*/
     void onError();
 
-    static constexpr char TAG[] = "led";
+    /*───────── Helpers / data ─────────*/
+    bool stubHardwareInit(); // returns true when LED HW ready
 
-    ctrl::Q &ctrlQ_;
+    static constexpr char TAG[] = "led_fsm";
+    ctrl::Q              &ctrlQ_; // notify controller about state changes
 
-    bool stubHardwareInit();
-
-    uint16_t fallAngleDeg_{kDefaultFallAngleDeg};
-    uint32_t confirmCnt_{kDefaultConfirmCount};
-    uint32_t sampleIntMs_{kDefaultSampleIntMs};
-
-    // State tags (no data)
+    /*───────── State tags (no data) ─────────*/
     struct Idle {};
     struct Error {};
-    // struct Ready{}; is a sub SM
+    // struct Ready {}; Sub states:
     struct Off {};
-    struct On {};
-    // struct Breathing {}; is a sub SM
+    struct Solid {};
+    // struct Breathing {}; Sub states:
     struct Low {};
     struct High {};
 };
 
+/*───────────────────────────────────────────────────────────────*/
 } // namespace esphome::smart_signage::led

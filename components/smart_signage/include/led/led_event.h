@@ -1,9 +1,10 @@
 #pragma once
 #include <etl/variant.h>
-#include <etl/algorithm.h>
+#include <etl/algorithm.h> // etl::clamp
 
 namespace esphome::smart_signage::led {
 
+/*────────────────────────── Limits & defaults ──────────────────────────*/
 constexpr uint16_t kMinBrightPct     = 0;
 constexpr uint16_t kMaxBrightPct     = 100;
 constexpr uint16_t kDefaultBrightPct = 100;
@@ -17,13 +18,15 @@ constexpr uint16_t kMinCycles     = 0;
 constexpr uint16_t kMaxCycles     = 1000;
 constexpr uint16_t kDefaultCycles = 255;
 
-// ── commands sent to the led q
+/*────────────────────────── Commands (Ctrl → LED) ──────────────────────*/
 struct CmdSetup {};
 struct CmdTeardown {};
+struct CmdStart {}; // reserved (e.g. start “session” timer) – optional
+struct CmdStop {};  // reserved counterpart
 struct CmdOn {
-    uint8_t brightPct = 100;
-    CmdOn(uint16_t p = kDefaultBrightPct)
-        : brightPct(etl::clamp(p, kMinBrightPct, kMaxBrightPct)) {}
+    uint8_t brightPct = kDefaultBrightPct;
+    explicit CmdOn(uint16_t p = kDefaultBrightPct)
+        : brightPct(static_cast<uint8_t>(etl::clamp(p, kMinBrightPct, kMaxBrightPct))) {}
 };
 struct CmdOff {};
 struct CmdBreathe {
@@ -31,7 +34,6 @@ struct CmdBreathe {
     uint16_t fadeInMs;
     uint16_t fadeOutMs;
     uint16_t maxCycles;
-
     CmdBreathe(uint16_t p      = kDefaultBrightPct,
         uint16_t        in     = kDefaultFadeIn,
         uint16_t        out    = kDefaultFadeOut,
@@ -41,17 +43,20 @@ struct CmdBreathe {
           fadeOutMs(etl::clamp(out, kMinFadeMs, kMaxFadeMs)),
           maxCycles(etl::clamp(cycles, kMinCycles, kMaxCycles)) {}
 };
-struct EvtFadeEnd {};
-struct EvtTimerEnd {};
 
+/*────────────────────────── Internal Events ──────────────────*/
+struct EvtFadeEnd {};
+/*────────────────────────── Unified variant type ───────────────────────*/
 using Event = etl::variant<
-    // Led commands
+    /* commands */
     CmdSetup,
+    CmdTeardown,
     CmdStart,
     CmdStop,
-    CmdTeardown,
-
-    EvtFadeEnd,
-    EvtTimerEnd>;
+    CmdOn,
+    CmdOff,
+    CmdBreathe,
+    /* events  */
+    EvtFadeEnd>;
 
 } // namespace esphome::smart_signage::led
