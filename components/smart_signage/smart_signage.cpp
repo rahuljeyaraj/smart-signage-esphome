@@ -22,11 +22,27 @@ void SmartSignage::set_profile(const std::string &p) {
     for (auto &kv : it->second) log_paths(kv.first.c_str(), kv.second);
 }
 
-void SmartSignage::set_radius(float v) { settings_.radius_m = v; }
-void SmartSignage::set_duration(float v) { settings_.duration_s = v; }
-void SmartSignage::set_volume(float v) { settings_.volume = v; }
-void SmartSignage::set_brightness(float v) { settings_.brightness = v; }
-void SmartSignage::on_start_button() { ESP_LOGI("ss", "Start"); }
+void SmartSignage::set_radius(float v) {
+    settings_.radius_m = v;
+    ESP_LOGI("ss", "Radius  → %.2f m", settings_.radius_m);
+}
+
+void SmartSignage::set_duration(float v) {
+    settings_.duration_s = static_cast<uint32_t>(v * 3600); // h → s
+    ESP_LOGI("ss", "Period  → %.1f h (%u s)", v, settings_.duration_s);
+}
+
+void SmartSignage::set_volume(float v) {
+    settings_.volume = static_cast<uint8_t>(v);
+    ESP_LOGI("ss", "Volume  → %u %%", settings_.volume);
+}
+
+void SmartSignage::set_brightness(float v) {
+    settings_.brightness = static_cast<uint8_t>(v);
+    ESP_LOGI("ss", "LED Brt → %u %%", settings_.brightness);
+}
+
+void SmartSignage::on_start_button() { ESP_LOGI("ss", "Start button pressed"); }
 
 /*──────────────────────────── Lifecycle ─────────────────────────────*/
 void SmartSignage::setup() { ESP_LOGI("ss", "setup()"); }
