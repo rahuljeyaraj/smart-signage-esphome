@@ -4,14 +4,6 @@ esphome:
     - "https://github.com/ETLCPP/etl.git"
   includes:
     - components\smart_signage\include\
-  on_boot:
-    priority: -100           # after everything else restored
-    then:
-      - lambda: |-
-          id(ss1)->set_radius(id(detection_radius_num).state);
-          id(ss1)->set_duration(id(active_period_num).state);
-          id(ss1)->set_volume(id(speaker_volume_num).state);
-          id(ss1)->set_brightness(id(led_brightness_num).state);
 
 
 esp32:
