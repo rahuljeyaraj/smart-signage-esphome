@@ -1,16 +1,22 @@
 #pragma once
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
+#include "ctrl/ctrl_const.h"
 
 namespace esphome::smart_signage::ctrl {
 
+// From upper layer
 struct CmdSetup {};
 struct CmdStart {
-    uint32_t runTimeMins;
+    uint32_t sessionMins = kDefaultSessionMins;
 };
 struct CmdStop {};
 struct CmdTeardown {};
-struct EvtTimeout {};
+
+struct EvtSetupTimeout {};
+struct EvtSessionEnd {};
+
+// TODO: move these to respective intf headers
 struct EvtRadarError {};
 struct EvtRadarReady {};
 struct EvtRadarData {
@@ -38,7 +44,8 @@ using Event = etl::variant<
     CmdTeardown,
 
     // timer
-    EvtTimeout,
+    EvtSetupTimeout,
+    EvtSessionEnd,
 
     // radar events
     EvtRadarError,

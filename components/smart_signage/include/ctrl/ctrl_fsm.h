@@ -41,7 +41,7 @@ class FSM {
             ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown        = state<Idle>
 
             ,state<Active>   + event<CmdStop>       / &Self::onCmdStop            = state<Ready>
-            ,state<Active>   + event<EvtTimeout>    / &Self::onActiveTimeout      = state<Idle>
+            ,state<Active>   + event<EvtSessionEnd> / &Self::onSessionEnd      = state<Idle>
             ,state<Active>   + event<EvtRadarData>  / &Self::onEvtRadarData       = state<Active>
             ,state<Active>   + event<EvtImuFell>    / &Self::onEvtImuFell         = state<Fallen>
 
@@ -77,7 +77,7 @@ class FSM {
     void onEvtImuFell(const EvtImuFell &);
     void onEvtImuRose(const EvtImuRose &);
     void onSetupTimeout(const EvtTimeout &);
-    void onActiveTimeout(const EvtTimeout &);
+    void onSessionEnd(const EvtTimeout &);
     void onError();
 
     static constexpr char TAG[] = "ctrlFSM";

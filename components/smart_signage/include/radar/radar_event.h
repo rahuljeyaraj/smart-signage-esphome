@@ -1,20 +1,23 @@
 #pragma once
 #include <etl/variant.h>
+#include "radar/radar_const.h"
 
 namespace esphome::smart_signage::radar {
 
-// ── commands sent *to* the radar
+// From user
 struct CmdSetup {};
 struct CmdStart {};
 struct CmdStop {};
 struct CmdTeardown {};
-struct EvtTimerPoll {};
 struct SetDistCm {
     uint16_t cm;
 };
 struct SetSampleInt {
     uint32_t ms;
 };
+
+// Internal
+struct EvtTimerPoll {};
 
 using Event = etl::variant<
     // Radar commands
@@ -23,9 +26,9 @@ using Event = etl::variant<
     CmdStop,
     CmdTeardown,
 
-    EvtTimerPoll,
-
     SetDistCm,
-    SetSampleInt>;
+    SetSampleInt,
+
+    EvtTimerPoll>;
 
 } // namespace esphome::smart_signage::radar

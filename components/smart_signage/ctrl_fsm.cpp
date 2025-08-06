@@ -95,7 +95,7 @@ void FSM::onSetupTimeout(const EvtTimeout &) {
     LOGI("Timeout: Setup phase timed out! Transitioning to Error state");
 }
 
-void FSM::onActiveTimeout(const EvtTimeout &) {
+void FSM::onSessionEnd(const EvtTimeout &) {
     LOGI("Timeout: Active phase timed out – stopping & tearing down all interfaces");
     onCmdStop({});
     onCmdTeardown({});
