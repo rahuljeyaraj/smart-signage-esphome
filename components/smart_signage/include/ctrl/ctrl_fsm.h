@@ -31,7 +31,7 @@ class FSM {
             // clang-format off
             *state<Idle>     + event<CmdSetup>      / &Self::onCmdSetup           = state<Setup>
 
-            ,state<Setup>    + event<EvtTimeout>    / &Self::onSetupTimeout       = state<Error>
+            ,state<Setup>    + event<EvtSetupTimeout>    / &Self::onSetupTimeout       = state<Error>
             ,state<Setup>    + event<EvtRadarReady> [ &Self::guardRadarReady ]    = state<Ready>
             ,state<Setup>    + event<EvtImuReady>   [ &Self::guardImuReady   ]    = state<Ready>
             ,state<Setup>    + event<EvtLedReady>   [ &Self::guardLedReady   ]    = state<Ready>
@@ -76,8 +76,8 @@ class FSM {
     void onEvtRadarData(const EvtRadarData &);
     void onEvtImuFell(const EvtImuFell &);
     void onEvtImuRose(const EvtImuRose &);
-    void onSetupTimeout(const EvtTimeout &);
-    void onSessionEnd(const EvtTimeout &);
+    void onSetupTimeout();
+    void onSessionEnd();
     void onError();
 
     static constexpr char TAG[] = "ctrlFSM";
@@ -87,7 +87,7 @@ class FSM {
     imu::Q               &imuQ_;
     led::Q               &ledQ_;
     audio::Q             &audioQ_;
-    uint32_t              runTimeMins_{0};
+    uint32_t              sessionMins_{0};
     etl::bitset<kIntfCnt> readyBits_{};
 
     /*──────────── State tags (no data) ────────────────────────────*/

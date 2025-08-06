@@ -1,6 +1,5 @@
 #pragma once
 #include <etl/variant.h>
-#include <etl/algorithm.h>
 #include "imu/imu_const.h"
 
 namespace esphome::smart_signage::imu {
@@ -12,29 +11,24 @@ struct CmdStop {};
 struct CmdTeardown {};
 struct SetFallAngle {
     uint16_t deg;
-    SetFallAngle(uint16_t d) : deg(clamp_max(d, kMaxFallAngleDeg)) {}
+    SetFallAngle(uint16_t d) : deg(d > kMaxFallAngleDeg ? kMaxFallAngleDeg : d) {}
 };
 struct SetConfirmCnt {
     uint16_t cnt;
-    SetConfirmCnt(uint16_t c) : cnt(clamp_min(c, kMinConfirmCount)) {}
+    SetConfirmCnt(uint16_t c) : cnt(c < kMinConfirmCount ? kMinConfirmCount : c) {}
 };
 struct SetSampleInt {
     uint32_t ms;
-    SetSampleInt(uint32_t m) : ms(clamp_min(m, kMinSampleIntMs)) {}
+    SetSampleInt(uint32_t m) : ms(m < kMinSampleIntMs ? kMinSampleIntMs : m) {}
 };
 
 // Internal
 struct EvtTimerPoll {};
 using Event = etl::variant<
     // Commands
-    CmdSetup,
-    CmdStart,
-    CmdStop,
-    CmdTeardown,
+    CmdSetup, CmdStart, CmdStop, CmdTeardown,
 
-    SetFallAngle,
-    SetConfirmCnt,
-    SetSampleInt,
+    SetFallAngle, SetConfirmCnt, SetSampleInt,
 
     EvtTimerPoll>;
 

@@ -38,34 +38,21 @@ struct EvtAudioDone {};
 // unified event variant
 using Event = etl::variant<
     // commands
-    CmdSetup,
-    CmdStart,
-    CmdStop,
-    CmdTeardown,
+    CmdSetup, CmdStart, CmdStop, CmdTeardown,
 
     // timer
-    EvtSetupTimeout,
-    EvtSessionEnd,
+    EvtSetupTimeout, EvtSessionEnd,
 
     // radar events
-    EvtRadarError,
-    EvtRadarReady,
-    EvtRadarData,
+    EvtRadarError, EvtRadarReady, EvtRadarData,
 
     // imu events
-    EvtImuError,
-    EvtImuReady,
-    EvtImuFell,
-    EvtImuRose,
+    EvtImuError, EvtImuReady, EvtImuFell, EvtImuRose,
 
     // led events
-    EvtLedError,
-    EvtLedReady,
-    EvtLedDone,
+    EvtLedError, EvtLedReady, EvtLedDone,
 
     // audio events
-    EvtAudioError,
-    EvtAudioReady,
-    EvtAudioDone>;
+    EvtAudioError, EvtAudioReady, EvtAudioDone>;
 
 } // namespace esphome::smart_signage::ctrl

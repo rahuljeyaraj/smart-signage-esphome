@@ -23,7 +23,7 @@ class FSM {
             ,state<Active>   + event<CmdStop>       / &Self::onCmdStop               = state<Ready>
             ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown           = state<Idle>
             ,state<Active>   + event<EvtTimerPoll>  / &Self::onEvtTimerPoll
-            ,state<_>        + event<SetDistCm>     / &Self::onSetDist
+            ,state<_>        + event<SetRangeCm>     / &Self::onSetDist
             ,state<_>        + event<SetSampleInt>  / &Self::onSetSampleInt
             ,state<Error>    + on_entry<_>          / &Self::onError
             // clang-format on
@@ -39,7 +39,7 @@ class FSM {
     void onCmdStop(const CmdStop &);
     void onCmdTeardown(const CmdTeardown &);
     void onEvtTimerPoll(const EvtTimerPoll &);
-    void onSetDist(const SetDistCm &);
+    void onSetDist(const SetRangeCm &);
     void onSetSampleInt(const SetSampleInt &);
     void onError();
 

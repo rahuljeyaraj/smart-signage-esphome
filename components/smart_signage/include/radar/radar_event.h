@@ -9,11 +9,12 @@ struct CmdSetup {};
 struct CmdStart {};
 struct CmdStop {};
 struct CmdTeardown {};
-struct SetDistCm {
-    uint16_t cm;
+struct SetRangeCm {
+    uint32_t cm;
 };
 struct SetSampleInt {
     uint32_t ms;
+    SetSampleInt(uint32_t m) : ms(m < kMinSampleIntMs ? kMinSampleIntMs : m) {}
 };
 
 // Internal
@@ -21,13 +22,9 @@ struct EvtTimerPoll {};
 
 using Event = etl::variant<
     // Radar commands
-    CmdSetup,
-    CmdStart,
-    CmdStop,
-    CmdTeardown,
+    CmdSetup, CmdStart, CmdStop, CmdTeardown,
 
-    SetDistCm,
-    SetSampleInt,
+    SetRangeCm, SetSampleInt,
 
     EvtTimerPoll>;
 

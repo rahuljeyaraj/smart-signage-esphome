@@ -58,8 +58,8 @@ void FSM::onCmdSetup(const CmdSetup &) {
 }
 
 void FSM::onCmdStart(const CmdStart &e) {
-    LOGI("Action: onCmdStart -> broadcast CmdStart (runTimeMins=%u)", e.runTimeMins);
-    runTimeMins_ = e.runTimeMins;
+    LOGI("Action: onCmdStart -> broadcast CmdStart (sessionMins=%u)", e.sessionMins);
+    sessionMins_ = e.sessionMins;
     radarQ_.post(radar::CmdStart{});
     imuQ_.post(imu::CmdStart{});
 }
@@ -91,11 +91,9 @@ void FSM::onEvtImuRose(const EvtImuRose &) {
     LOGI("Event: IMU reports device has been restored (rose)");
 }
 
-void FSM::onSetupTimeout(const EvtTimeout &) {
-    LOGI("Timeout: Setup phase timed out! Transitioning to Error state");
-}
+void FSM::onSetupTimeout() { LOGI("Timeout: Setup phase timed out! Transitioning to Error state"); }
 
-void FSM::onSessionEnd(const EvtTimeout &) {
+void FSM::onSessionEnd() {
     LOGI("Timeout: Active phase timed out – stopping & tearing down all interfaces");
     onCmdStop({});
     onCmdTeardown({});

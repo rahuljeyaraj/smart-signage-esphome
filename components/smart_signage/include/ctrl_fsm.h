@@ -51,8 +51,8 @@
 //         radar::RxEvent radarStart(radar::Start{});
 //         radarQ.post(&radarStart);
 
-//         runTimeMins_ = e.runTimeMins;
-//         LOGI("onStart: runTimeMins=%u", runTimeMins_);
+//         sessionMins_ = e.runTimeMins;
+//         LOGI("onStart: runTimeMins=%u", sessionMins_);
 //         // schedule Timeout via your automation API...
 //     }
 
@@ -83,7 +83,7 @@
 //     // etl::flat_set<Ready, kIntfCnt> readySeen_;
 
 //     // runs for this many minutes once started
-//     uint32_t runTimeMins_{0};
+//     uint32_t sessionMins_{0};
 
 //     // ––– Teardown helper –––––––––––––––––––––––––––––––
 //     void teardownAll() {
