@@ -5,10 +5,13 @@
 
 namespace esphome::smart_signage {
 
-SmartSignage::SmartSignage(const UiHandles &ui)
-    : nvsConfigManager_(), userIntf_(nvsConfigManager_, ui) {};
+SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
+    : nvsConfigManager_(), userIntf_(nvsConfigManager_, ui, configJson) {};
 
-void SmartSignage::setup() { userIntf_.registerCallbacks(); }
+void SmartSignage::setup() {
+    userIntf_.setup();
+    userIntf_.registerCallbacks();
+}
 void SmartSignage::loop() {}
 void SmartSignage::dump_config() { LOGI("SmartSignage config:"); }
 

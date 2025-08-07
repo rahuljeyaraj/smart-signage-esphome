@@ -11,7 +11,7 @@ namespace esphome::smart_signage {
 
 class SmartSignage : public Component {
   public:
-    explicit SmartSignage(const UiHandles &ui);
+    explicit SmartSignage(const UiHandles &ui, const char *configJson);
 
     void setup() override;
     void loop() override;

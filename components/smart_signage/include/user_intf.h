@@ -6,6 +6,7 @@
 #include "esphome/components/button/button.h"
 #include "log.h"
 #include <string>
+#include <ArduinoJson.h>
 
 namespace esphome::smart_signage {
 
@@ -23,9 +24,45 @@ struct UiHandles {
 
 class UserIntf {
   public:
-    UserIntf(ConfigManager &cfg, const UiHandles &ui) : cfg_(cfg), ui_(ui) {}
+    UserIntf(ConfigManager &cfg, const UiHandles &ui, const char *configJson) : cfg_(cfg), ui_(ui) {
+        DeserializationError err = deserializeJson(configJsondoc_, configJson);
+        if (err) {
+            LOGE("Config Json parse failed: %s", err.c_str());
+            // TODO: handle error
+        }
+    }
 
   public:
+    void setup() {
+        JsonArray profiles = configJsondoc_["profiles"].as<JsonArray>();
+
+        if (profiles.isNull()) {
+            LOGE("No profiles found in JSON!");
+            return;
+        }
+
+        LOGI("List of Profiles:");
+        std::vector<std::string> options;
+        for (JsonObject profile : profiles) {
+            const char *profileName = profile["name"] | "<no name>";
+            LOGI("Name: %s", profileName);
+            options.emplace_back(profileName);
+        }
+
+        // Set the options in the select component
+        ui_.currProfile->traits.set_options(options);
+    }
+    // JsonArray profiles = configJsondoc_["profiles"].as<JsonArray>();
+
+    // LOGI("List of Profiles:");
+    // for (JsonObject profile : profiles) {
+    //     const char *profileId   = profile["id"];
+    //     const char *profileName = profile["name"];
+    //     LOGI("ID: %s", profileId);
+    //     LOGI("Name: %s", profileName);
+    //     ui_.currProfile->traits.set_options({"__placeholder__"});
+    // }
+
     void registerCallbacks() {
         using std::placeholders::_1;
         using std::placeholders::_2;
@@ -85,6 +122,7 @@ class UserIntf {
     ConfigManager           &cfg_;
     UiHandles                ui_;
     ConfigManager::Namespace ns_{"ss"};
+    JsonDocument             configJsondoc_;
 
     static constexpr char TAG[] = "UserIntf";
 };

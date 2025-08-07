@@ -1,0 +1,28 @@
+profiles:
+  - id: wet_floor
+    name: "Wet Floor Warning"
+    events:
+      setup_done:
+        audio: "/audio/wet_floor/setup_done.mp3"
+        led: { effect: blink, color: "#00FF00" }
+      setup_error:
+        audio: "/audio/wet_floor/setup_error.mp3"
+        led: { effect: blink, color: "#FF0000" }
+      start:
+        audio: "/audio/wet_floor/start.mp3"
+      detected:
+        - audio: "/audio/wet_floor/detected1.mp3"
+          repeat_s: 2
+        - audio: "/audio/wet_floor/detected2.mp3"
+          repeat_s: 3
+      fallen:
+        - audio: "/audio/wet_floor/fall1.mp3"
+          repeat_s: 5
+        - audio: "/audio/wet_floor/fall2.mp3"
+          repeat_s: 7
+      rose:
+        audio: "/audio/wet_floor/rose.mp3"
+      run_end:
+        audio: "/audio/wet_floor/run_end.mp3"
+      low_battery:
+        audio: "/audio/wet_floor/low_batt.mp3"
