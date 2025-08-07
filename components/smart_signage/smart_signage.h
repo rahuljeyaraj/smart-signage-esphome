@@ -21,7 +21,8 @@ class SmartSignage : public Component {
     NVSConfigManager nvsConfigManager_;
     UserIntf         userIntf_;
 
-    static constexpr char TAG[] = "SmartSignage";
+    static constexpr char kNVSNamespace[] = "SmartSignage";
+    static constexpr char TAG[]           = "SmartSignage";
 };
 
 } // namespace esphome::smart_signage
