@@ -20,6 +20,8 @@ class SmartSignage : public Component {
   private:
     NVSConfigManager nvsConfigManager_;
     UserIntf         userIntf_;
+
+    static constexpr char TAG[] = "SmartSignage";
 };
 
 } // namespace esphome::smart_signage

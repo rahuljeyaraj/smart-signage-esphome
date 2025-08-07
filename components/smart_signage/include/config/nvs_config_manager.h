@@ -6,8 +6,6 @@
 #include "log.h"
 #include <string>
 
-static inline constexpr char TAG[] = "NVSConfigMgr";
-
 class NVSConfigManager : public ConfigManager {
   public:
     NVSConfigManager() = default;
@@ -124,4 +122,7 @@ class NVSConfigManager : public ConfigManager {
         value = defaultValue;
         return true;
     }
+
+  private:
+    static constexpr char TAG[] = "NVSConfigMgr";
 };

@@ -41,7 +41,7 @@ class FSM {
             ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown        = state<Idle>
 
             ,state<Active>   + event<CmdStop>       / &Self::onCmdStop            = state<Ready>
-            ,state<Active>   + event<EvtSessionEnd> / &Self::onSessionEnd      = state<Idle>
+            ,state<Active>   + event<EvtSessionEnd> / &Self::onSessionEnd         = state<Idle>
             ,state<Active>   + event<EvtRadarData>  / &Self::onEvtRadarData       = state<Active>
             ,state<Active>   + event<EvtImuFell>    / &Self::onEvtImuFell         = state<Fallen>
 

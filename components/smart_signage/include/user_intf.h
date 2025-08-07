@@ -30,12 +30,9 @@ class UserIntf {
         using std::placeholders::_1;
         using std::placeholders::_2;
 
-        // select: value + index
         ui_.currProfile->add_on_state_callback(
             std::bind(&UserIntf::onCurrProfileChanged, this, _1, _2));
         ui_.knobFn->add_on_state_callback(std::bind(&UserIntf::onKnobFnChanged, this, _1, _2));
-
-        // number: only value
         ui_.sessionMins->add_on_state_callback(
             std::bind(&UserIntf::onSessionMinsChanged, this, _1));
         ui_.radarRangeCm->add_on_state_callback(
@@ -44,13 +41,10 @@ class UserIntf {
             std::bind(&UserIntf::onAudioVolPctChanged, this, _1));
         ui_.ledBrightPct->add_on_state_callback(
             std::bind(&UserIntf::onLedBrightPctChanged, this, _1));
-
-        // button
         ui_.startButton->add_on_press_callback(std::bind(&UserIntf::onStartButtonPressed, this));
     }
 
   private:
-    // — select callbacks take (value, idx) and log + save —
     inline void onCurrProfileChanged(const std::string &v, uint32_t idx) {
         cfg_.setString(ns_, kCurrProfileKey, v);
         LOGI("currProfile → %s (idx %u)", v.c_str(), idx);
@@ -59,8 +53,6 @@ class UserIntf {
         cfg_.setString(ns_, kKnobFnKey, v);
         LOGI("knobFn → %s (idx %u)", v.c_str(), idx);
     }
-
-    // — number callbacks take only (value) —
     inline void onSessionMinsChanged(float v) {
         cfg_.setValue(ns_, kSessionMinsKey, static_cast<uint32_t>(v));
         LOGI("sessionMins → %.1f", v);
@@ -77,8 +69,6 @@ class UserIntf {
         cfg_.setValue(ns_, kLedBrightPctKey, static_cast<uint32_t>(v));
         LOGI("ledBrightPct → %.1f", v);
     }
-
-    // — button callback —
     inline void onStartButtonPressed() {
         LOGI("startButton pressed");
         // TODO: your start action
@@ -86,11 +76,11 @@ class UserIntf {
 
     // — storage keys —
     static constexpr char kCurrProfileKey[]  = "currProfile";
+    static constexpr char kKnobFnKey[]       = "knobFn";
     static constexpr char kSessionMinsKey[]  = "sessionMins";
     static constexpr char kRadarRangeCmKey[] = "radarRangeCm";
     static constexpr char kAudioVolPctKey[]  = "audioVolPct";
     static constexpr char kLedBrightPctKey[] = "ledBrightPct";
-    static constexpr char kKnobFnKey[]       = "knobFn";
 
     ConfigManager           &cfg_;
     UiHandles                ui_;
