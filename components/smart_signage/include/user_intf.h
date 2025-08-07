@@ -12,8 +12,9 @@
 #include "radar/radar_const.h"
 #include "led/led_const.h"
 #include "audio/audio_const.h"
-#include <etl/string.h>    // For etl::string
-#include <etl/to_string.h> // For etl::to_string
+#include <etl/string.h>
+#include <etl/to_string.h>
+#include <cstdio>
 
 namespace esphome::smart_signage {
 
@@ -74,15 +75,9 @@ class UserIntf {
             cfg_.setValue(kCurrProfileKey, kDefaultProfileIdx);
         }
 
-        ui_.currProfile->publish_state(profile_options[currProfileIdx]);
-
-        // publishSelect(kKnobFnKey, ui_.knobFn, kDefaultKnobFnIdx);
-        publishNumber(kSessionMinsKey, ui_.sessionMins, ctrl::kDefaultSessionMins);
-        publishNumber(kRadarRangeCmKey, ui_.sessionMins, radar::kDefaultRangeCm);
-        publishNumber(kAudioVolPctKey, ui_.sessionMins, audio::kDefaultVolPct);
-        publishNumber(kLedBrightPctKey, ui_.sessionMins, led::kDefaultBrightPct);
-
         registerCallbacks();
+
+        ui_.currProfile->publish_state(profile_options[currProfileIdx]);
         return true;
     }
 
@@ -105,57 +100,51 @@ class UserIntf {
         ui_.startButton->add_on_press_callback(std::bind(&UserIntf::onStartButtonPressed, this));
     }
 
-    // Each callback updates the value for the current profile index in NVS
-    inline void onCurrProfileUpdated(const std::string &v, uint32_t idx) {
-        set(kCurrProfileKey, idx);
+    void onKnobFnUpdated(const std::string &v, uint32_t idx) {
+        LOGI("onKnobFnUpdated");
+        set(kKnobFnKey, idx);
     }
-    inline void onKnobFnUpdated(const std::string &v, uint32_t idx) { set(kKnobFnKey, idx); }
-    inline void onSessionMinsUpdated(float v) { set(kSessionMinsKey, v); }
-    inline void onRadarRangeCmUpdated(float v) { set(kRadarRangeCmKey, v); }
-    inline void onAudioVolPctUpdated(float v) { set(kAudioVolPctKey, v); }
-    inline void onLedBrightPctUpdated(float v) { set(kLedBrightPctKey, v); }
-    inline void onStartButtonPressed() { LOGI("startButton pressed"); }
-
-    inline void publishNumber(Key key, number::Number *ui_field, uint32_t defaultValue) {
-        uint32_t value;
-        get(key, value, defaultValue);
-        ui_field->publish_state(static_cast<float>(value));
-        LOGI("publish %s → %u", key.c_str(), value);
+    void onSessionMinsUpdated(float v) {
+        LOGI("onSessionMinsUpdated");
+        set(kSessionMinsKey, v);
+    }
+    void onRadarRangeCmUpdated(float v) {
+        LOGI("onRadarRangeCmUpdated");
+        set(kRadarRangeCmKey, v);
+    }
+    void onAudioVolPctUpdated(float v) {
+        LOGI("onAudioVolPctUpdated");
+        set(kAudioVolPctKey, v);
+    }
+    void onLedBrightPctUpdated(float v) {
+        LOGI("onLedBrightPctUpdated");
+        set(kLedBrightPctKey, v);
     }
 
-    // inline void publishSelect(Key key, select::Select *ui_field, uint32_t defaultValue) {
-    //     uint32_t value;
-    //     get(key, value, defaultValue);
-    //     ui_field.publish_state(profile_options[idx]);
-    //     LOGI("publish select → %s (profile %u)", profile_options[idx].c_str(), idx);
-    // }
+    void onStartButtonPressed() { LOGI("startButton pressed"); }
 
-    // inline void set(Key key, float v) {
-    //     uint32_t idx = getCurrProfileIndex();
-    //     key += etl::to_string(idx);
-    //     cfg_.setValue(key, static_cast<uint32_t>(v));
-    //     LOGI("set %s → %.1f (profile %u)", key.c_str(), v, idx);
-    // }
+    void onCurrProfileUpdated(const std::string & /*unused*/, uint32_t profileIdx) {
+        cfg_.setValue(kCurrProfileKey, profileIdx);
+        ui_.sessionMins->publish_state(get(kSessionMinsKey, ctrl::kDefaultSessionMins));
+        ui_.radarRangeCm->publish_state(get(kRadarRangeCmKey, radar::kDefaultRangeCm));
+        ui_.audioVolPct->publish_state(get(kAudioVolPctKey, audio::kDefaultVolPct));
+        ui_.ledBrightPct->publish_state(get(kLedBrightPctKey, led::kDefaultBrightPct));
+    }
 
-    // inline void get(Key key, uint32_t &value, uint32_t defaultValue) {
-    //     uint32_t idx = getCurrProfileIndex();
-    //     key += etl::to_string(idx);
-    //     cfg_.getValue(key, value, defaultValue);
-    //     LOGI("get %s → %u (profile %u)", key.c_str(), value, idx);
-    // }
-
-    inline void set(Key key, float v) {
+    uint32_t get(Key key, uint32_t defaultValue) {
         uint32_t idx = getCurrProfileIndex();
-        etl::to_string(idx, key);
+        etl::to_string(idx, key, etl::format_spec(), true);
+        uint32_t v = defaultValue;
+        cfg_.getValue(key, v, defaultValue);
+        LOGI("get %s → %u  (profile %u)", key.c_str(), v, idx);
+        return v;
+    }
+
+    void set(Key key, float v) {
+        uint32_t idx = getCurrProfileIndex();
+        etl::to_string(idx, key, etl::format_spec(), true);
         cfg_.setValue(key, static_cast<uint32_t>(v));
         LOGI("set %s → %.1f (profile %u)", key.c_str(), v, idx);
-    }
-
-    inline void get(Key key, uint32_t &value, uint32_t defaultValue) {
-        uint32_t idx = getCurrProfileIndex();
-        etl::to_string(idx, key); // appends idx to key
-        cfg_.getValue(key, value, defaultValue);
-        LOGI("get %s → %u (profile %u)", key.c_str(), value, idx);
     }
 
     uint32_t getCurrProfileIndex() const {
