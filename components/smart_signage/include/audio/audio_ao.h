@@ -5,8 +5,6 @@
 
 namespace esphome::smart_signage::audio {
 
-static constexpr char AO_TAG[] = "audioAo";
-
-using AO = ActiveObject<Q, FSM, AO_TAG>;
+using AO = ActiveObject<Q, FSM>;
 
 } // namespace esphome::smart_signage::audio

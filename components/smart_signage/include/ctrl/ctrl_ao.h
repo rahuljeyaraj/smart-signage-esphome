@@ -5,8 +5,6 @@
 
 namespace esphome::smart_signage::ctrl {
 
-static constexpr char AO_TAG[] = "ctrlAo";
-
-using AO = ActiveObject<Q, FSM, AO_TAG>;
+using AO = ActiveObject<Q, FSM>;
 
 } // namespace esphome::smart_signage::ctrl

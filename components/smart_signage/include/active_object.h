@@ -11,25 +11,21 @@ namespace esphome::smart_signage {
 namespace sml = boost::sml;
 
 /**
- * A generic “active object” that
- *  - wraps an SML functor internally,
- *  - creates its own FreeRTOS task in the ctor,
- *  - and pushes Events (std::variant) into the FSM.
+ * Generic Active-Object wrapper
+ *   • owns an SML state-machine            (fsm_)
+ *   • consumes events from a FreeRTOS queue (queue_)
+ *   • runs in its own task                  (taskHandle_)
  */
-template <typename QueueType, typename Functor, const char *TAG>
+template <typename QueueType, typename Functor>
 class ActiveObject {
   public:
-    // deduce EventType from the QueueType
-    using EventType = QueueType::ItemType;
+    using EventType = typename QueueType::ItemType; // ← ↑ added *typename*
 
-    explicit ActiveObject(QueueType &queue,
-        Functor                     &functor,
-        FsmLogger                   &fsmLogger,
-        const char                  *taskName  = "default_task",
-        uint32_t                     stackSize = 2048,
-        UBaseType_t                  priority  = tskIDLE_PRIORITY + 1,
-        BaseType_t                   coreId    = 0)
-        : queue_(queue), fsm_(functor, fsmLogger) {
+    explicit ActiveObject(QueueType &queue, Functor &functor, FsmLogger &fsmLogger,
+        const char *taskName, // only one string now
+        uint32_t stackSize = 2048, UBaseType_t priority = tskIDLE_PRIORITY + 1,
+        BaseType_t coreId = tskNO_AFFINITY)
+        : TAG{taskName}, queue_{queue}, fsm_{functor, fsmLogger} {
         if (xTaskCreatePinnedToCore(&ActiveObject::taskEntry,
                 taskName,
                 stackSize,
@@ -37,13 +33,12 @@ class ActiveObject {
                 priority,
                 &taskHandle_,
                 coreId) != pdPASS) {
-            LOGE(TAG, "Task creation failed");
+            LOGE("Task creation failed");
         }
     }
 
     bool post(const EventType &e, TickType_t wait = 0) {
-        // forward to the queue’s own post
-        return queue_.post(e, wait);
+        return queue_.post(e, wait); // forward to queue
     }
 
   private:
@@ -58,11 +53,10 @@ class ActiveObject {
         }
     }
 
+    const char                              *TAG;
+    QueueType                               &queue_;
     sml::sm<Functor, sml::logger<FsmLogger>> fsm_;
-    // sml::sm<Functor> fsm_;
-
-    QueueType   &queue_;
-    TaskHandle_t taskHandle_{nullptr};
+    TaskHandle_t                             taskHandle_{nullptr};
 };
 
 } // namespace esphome::smart_signage

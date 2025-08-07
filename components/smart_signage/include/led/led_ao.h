@@ -5,8 +5,6 @@
 
 namespace esphome::smart_signage::led {
 
-static constexpr char AO_TAG[] = "ledAo";
-
-using AO = ActiveObject<Q, FSM, AO_TAG>;
+using AO = ActiveObject<Q, FSM>;
 
 } // namespace esphome::smart_signage::led
