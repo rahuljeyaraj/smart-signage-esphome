@@ -5,95 +5,103 @@
 
 namespace esphome::smart_signage {
 
-/*──────── event map (unchanged) ───────*/
-void SmartSignage::add_event_map(const std::string &profile,
-    const std::string                              &evt,
-    const PathList                                 &paths) {
-    profiles_[profile][evt] = paths;
+SmartSignage::SmartSignage(const UiHandles &ui)
+    : nvsConfigManager_(), userIntf_(nvsConfigManager_, ui) {};
+
+void SmartSignage::setup() { userIntf_.registerCallbacks(); }
+void SmartSignage::loop() {}
+void SmartSignage::dump_config() { LOGI("SmartSignage config:"); }
+
 }
 
-/*──────── NVS helpers ─────────────────*/
-bool SmartSignage::load_from_nvs(const std::string &profile, UserSettings &out) {
-    nvs_handle_t h;
-    if (nvs_open(profile.c_str(), NVS_READONLY, &h) != ESP_OK) return false;
+// /*──────── event map (unchanged) ───────*/
+// void SmartSignage::add_event_map(
+//     const std::string &profile, const std::string &evt, const PathList &paths) {
+//     profiles_[profile][evt] = paths;
+// }
 
-    uint32_t tmp;
-    if (nvs_get_u32(h, "radius_cm", &tmp) == ESP_OK) out.radius_m = tmp / 100.0f;
-    if (nvs_get_u32(h, "duration_s", &tmp) == ESP_OK) out.duration_s = tmp;
-    if (nvs_get_u32(h, "volume", &tmp) == ESP_OK) out.volume = tmp;
-    if (nvs_get_u32(h, "brightness", &tmp) == ESP_OK) out.brightness = tmp;
-    nvs_close(h);
-    return true;
-}
+// /*──────── NVS helpers ─────────────────*/
+// bool SmartSignage::load_from_nvs(const std::string &profile, UserSettings &out) {
+//     nvs_handle_t h;
+//     if (nvs_open(profile.c_str(), NVS_READONLY, &h) != ESP_OK) return false;
 
-void SmartSignage::save_to_nvs(const std::string &profile, const UserSettings &in) {
-    nvs_handle_t h;
-    if (nvs_open(profile.c_str(), NVS_READWRITE, &h) != ESP_OK) return;
-    nvs_set_u32(h, "radius_cm", uint32_t(in.radius_m * 100));
-    nvs_set_u32(h, "duration_s", in.duration_s);
-    nvs_set_u32(h, "volume", in.volume);
-    nvs_set_u32(h, "brightness", in.brightness);
-    nvs_commit(h);
-    nvs_close(h);
-}
+//     uint32_t tmp;
+//     if (nvs_get_u32(h, "radius_cm", &tmp) == ESP_OK) out.radius_m = tmp / 100.0f;
+//     if (nvs_get_u32(h, "duration_s", &tmp) == ESP_OK) out.duration_s = tmp;
+//     if (nvs_get_u32(h, "volume", &tmp) == ESP_OK) out.volume = tmp;
+//     if (nvs_get_u32(h, "brightness", &tmp) == ESP_OK) out.brightness = tmp;
+//     nvs_close(h);
+//     return true;
+// }
 
-/*──────── dashboard sync ──────────────*/
-void SmartSignage::publish_to_dashboard(const UserSettings &s) {
-    if (radius_num_) radius_num_->publish_state(s.radius_m);
-    if (duration_num_) duration_num_->publish_state(s.duration_s / 3600.0f);
-    if (volume_num_) volume_num_->publish_state(s.volume);
-    if (brightness_num_) brightness_num_->publish_state(s.brightness);
-}
+// void SmartSignage::save_to_nvs(const std::string &profile, const UserSettings &in) {
+//     nvs_handle_t h;
+//     if (nvs_open(profile.c_str(), NVS_READWRITE, &h) != ESP_OK) return;
+//     nvs_set_u32(h, "radius_cm", uint32_t(in.radius_m * 100));
+//     nvs_set_u32(h, "duration_s", in.duration_s);
+//     nvs_set_u32(h, "volume", in.volume);
+//     nvs_set_u32(h, "brightness", in.brightness);
+//     nvs_commit(h);
+//     nvs_close(h);
+// }
 
-/*──────── setup ───────────────────────*/
-void SmartSignage::setup() {
-    nvs_flash_init();
-    if (profile_sel_) current_profile_ = profile_sel_->state;
-    load_from_nvs(current_profile_, settings_);
-    cached_[current_profile_] = settings_;
-    publish_to_dashboard(settings_);
-    ESP_LOGI("ss", "Boot profile → %s", current_profile_.c_str());
-}
+// /*──────── dashboard sync ──────────────*/
+// void SmartSignage::publish_to_dashboard(const UserSettings &s) {
+//     if (radius_num_) radius_num_->publish_state(s.radius_m);
+//     if (duration_num_) duration_num_->publish_state(s.duration_s / 3600.0f);
+//     if (volume_num_) volume_num_->publish_state(s.volume);
+//     if (brightness_num_) brightness_num_->publish_state(s.brightness);
+// }
 
-/*──────── profile switch ──────────────*/
-void SmartSignage::set_profile(const std::string &p) {
-    save_to_nvs(current_profile_, settings_);
-    cached_[current_profile_] = settings_;
+// /*──────── setup ───────────────────────*/
+// void SmartSignage::setup() {
+//     nvs_flash_init();
+//     if (profile_sel_) current_profile_ = profile_sel_->state;
+//     load_from_nvs(current_profile_, settings_);
+//     cached_[current_profile_] = settings_;
+//     publish_to_dashboard(settings_);
+//     ESP_LOGI("ss", "Boot profile → %s", current_profile_.c_str());
+// }
 
-    current_profile_ = p;
-    ESP_LOGI("ss", "Profile → %s", p.c_str());
+// /*──────── profile switch ──────────────*/
+// void SmartSignage::set_profile(const std::string &p) {
+//     save_to_nvs(current_profile_, settings_);
+//     cached_[current_profile_] = settings_;
 
-    auto it = cached_.find(p);
-    if (it != cached_.end())
-        settings_ = it->second;
-    else
-        load_from_nvs(p, settings_);
+//     current_profile_ = p;
+//     ESP_LOGI("ss", "Profile → %s", p.c_str());
 
-    publish_to_dashboard(settings_);
-}
+//     auto it = cached_.find(p);
+//     if (it != cached_.end())
+//         settings_ = it->second;
+//     else
+//         load_from_nvs(p, settings_);
 
-/*──────── live setters ────────────────*/
-void SmartSignage::set_radius(float v) {
-    settings_.radius_m = v;
-    save_to_nvs(current_profile_, settings_);
-    ESP_LOGI("ss", "Radius  → %.2f m", v);
-}
-void SmartSignage::set_duration(float v_h) {
-    settings_.duration_s = static_cast<uint32_t>(v_h * 3600);
-    save_to_nvs(current_profile_, settings_);
-    ESP_LOGI("ss", "Period  → %.1f h", v_h);
-}
-void SmartSignage::set_volume(float v) {
-    settings_.volume = static_cast<uint8_t>(v);
-    save_to_nvs(current_profile_, settings_);
-    ESP_LOGI("ss", "Volume  → %u %%", settings_.volume);
-}
-void SmartSignage::set_brightness(float v) {
-    settings_.brightness = static_cast<uint8_t>(v);
-    save_to_nvs(current_profile_, settings_);
-    ESP_LOGI("ss", "LED Brt → %u %%", settings_.brightness);
-}
-void SmartSignage::on_start_button() { ESP_LOGI("ss", "Start button"); }
+//     publish_to_dashboard(settings_);
+// }
+
+// /*──────── live setters ────────────────*/
+// void SmartSignage::set_radius(float v) {
+//     settings_.radius_m = v;
+//     save_to_nvs(current_profile_, settings_);
+//     ESP_LOGI("ss", "Radius  → %.2f m", v);
+// }
+// void SmartSignage::set_duration(float v_h) {
+//     settings_.duration_s = static_cast<uint32_t>(v_h * 3600);
+//     save_to_nvs(current_profile_, settings_);
+//     ESP_LOGI("ss", "Period  → %.1f h", v_h);
+// }
+// void SmartSignage::set_volume(float v) {
+//     settings_.volume = static_cast<uint8_t>(v);
+//     save_to_nvs(current_profile_, settings_);
+//     ESP_LOGI("ss", "Volume  → %u %%", settings_.volume);
+// }
+// void SmartSignage::set_brightness(float v) {
+//     settings_.brightness = static_cast<uint8_t>(v);
+//     save_to_nvs(current_profile_, settings_);
+//     ESP_LOGI("ss", "LED Brt → %u %%", settings_.brightness);
+// }
+// void SmartSignage::on_start_button() { ESP_LOGI("ss", "Start button"); }
 
 } // namespace esphome::smart_signage
 

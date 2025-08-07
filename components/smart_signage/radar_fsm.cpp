@@ -36,7 +36,7 @@ void FSM::onEvtTimerPoll(const EvtTimerPoll &) {
     // stubHardwarePoll();
 }
 
-void FSM::onSetDist(const SetDistCm &c) {
+void FSM::onSetDist(const SetRangeCm &c) {
     detDistCm_ = c.cm;
     LOGI("onSetDist: set max distance to %u cm", detDistCm_);
 }

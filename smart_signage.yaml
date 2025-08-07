@@ -44,139 +44,128 @@ web_server:
 # ───────────────────────────── Smart-signage component ─────────────────────
 smart_signage:
   id: ss1
-  profile_select:    profile_select
-  radius_number:     detection_radius_num
-  duration_number:   active_period_num
-  volume_number:     speaker_volume_num
-  brightness_number: led_brightness_num
-  start_button:      start_button
+  currProfile:    currProfile
+  knobFn:         knobFn
+  sessionMins:    sessionMins
+  radarRangeCm:   radarRangeCm
+  audioVolPct:    audioVolPct
+  ledBrightPct:   ledBrightPct
+  startButton:    startButton
 
   # ── Profile catalogue (anchors feed the <select>) ──
-  profiles:
-    - id: profile_0
-      name: &PROFILE0_NAME "Default Office"
-      events:
-        setup_done:  "/audio/p0/setup_done.mp3"
-        setup_error: "/audio/p0/setup_error.mp3"
-        start:       "/audio/p0/start.mp3"
-        detected:
-          - "/audio/p0/detected1.mp3"
-          - "/audio/p0/detected2.mp3"
-          - "/audio/p0/detected3.mp3"
-        fallen:
-          - "/audio/p0/fall1.mp3"
-          - "/audio/p0/fall2.mp3"
-          - "/audio/p0/fall3.mp3"
-        rose:        "/audio/p0/rose.mp3"
-        run_end:     "/audio/p0/run_end.mp3"
-        low_battery: "/audio/p0/low_batt.mp3"
+  # profiles:
+  #   - id: profile_0
+  #     name: &PROFILE0_NAME "Default Office"
+  #     events:
+  #       setup_done:  "/audio/p0/setup_done.mp3"
+  #       setup_error: "/audio/p0/setup_error.mp3"
+  #       start:       "/audio/p0/start.mp3"
+  #       detected:
+  #         - "/audio/p0/detected1.mp3"
+  #         - "/audio/p0/detected2.mp3"
+  #         - "/audio/p0/detected3.mp3"
+  #       fallen:
+  #         - "/audio/p0/fall1.mp3"
+  #         - "/audio/p0/fall2.mp3"
+  #         - "/audio/p0/fall3.mp3"
+  #       rose:        "/audio/p0/rose.mp3"
+  #       run_end:     "/audio/p0/run_end.mp3"
+  #       low_battery: "/audio/p0/low_batt.mp3"
 
-    - id: profile_1
-      name: &PROFILE1_NAME "Factory Loud"
-      events:
-        setup_done:  "/audio/p1/setup_done.mp3"
-        setup_error: "/audio/p1/setup_error.mp3"
-        start:       "/audio/p1/start.mp3"
-        detected:
-          - "/audio/p1/detected_fast.mp3"
-          - "/audio/p1/detected_warn.mp3"
-          - "/audio/p1/detected_alert.mp3"
-        fallen:
-          - "/audio/p1/fall_a.mp3"
-          - "/audio/p1/fall_b.mp3"
-          - "/audio/p1/fall_c.mp3"
-        rose:        "/audio/p1/rose.mp3"
-        run_end:     "/audio/p1/run_end.mp3"
-        low_battery: "/audio/p1/low_batt.mp3"
+  #   - id: profile_1
+  #     name: &PROFILE1_NAME "Factory Loud"
+  #     events:
+  #       setup_done:  "/audio/p1/setup_done.mp3"
+  #       setup_error: "/audio/p1/setup_error.mp3"
+  #       start:       "/audio/p1/start.mp3"
+  #       detected:
+  #         - "/audio/p1/detected_fast.mp3"
+  #         - "/audio/p1/detected_warn.mp3"
+  #         - "/audio/p1/detected_alert.mp3"
+  #       fallen:
+  #         - "/audio/p1/fall_a.mp3"
+  #         - "/audio/p1/fall_b.mp3"
+  #         - "/audio/p1/fall_c.mp3"
+  #       rose:        "/audio/p1/rose.mp3"
+  #       run_end:     "/audio/p1/run_end.mp3"
+  #       low_battery: "/audio/p1/low_batt.mp3"
 
-    - id: profile_2
-      name: &PROFILE2_NAME "Quiet Library"
-      events:
-        setup_done:  "/audio/p2/setup_done.wav"
-        setup_error: "/audio/p2/setup_error.wav"
-        start:       "/audio/p2/start.wav"
-        detected:
-          - "/audio/p2/detected_soft1.wav"
-          - "/audio/p2/detected_soft2.wav"
-          - "/audio/p2/detected_soft3.wav"
-        fallen:
-          - "/audio/p2/fall_soft1.wav"
-          - "/audio/p2/fall_soft2.wav"
-          - "/audio/p2/fall_soft3.wav"
-        rose:        "/audio/p2/rose.wav"
-        run_end:     "/audio/p2/run_end.wav"
-        low_battery: "/audio/p2/low_batt.wav"
+  #   - id: profile_2
+  #     name: &PROFILE2_NAME "Quiet Library"
+  #     events:
+  #       setup_done:  "/audio/p2/setup_done.wav"
+  #       setup_error: "/audio/p2/setup_error.wav"
+  #       start:       "/audio/p2/start.wav"
+  #       detected:
+  #         - "/audio/p2/detected_soft1.wav"
+  #         - "/audio/p2/detected_soft2.wav"
+  #         - "/audio/p2/detected_soft3.wav"
+  #       fallen:
+  #         - "/audio/p2/fall_soft1.wav"
+  #         - "/audio/p2/fall_soft2.wav"
+  #         - "/audio/p2/fall_soft3.wav"
+  #       rose:        "/audio/p2/rose.wav"
+  #       run_end:     "/audio/p2/run_end.wav"
+  #       low_battery: "/audio/p2/low_batt.wav"
 
 # ───────────────────────────── Dashboard entities ──────────────────────────
 select:
   - platform: template
     name: "Profile"
-    id: profile_select
+    id: currProfile
     optimistic: true
-    restore_value: true
     options:
-      - *PROFILE0_NAME
-      - *PROFILE1_NAME
-      - *PROFILE2_NAME
-    initial_option: *PROFILE0_NAME
-    set_action:
-      - lambda: "id(ss1)->set_profile(x);"
+      - "__placeholder__"
+
+
+  - platform: template
+    name: "Knob Fn"
+    id: knobFn
+    optimistic: true
+    options:
+      - "__placeholder__"
 
 number:
   - platform: template
-    name: "Detection Radius (m)"
-    id: detection_radius_num
-    optimistic: true
-    restore_value: true
-    min_value: 1
-    max_value: 6
-    step: 1
-    set_action:
-      - lambda: |-
-          id(ss1)->set_radius(x);
-
-  - platform: template
-    name: "Active Period (h)"
-    id: active_period_num
+    name: "Session Period (mins)"
+    id: sessionMins
     optimistic: true
     restore_value: true
     min_value: 0
     max_value: 24
     step: 0.5
-    set_action:
-      - lambda: |-
-          id(ss1)->set_duration(x);
+
+  - platform: template
+    name: "Detection Radius (m)"
+    id: radarRangeCm
+    optimistic: true
+    restore_value: true
+    min_value: 1
+    max_value: 6
+    step: 1
 
   - platform: template
     name: "Speaker Volume (%)"
-    id: speaker_volume_num
+    id: audioVolPct
     optimistic: true
     restore_value: true
     min_value: 0
     max_value: 100
     step: 1
-    set_action:
-      - lambda: |-
-          id(ss1)->set_volume(x);
 
   - platform: template
     name: "LED Brightness (%)"
-    id: led_brightness_num
+    id: ledBrightPct
     optimistic: true
     restore_value: true
     min_value: 0
     max_value: 100
     step: 1
-    set_action:
-      - lambda: |-
-          id(ss1)->set_brightness(x);
 
 button:
   - platform: template
-    name: "Signage Start"
-    id: start_button
-    on_press:
-      - lambda: "id(ss1)->on_start_button();"
+    name: "Start"
+    id: startButton
 
 external_components:
   - source: components      # ← folder that holds this component

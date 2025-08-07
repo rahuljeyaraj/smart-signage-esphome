@@ -5,7 +5,7 @@ Language:        Cpp
 IndentWidth:     4
 ColumnLimit:     100
 
-BinPackParameters:                         false
+BinPackParameters: true
 BinPackArguments:                          false
 AllowAllParametersOfDeclarationOnNextLine: false
 
