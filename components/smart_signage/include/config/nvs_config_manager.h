@@ -1,10 +1,10 @@
-// nvs_config_manager.h
 #pragma once
 
-#include "config_manager.h"
+#include "config/config_manager.h"
 #include "nvs_flash.h"
 #include "nvs.h"
-#include "log.h" // ASCII‐only LOGD(fmt, ...)
+#include "log.h"
+#include <string>
 
 static inline constexpr char TAG[] = "NVSConfigMgr";
 
@@ -84,7 +84,7 @@ class NVSConfigManager : public ConfigManager {
         }
         size_t    required = 0;
         esp_err_t err      = nvs_get_str(h, key.c_str(), nullptr, &required);
-        if (err != ESP_OK || required == 0 || required > (MAX_STRING_SIZE + 1)) {
+        if (err != ESP_OK || required == 0) {
             LOGD(TAG,
                 "getStr size failed ns='%s' key='%s' err=%d req=%u",
                 ns.c_str(),
@@ -94,12 +94,14 @@ class NVSConfigManager : public ConfigManager {
             nvs_close(h);
             return false;
         }
-        char buf[MAX_STRING_SIZE + 1];
-        err = nvs_get_str(h, key.c_str(), buf, &required);
+        // allocate a std::string of the required length (includes null)
+        std::string buf(required, '\0');
+        err = nvs_get_str(h, key.c_str(), buf.data(), &required);
         nvs_close(h);
         if (err == ESP_OK) {
-            buf[required - 1] = '\0';
-            value             = ValueString(buf);
+            // strip trailing NUL if present
+            if (!buf.empty() && buf.back() == '\0') buf.pop_back();
+            value = std::move(buf);
             LOGD("gotStr ns='%s' key='%s' val='%s'", ns.c_str(), key.c_str(), value.c_str());
             return true;
         }

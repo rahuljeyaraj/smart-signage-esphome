@@ -39,7 +39,7 @@ def to_code(config):
     startButton   = yield cg.get_variable(config[CONF_START_BUTTON])
 
     uiHandles = cg.RawExpression(
-        f"UiHandles{{{currProfile}, "
+        f"esphome::smart_signage::UiHandles{{{currProfile}, "
         f"{sessionMins}, "
         f"{radarRangeCm}, "
         f"{audioVolPct}, "

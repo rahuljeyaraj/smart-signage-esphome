@@ -12,7 +12,7 @@ void SmartSignage::setup() { userIntf_.registerCallbacks(); }
 void SmartSignage::loop() {}
 void SmartSignage::dump_config() { LOGI("SmartSignage config:"); }
 
-}
+} // namespace esphome::smart_signage
 
 // /*──────── event map (unchanged) ───────*/
 // void SmartSignage::add_event_map(
@@ -102,8 +102,6 @@ void SmartSignage::dump_config() { LOGI("SmartSignage config:"); }
 //     ESP_LOGI("ss", "LED Brt → %u %%", settings_.brightness);
 // }
 // void SmartSignage::on_start_button() { ESP_LOGI("ss", "Start button"); }
-
-} // namespace esphome::smart_signage
 
 // #include "smart_signage.h"
 // #include "ctrl/ctrl_ao.h"

@@ -2,17 +2,14 @@
 #pragma once
 
 #include <cstdint>
-#include <etl/string.h>
+#include <string>
 
 /** Abstract interface for 32-bit key/value and string config storage. */
 class ConfigManager {
   public:
-    using Namespace = etl::string<15>;
-    using Key       = etl::string<15>;
-
-    /// Max length of stored C-strings (not counting null terminator).
-    static constexpr size_t MAX_STRING_SIZE = 64;
-    using ValueString                       = etl::string<MAX_STRING_SIZE>;
+    using Namespace   = std::string;
+    using Key         = std::string;
+    using ValueString = std::string;
 
     // Integer getters/setters
     virtual bool setValue(const Namespace &ns, const Key &key, uint32_t value)  = 0;

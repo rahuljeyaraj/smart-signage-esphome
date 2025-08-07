@@ -4,7 +4,7 @@
 #include "esphome/components/select/select.h"
 #include "esphome/components/number/number.h"
 #include "esphome/components/button/button.h"
-#include "esp_log.h"
+#include "log.h"
 #include <string>
 
 namespace esphome::smart_signage {
@@ -23,49 +23,65 @@ struct UiHandles {
 
 class UserIntf {
   public:
-    UserIntf(ConfigManager &cfg, const UiHandles &ui) : cfg_(cfg), ui_(ui) { registerCallbacks(); }
+    UserIntf(ConfigManager &cfg, const UiHandles &ui) : cfg_(cfg), ui_(ui) {}
+
+  public:
+    void registerCallbacks() {
+        using std::placeholders::_1;
+        using std::placeholders::_2;
+
+        // select: value + index
+        ui_.currProfile->add_on_state_callback(
+            std::bind(&UserIntf::onCurrProfileChanged, this, _1, _2));
+        ui_.knobFn->add_on_state_callback(std::bind(&UserIntf::onKnobFnChanged, this, _1, _2));
+
+        // number: only value
+        ui_.sessionMins->add_on_state_callback(
+            std::bind(&UserIntf::onSessionMinsChanged, this, _1));
+        ui_.radarRangeCm->add_on_state_callback(
+            std::bind(&UserIntf::onRadarRangeCmChanged, this, _1));
+        ui_.audioVolPct->add_on_state_callback(
+            std::bind(&UserIntf::onAudioVolPctChanged, this, _1));
+        ui_.ledBrightPct->add_on_state_callback(
+            std::bind(&UserIntf::onLedBrightPctChanged, this, _1));
+
+        // button
+        ui_.startButton->add_on_press_callback(std::bind(&UserIntf::onStartButtonPressed, this));
+    }
 
   private:
-    void registerCallbacks() {
-        ui_.currProfile->add_on_state_callback(
-            [this](const std::string &v) { this->onCurrProfileUpdate(v); });
-        ui_.sessionMins->add_on_state_callback([this](float v) { this->onSessionMinsUpdate(v); });
-        ui_.radarRangeCm->add_on_state_callback([this](float v) { this->onRadarRangeCmUpdate(v); });
-        ui_.audioVolPct->add_on_state_callback([this](float v) { this->onAudioVolPctUpdate(v); });
-        ui_.ledBrightPct->add_on_state_callback([this](float v) { this->onLedBrightPctUpdate(v); });
-        ui_.startButton->set_on_press_callback([this]() { this->onStartButtonPressed(); });
-        ui_.knobFn->add_on_state_callback(
-            [this](const std::string &v) { this->onKnobFnUpdate(v); });
+    // — select callbacks take (value, idx) and log + save —
+    inline void onCurrProfileChanged(const std::string &v, uint32_t idx) {
+        cfg_.setString(ns_, kCurrProfileKey, v);
+        LOGI("currProfile → %s (idx %u)", v.c_str(), idx);
+    }
+    inline void onKnobFnChanged(const std::string &v, uint32_t idx) {
+        cfg_.setString(ns_, kKnobFnKey, v);
+        LOGI("knobFn → %s (idx %u)", v.c_str(), idx);
     }
 
-    // — callback implementations —
-    inline void onCurrProfileUpdate(const std::string &newProfile) {
-        cfg_.setString(ns_, kCurrProfileKey, newProfile);
-        ESP_LOGI("userIntf", "currProfile → %s", newProfile.c_str());
+    // — number callbacks take only (value) —
+    inline void onSessionMinsChanged(float v) {
+        cfg_.setValue(ns_, kSessionMinsKey, static_cast<uint32_t>(v));
+        LOGI("sessionMins → %.1f", v);
     }
-    inline void onSessionMinsUpdate(float newMins) {
-        cfg_.setValue(ns_, kSessionMinsKey, static_cast<uint32_t>(newMins));
-        ESP_LOGI("userIntf", "sessionMins → %.1f", newMins);
+    inline void onRadarRangeCmChanged(float v) {
+        cfg_.setValue(ns_, kRadarRangeCmKey, static_cast<uint32_t>(v));
+        LOGI("radarRangeCm → %.1f", v);
     }
-    inline void onRadarRangeCmUpdate(float newRange) {
-        cfg_.setValue(ns_, kRadarRangeCmKey, static_cast<uint32_t>(newRange));
-        ESP_LOGI("userIntf", "radarRangeCm → %.1f", newRange);
+    inline void onAudioVolPctChanged(float v) {
+        cfg_.setValue(ns_, kAudioVolPctKey, static_cast<uint32_t>(v));
+        LOGI("audioVolPct → %.1f", v);
     }
-    inline void onAudioVolPctUpdate(float newVol) {
-        cfg_.setValue(ns_, kAudioVolPctKey, static_cast<uint32_t>(newVol));
-        ESP_LOGI("userIntf", "audioVolPct → %.1f", newVol);
+    inline void onLedBrightPctChanged(float v) {
+        cfg_.setValue(ns_, kLedBrightPctKey, static_cast<uint32_t>(v));
+        LOGI("ledBrightPct → %.1f", v);
     }
-    inline void onLedBrightPctUpdate(float newPct) {
-        cfg_.setValue(ns_, kLedBrightPctKey, static_cast<uint32_t>(newPct));
-        ESP_LOGI("userIntf", "ledBrightPct → %.1f", newPct);
-    }
+
+    // — button callback —
     inline void onStartButtonPressed() {
-        ESP_LOGI("userIntf", "startButton pressed");
-        // TODO: trigger main action
-    }
-    inline void onKnobFnUpdate(const std::string &newFn) {
-        cfg_.setString(ns_, kKnobFnKey, newFn);
-        ESP_LOGI("userIntf", "knobFn → %s", newFn.c_str());
+        LOGI("startButton pressed");
+        // TODO: your start action
     }
 
     // — storage keys —
@@ -79,6 +95,8 @@ class UserIntf {
     ConfigManager           &cfg_;
     UiHandles                ui_;
     ConfigManager::Namespace ns_{"ss"};
+
+    static constexpr char TAG[] = "UserIntf";
 };
 
 } // namespace esphome::smart_signage
