@@ -79,8 +79,7 @@ void FSM::onCmdTeardown(const CmdTeardown &) {
 }
 
 void FSM::onEvtRadarData(const EvtRadarData &e) {
-    LOGI(TAG,
-        "Data: Radar detected=%s, distance=%u cm, timestamp=%u",
+    LOGI("Data: Radar detected=%s, distance=%u cm, timestamp=%u",
         e.detected ? "YES" : "NO",
         static_cast<unsigned>(e.distanceCm),
         static_cast<unsigned>(e.timestampTicks));

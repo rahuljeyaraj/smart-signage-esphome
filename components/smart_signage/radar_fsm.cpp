@@ -1,5 +1,6 @@
 #include "radar/radar_fsm.h"
 #include "log.h"
+#include <Arduino.h>
 
 namespace esphome::smart_signage::radar {
 
@@ -30,12 +31,22 @@ void FSM::onCmdStop(const CmdStop &) { timer_.stop(); }
 void FSM::onCmdTeardown(const CmdTeardown &) { timer_.stop(); }
 
 void FSM::onEvtTimerPoll(const EvtTimerPoll &) {
-    if (!hal_.hasNewData()) { LOGW("No new radar data"); }
+    bool     hadData = false;
+    uint16_t raw     = 0;
+    bool     pres    = false;
 
-    uint16_t raw    = hal_.getDistance();
-    bool     pres   = hal_.presenceDetected();
-    auto     filt   = static_cast<uint16_t>(filter_.updateEstimate(raw) + 0.5f);
-    bool     detect = pres && (filt <= detDistCm_);
+    int flushCnt = 0;
+    for (; flushCnt < kMaxFlushCnt && hal_.hasNewData(); ++flushCnt) {
+        raw     = hal_.getDistance();
+        pres    = hal_.presenceDetected();
+        hadData = true;
+    }
+    if (flushCnt == kMaxFlushCnt) { LOGW("Radar flush: max flush count %d reached", kMaxFlushCnt); }
+    if (!hadData) { return; }
+
+    auto filt   = static_cast<uint16_t>(filter_.updateEstimate(raw) + 0.5f);
+    bool detect = pres && (filt <= detDistCm_);
+    Serial.printf(">raw:%u,filt:%u\r\n", raw, filt);
 
     LOGD("raw=%u filtered=%u detected=%s", raw, filt, detect ? "YES" : "NO");
     ctrlQ_.post(ctrl::EvtRadarData{detect, filt, xTaskGetTickCount()});
