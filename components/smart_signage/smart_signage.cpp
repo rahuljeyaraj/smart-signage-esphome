@@ -1,5 +1,6 @@
 #include "smart_signage.h"
 #include "log.h"
+#include "board.h"
 
 namespace esphome::smart_signage {
 
@@ -8,6 +9,11 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     /*── Helpers ──*/
     : nvsConfigManager_{kNVSNamespace}
     , userIntf_{nvsConfigManager_, ui, configJson}
+
+    /*──  Hal ─*/
+    , radarSerial_{1}
+    , radarHal_{radarSerial_, RADAR_RX_PIN, RADAR_TX_PIN}
+    , filter_{radar::kMeasurementNoise, radar::kInitialError, radar::kProcessNoise}
 
     /*── Queues ──*/
     , ctrlQ_{}
@@ -18,7 +24,7 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     
     /*── FSMs ──*/
     , ctrlFsm_{radarQ_, imuQ_, ledQ_, audioQ_}
-    , radarFsm_{ctrlQ_}
+    , radarFsm_{ctrlQ_, radarHal_, filter_}
     , imuFsm_{ctrlQ_}
     , ledFsm_{ctrlQ_}
     , audioFsm_{ctrlQ_}
@@ -38,8 +44,12 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     , audioAo_{ audioQ_,    audioFsm_,  audioFsmLogger_,    "audioTask",    8192, tskIDLE_PRIORITY + 2, 1} 
     {} // clang-format on
 
-void SmartSignage::setup() { userIntf_.setup(); }
-void SmartSignage::loop() { /* nothing yet */ }
+void SmartSignage::setup() {
+    LOGI("SmartSignage setup");
+    userIntf_.setup();
+    ctrlQ_.post(ctrl::CmdSetup{});
+}
+void SmartSignage::loop() {}
 void SmartSignage::dump_config() { LOGI("SmartSignage ready"); }
 
 } // namespace esphome::smart_signage

@@ -10,7 +10,7 @@ FSM::FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ)
 bool FSM::guardRadarReady(const EvtRadarReady &) {
     readyBits_.set(static_cast<size_t>(Intf::Radar));
     const bool all = readyBits_.all();
-    LOGI("Guard: RadarReady – %u/%u ready → all=%s",
+    LOGI("Guard: RadarReady - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -20,7 +20,7 @@ bool FSM::guardRadarReady(const EvtRadarReady &) {
 bool FSM::guardImuReady(const EvtImuReady &) {
     readyBits_.set(static_cast<size_t>(Intf::Imu));
     const bool all = readyBits_.all();
-    LOGI("Guard: ImuReady   – %u/%u ready → all=%s",
+    LOGI("Guard: ImuReady   - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -30,7 +30,7 @@ bool FSM::guardImuReady(const EvtImuReady &) {
 bool FSM::guardLedReady(const EvtLedReady &) {
     readyBits_.set(static_cast<size_t>(Intf::Led));
     const bool all = readyBits_.all();
-    LOGI("Guard: LedReady   – %u/%u ready → all=%s",
+    LOGI("Guard: LedReady   - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -40,7 +40,7 @@ bool FSM::guardLedReady(const EvtLedReady &) {
 bool FSM::guardAudioReady(const EvtAudioReady &) {
     readyBits_.set(static_cast<size_t>(Intf::Audio));
     const bool all = readyBits_.all();
-    LOGI("Guard: AudioReady – %u/%u ready → all=%s",
+    LOGI("Guard: AudioReady - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -94,7 +94,7 @@ void FSM::onEvtImuRose(const EvtImuRose &) {
 void FSM::onSetupTimeout() { LOGI("Timeout: Setup phase timed out! Transitioning to Error state"); }
 
 void FSM::onSessionEnd() {
-    LOGI("Timeout: Active phase timed out – stopping & tearing down all interfaces");
+    LOGI("Timeout: Active phase timed out - stopping & tearing down all interfaces");
     onCmdStop({});
     onCmdTeardown({});
 }

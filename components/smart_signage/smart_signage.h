@@ -3,6 +3,9 @@
 #include <esphome/components/number/number.h>
 #include <esphome/components/select/select.h>
 
+#include <SimpleKalmanFilter.h>
+#include "radar/hal/ld2410_radar_hal.h"
+
 #include "ctrl/ctrl_ao.h"
 #include "radar/radar_ao.h"
 #include "imu/imu_ao.h"
@@ -27,6 +30,11 @@ class SmartSignage : public Component {
     /*────── High-level helpers ────*/
     NVSConfigManager nvsConfigManager_;
     UserIntf         userIntf_;
+
+    /*──────  Hal ──────────────────*/
+    SimpleKalmanFilter filter_;
+    HardwareSerial     radarSerial_;
+    LD2410RadarHal     radarHal_;
 
     /*────── Message queues ────────*/
     ctrl::Q  ctrlQ_;

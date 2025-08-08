@@ -1,7 +1,11 @@
 esphome:
   name: smart-signage
+  platformio_options:
+    lib_ldf_mode: deep
   libraries:
     - "https://github.com/ETLCPP/etl.git"
+    - "iavorvel/MyLD2410@^1.2.5"
+    - "denyssene/SimpleKalmanFilter"
   includes:
     - components\smart_signage\include\
 
@@ -9,12 +13,12 @@ esphome:
 esp32:
   board: seeed_xiao_esp32s3
   flash_size: 8MB
-  partitions: "custom_partitions.csv"
+  # partitions: "custom_partitions.csv"
   framework:
-    type: esp-idf
-    components:
-      - name: esp_littlefs
-        source: https://github.com/joltwallet/esp_littlefs.git
+    type: arduino
+    # components:
+    #   - name: esp_littlefs
+    #     source: https://github.com/joltwallet/esp_littlefs.git
 
 
 logger:
@@ -53,7 +57,7 @@ smart_signage:
   startButton:    startButton
 
   
-  profileConfig:  !include profile_config.yaml
+  profileConfig:  !include config.yaml
 # ───────────────────────────── Dashboard entities ──────────────────────────
 select:
   - platform: template
