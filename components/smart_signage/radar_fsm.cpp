@@ -46,7 +46,7 @@ void FSM::onEvtTimerPoll(const EvtTimerPoll &) {
 
     auto filt   = static_cast<uint16_t>(filter_.updateEstimate(raw) + 0.5f);
     bool detect = pres && (filt <= detDistCm_);
-    Serial.printf(">raw:%u,filt:%u\r\n", raw, filt);
+    // Serial.printf(">raw:%u,filt:%u\r\n", raw, filt);
 
     LOGD("raw=%u filtered=%u detected=%s", raw, filt, detect ? "YES" : "NO");
     ctrlQ_.post(ctrl::EvtRadarData{detect, filt, xTaskGetTickCount()});

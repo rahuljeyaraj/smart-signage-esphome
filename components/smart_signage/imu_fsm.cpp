@@ -22,27 +22,22 @@ bool FSM::isReadyGuard(const CmdSetup &e) {
 }
 
 bool FSM::isFallenGuard(const EvtTimerPoll &e) {
-    Vector acc      = hal_.getAccel();
-    double tiltDeg  = computeTiltAngle(acc, refAcc_);
-    bool   isFallen = tiltDeg >= fallAngleDeg_;
+    hal_.read();
+    Vector   acc      = hal_.getAccel();
+    uint16_t tiltDeg  = computeTiltAngle(acc, refAcc_);
+    bool     isFallen = tiltDeg >= fallAngleDeg_;
+    LOGD("fall angle: %u, curr angle: %u ", fallAngleDeg_, tiltDeg);
     isFallenDebounce_.add(isFallen);
-    // if (isFallenDebounce_.has_changed()) {
-    //     LOG_I("Fallen:%s", isFallenDebounce_.is_set() ? "true" : "false");
-    //     if (isFallenDebounce_.is_set()) { return true }
-    //     return false;
-    // }
     return isFallenDebounce_.is_set();
 }
 
 // Actions
 void FSM::onCmdStart(const CmdStart &e) {
     LOGD("onStart: imu polling at %u ms", sampleIntMs_);
-    // Save reference acceration vector
-    refAcc_ = hal_.getAccel();
-    // Clear isfallen state
-    isFallenDebounce_.add(false);
-    // Starts the timer
-    // timer_.startPeriodic(uint64_t(sampleIntMs_) * 1000ULL);
+    hal_.read();
+    refAcc_ = hal_.getAccel();                              // Save reference acceration vector
+    isFallenDebounce_.add(false);                           // Clear isfallen state
+    timer_.startPeriodic(uint64_t(sampleIntMs_) * 1000ULL); // Starts the timer
 }
 
 void FSM::onCmdStop(const CmdStop &e) { timer_.stop(); }
@@ -67,21 +62,25 @@ void FSM::onSetSampleInt(const SetSampleInt &e) {
     LOGI("onSetSampleInt(): %u ms", sampleIntMs_);
 }
 
-void FSM::onFallenEntry() { LOGE("Entered Fallen state"); }
+void FSM::onFallenEntry() {
+    LOGI("Is fallen");
+    ctrlQ_.post(ctrl::EvtImuFell{}, portMAX_DELAY); // Blocking
+}
 
-void FSM::onFallenExit() { LOGE("Exiting Fallen state"); }
+void FSM::onFallenExit() {
+    LOGI("Is upright");
+    ctrlQ_.post(ctrl::EvtImuRose{}, portMAX_DELAY); // Blocking
+}
 
 void FSM::onError() { LOGE("Entered Error state"); }
 
-double FSM::computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const {
+uint16_t FSM::computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const {
     double dotProd = curAccel.dot(refAccel);
     double magProd = curAccel.norm() * refAccel.norm();
     if (magProd <= 0.0) return 0.0;
-
     double cosθ = dotProd / magProd;
     cosθ        = std::clamp(cosθ, -1.0, 1.0);
-
-    return std::acos(cosθ) * 180.0 / M_PI;
+    return static_cast<uint16_t>(std::lround(std::acos(cosθ) * 180.0 / M_PI));
 }
 
 } // namespace esphome::smart_signage::imu

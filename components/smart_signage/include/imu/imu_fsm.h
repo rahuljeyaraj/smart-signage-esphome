@@ -68,7 +68,7 @@ class FSM {
     void onFallenExit();
     void onError();
 
-    double computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const;
+    uint16_t computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const;
 
     ctrl::Q       &ctrlQ_;
     hal::IImuHal  &hal_;
