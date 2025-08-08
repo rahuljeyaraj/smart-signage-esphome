@@ -1,8 +1,33 @@
 #include "smart_signage.h"
 #include "log.h"
 #include "board.h"
+#include <Arduino.h>
+#include <Wire.h>
 
 namespace esphome::smart_signage {
+
+// Controller controller(logger);
+// SmartSignageApp app(controller, logger);
+
+// // Radar setup
+// HardwareSerial radarSerial(1);
+// LD2410RadarHal radarHal(radarSerial, RADAR_RX_PIN, RADAR_TX_PIN, logger);
+// RadarDriver frontRadar(Id::FrontRadar, controller, radarHal, logger);
+// IMU setup
+// ESP32-S3: supports two I2C peripherals (0/1 = Wire/Wire1).
+// ESP32-C3: only one I2C peripheral (0 = Wire).
+// MPU6500   imu(Wire);
+// I2cImuHal imuHal(imu, Wire, MPU6500_DEFAULT_ADDRESS, I2C_SDA_PIN, I2C_SCL_PIN);
+// ImuDriver imuDrver(Id::FallDetector, controller, imuHal);
+// // LED setup
+// EspLedHal ledHal(LED0_PIN);
+// LedDriver frontLed(Id::FrontLed, controller, ledHal, logger);
+
+// // Speaker setup
+// audio_tools::AudioSourceLittleFS source("/", ".mp3");
+// audio_tools::MP3DecoderHelix decoder;
+// I2SAudioHal audioHal(source, decoder, I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DATA_PIN);
+// AudioDriver audioDriver(Id::FrontSpeaker, controller, audioHal, logger);
 
 SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     // clang-format off
@@ -10,10 +35,15 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     : nvsConfigManager_{kNVSNamespace}
     , userIntf_{nvsConfigManager_, ui, configJson}
 
-    /*──  Hal ─*/
+    /*──────  Radar dependencies ────*/
     , radarSerial_{1}
     , radarHal_{radarSerial_, RADAR_RX_PIN, RADAR_TX_PIN}
     , filter_{radar::kMeasurementNoise, radar::kInitialError, radar::kProcessNoise}
+
+    /*──────  Imu dependencies ────*/
+    , imu_(Wire) //ESP32-S3: (I2C 0/1 = Wire/Wire1), ESP32-C3: (I2C 0 = Wire).
+    , imuHal_(imu_, Wire, MPU6500_DEFAULT_ADDRESS, I2C_SDA_PIN, I2C_SCL_PIN)
+    , imuPollTimer_()
 
     /*── Queues ──*/
     , ctrlQ_{}
@@ -25,7 +55,7 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     /*── FSMs ──*/
     , ctrlFsm_{radarQ_, imuQ_, ledQ_, audioQ_}
     , radarFsm_{ctrlQ_, radarHal_, filter_}
-    , imuFsm_{ctrlQ_}
+    , imuFsm_{ctrlQ_, imuHal_, imuPollTimer_}
     , ledFsm_{ctrlQ_}
     , audioFsm_{ctrlQ_}
 
@@ -41,8 +71,11 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     , radarAo_{ radarQ_,    radarFsm_,  radarFsmLogger_,    "radarTask",    8192, tskIDLE_PRIORITY + 2, 1}
     , imuAo_{   imuQ_,      imuFsm_,    imuFsmLogger_,      "imuTask",      8192, tskIDLE_PRIORITY + 2, 1}
     , ledAo_{   ledQ_,      ledFsm_,    ledFsmLogger_,      "ledTask",      8192, tskIDLE_PRIORITY + 2, 1}
-    , audioAo_{ audioQ_,    audioFsm_,  audioFsmLogger_,    "audioTask",    8192, tskIDLE_PRIORITY + 2, 1} 
-    {} // clang-format on
+    , audioAo_{ audioQ_,    audioFsm_,  audioFsmLogger_,    "audioTask",    8192, tskIDLE_PRIORITY + 2, 1}
+// clang-format on
+{
+    imuPollTimer_.create("imuPoll", &SmartSignage::imuPollCb, this);
+}
 
 void SmartSignage::setup() {
     LOGI("SmartSignage setup");
@@ -51,6 +84,11 @@ void SmartSignage::setup() {
 }
 void SmartSignage::loop() {}
 void SmartSignage::dump_config() { LOGI("SmartSignage ready"); }
+
+void SmartSignage::imuPollCb(void *arg) {
+    auto *self = static_cast<SmartSignage *>(arg);
+    self->imuQ_.post(imu::EvtTimerPoll{});
+}
 
 } // namespace esphome::smart_signage
 

@@ -1,19 +1,24 @@
 #pragma once
 #include <etl/variant.h>
+#include <etl/debounce.h>
 #include "sml.hpp"
 #include "log.h"
 #include "ctrl/ctrl_q.h"
 #include "imu/imu_event.h"
+#include "imu/hal/iimu_hal.h"
+#include "timer/itimer.h"
 
 namespace sml = boost::sml;
 
 namespace esphome::smart_signage::imu {
 
+using Vector = Eigen::Vector3f;
+
 class FSM {
     using Self = FSM;
 
   public:
-    explicit FSM(ctrl::Q &q);
+    explicit FSM(ctrl::Q &q, hal::IImuHal &hal, timer::ITimer &timer);
 
     struct Active {
         auto operator()() const noexcept {
@@ -63,9 +68,14 @@ class FSM {
     void onFallenExit();
     void onError();
 
-    static constexpr char TAG[] = "imu";
+    double computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const;
 
-    ctrl::Q &ctrlQ_;
+    ctrl::Q       &ctrlQ_;
+    hal::IImuHal  &hal_;
+    timer::ITimer &timer_;
+
+    Vector                 refAcc_{Vector::Zero()};
+    etl::debounce<0, 0, 0> isFallenDebounce_;
 
     bool stubHardwareInit();
 
@@ -80,6 +90,8 @@ class FSM {
     // struct Active{}; is a sub SM
     struct Standing {};
     struct Fallen {};
+
+    static constexpr char TAG[] = "ImuFsm";
 };
 
 } // namespace esphome::smart_signage::imu

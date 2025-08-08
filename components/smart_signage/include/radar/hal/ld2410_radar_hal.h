@@ -5,6 +5,8 @@
 
 #include "log.h"
 
+namespace esphome::smart_signage::radar::hal {
+
 class LD2410RadarHal : public IRadarHal {
   public:
     LD2410RadarHal(HardwareSerial &serial, int8_t rxPin, int8_t txPin)
@@ -47,3 +49,4 @@ class LD2410RadarHal : public IRadarHal {
 
     static constexpr char TAG[] = "RadarHal";
 };
+} // namespace esphome::smart_signage::radar::hal

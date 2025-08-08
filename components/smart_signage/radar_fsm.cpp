@@ -3,13 +3,12 @@
 
 namespace esphome::smart_signage::radar {
 
-FSM::FSM(ctrl::Q &q, IRadarHal &hal, SimpleKalmanFilter &filter)
+FSM::FSM(ctrl::Q &q, hal::IRadarHal &hal, SimpleKalmanFilter &filter)
     : ctrlQ_(q), hal_(hal), filter_(filter) {}
 
-// Guard: replace stub with real init
 bool FSM::isReadyGuard(const CmdSetup &e) {
 
-    LOGI("Initializing hardware...");
+    LOGI("onSetup: Initializing hardware...");
     if (!hal_.init()) {
         LOGE("onSetup: HAL init failed");
         ctrlQ_.post(ctrl::EvtRadarError{});
@@ -20,11 +19,7 @@ bool FSM::isReadyGuard(const CmdSetup &e) {
     return true;
 }
 
-// Action: you might hook up a timer here if needed
-void FSM::onCmdStart(const CmdStart &) {
-    LOGI("onStart: radar polling at %u ms", sampleIntMs_);
-    // esphome timer already running EvtTimerPoll—no change needed
-}
+void FSM::onCmdStart(const CmdStart &) { LOGI("onStart: radar polling at %u ms", sampleIntMs_); }
 
 void FSM::onCmdStop(const CmdStop &) {
     LOGI("onStop: stopping radar");

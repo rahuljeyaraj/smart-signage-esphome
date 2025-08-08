@@ -3,8 +3,9 @@
 #include <esphome/components/number/number.h>
 #include <esphome/components/select/select.h>
 
-#include <SimpleKalmanFilter.h>
+#include "timer/esp_timer.h"
 #include "radar/hal/ld2410_radar_hal.h"
+#include "imu/hal/i2c_imu_hal.h"
 
 #include "ctrl/ctrl_ao.h"
 #include "radar/radar_ao.h"
@@ -31,17 +32,22 @@ class SmartSignage : public Component {
     NVSConfigManager nvsConfigManager_;
     UserIntf         userIntf_;
 
-    /*──────  Hal ──────────────────*/
-    SimpleKalmanFilter filter_;
-    HardwareSerial     radarSerial_;
-    LD2410RadarHal     radarHal_;
-
     /*────── Message queues ────────*/
     ctrl::Q  ctrlQ_;
     radar::Q radarQ_;
     imu::Q   imuQ_;
     led::Q   ledQ_;
     audio::Q audioQ_;
+
+    /*──────  Radar dependencies ────*/
+    SimpleKalmanFilter         filter_;
+    HardwareSerial             radarSerial_;
+    radar::hal::LD2410RadarHal radarHal_;
+
+    /*──────  Imu dependencies ────*/
+    MPU6500             imu_;
+    imu::hal::I2cImuHal imuHal_;
+    timer::EspTimer     imuPollTimer_;
 
     /*────── Finite-state machines ─*/
     ctrl::FSM  ctrlFsm_;
@@ -66,6 +72,9 @@ class SmartSignage : public Component {
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";
+
+  private:
+    static void imuPollCb(void *arg);
 };
 
 } // namespace esphome::smart_signage

@@ -6,6 +6,8 @@ esphome:
     - "https://github.com/ETLCPP/etl.git"
     - "iavorvel/MyLD2410@^1.2.5"
     - "denyssene/SimpleKalmanFilter"
+    - "https://github.com/LiquidCGS/FastIMU.git#1.2.8"
+    - "hideakitai/ArduinoEigen@^0.3.2"
   includes:
     - components\smart_signage\include\
 

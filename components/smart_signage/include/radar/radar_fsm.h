@@ -13,7 +13,7 @@ class FSM {
 
   public:
     // Now take IRadarHal& so we can call into the real driver
-    explicit FSM(ctrl::Q &q, IRadarHal &hal, SimpleKalmanFilter &filter);
+    explicit FSM(ctrl::Q &q, hal::IRadarHal &hal, SimpleKalmanFilter &filter);
 
     auto operator()() noexcept {
         using namespace boost::sml;
@@ -47,8 +47,8 @@ class FSM {
 
     static constexpr char TAG[] = "Radar";
 
-    ctrl::Q   &ctrlQ_;
-    IRadarHal &hal_;
+    ctrl::Q        &ctrlQ_;
+    hal::IRadarHal &hal_;
 
     SimpleKalmanFilter &filter_;
 

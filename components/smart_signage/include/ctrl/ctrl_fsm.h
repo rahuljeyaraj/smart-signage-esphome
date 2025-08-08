@@ -29,13 +29,16 @@ class FSM {
         using namespace boost::sml;
         return make_transition_table(
             // clang-format off
-            *state<Idle>     + event<CmdSetup>      / &Self::onCmdSetup           = state<Setup>
+            *state<Idle>     + event<CmdSetup>          / &Self::onCmdSetup           = state<Setup>
 
-            ,state<Setup>    + event<EvtSetupTimeout>    / &Self::onSetupTimeout       = state<Error>
-            ,state<Setup>    + event<EvtRadarReady> [ &Self::guardRadarReady ]    = state<Ready>
-            ,state<Setup>    + event<EvtImuReady>   [ &Self::guardImuReady   ]    = state<Ready>
-            ,state<Setup>    + event<EvtLedReady>   [ &Self::guardLedReady   ]    = state<Ready>
-            ,state<Setup>    + event<EvtAudioReady> [ &Self::guardAudioReady ]    = state<Ready>
+            // For future, if any interface hangs on setup command we need a timeout (currently not used)
+            ,state<Setup>    + event<EvtSetupTimeout>   / &Self::onSetupTimeout         = state<Error>
+
+            // TODO: Try to make it with just one guard function
+            ,state<Setup>    + event<EvtRadarReady>     [ &Self::guardRadarReady ]      = state<Ready>
+            ,state<Setup>    + event<EvtImuReady>       [ &Self::guardImuReady   ]      = state<Ready>
+            ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]      = state<Ready>
+            ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]      = state<Ready>
 
             ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart           = state<Active>
             ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown        = state<Idle>
