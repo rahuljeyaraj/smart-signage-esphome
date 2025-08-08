@@ -6,6 +6,7 @@
 #include "timer/esp_timer.h"
 #include "radar/hal/ld2410_radar_hal.h"
 #include "imu/hal/i2c_imu_hal.h"
+#include "led/hal/esp_led_hal.h"
 
 #include "ctrl/ctrl_ao.h"
 #include "radar/radar_ao.h"
@@ -40,43 +41,36 @@ class SmartSignage : public Component {
     audio::Q audioQ_;
 
     /*──────  Radar dependencies ────*/
-    SimpleKalmanFilter         filter_;
     HardwareSerial             radarSerial_;
     radar::hal::LD2410RadarHal radarHal_;
-    timer::EspTimer            radarPollTimer_;
+    timer::EspTimer            radarTimer_;
 
     /*──────  Imu dependencies ────*/
     MPU6500             imu_;
     imu::hal::I2cImuHal imuHal_;
-    timer::EspTimer     imuPollTimer_;
+    timer::EspTimer     imuTimer_;
+
+    /*──────  Led dependencies ────*/
+    led::hal::EspLedHal ledHal_;
+    timer::EspTimer     ledTimer_;
 
     /*────── Finite-state machines ─*/
     ctrl::FSM  ctrlFsm_;
-    radar::FSM radarFsm_;
-    imu::FSM   imuFsm_;
-    led::FSM   ledFsm_;
     audio::FSM audioFsm_;
 
     /*────── Loggers ───────────────*/
     FsmLogger ctrlFsmLogger_;
-    FsmLogger radarFsmLogger_;
-    FsmLogger imuFsmLogger_;
-    FsmLogger ledFsmLogger_;
     FsmLogger audioFsmLogger_;
 
     /*────── Active objects/tasks ──*/
-    ctrl::AO  ctrlAo_;
-    radar::AO radarAo_;
-    imu::AO   imuAo_;
-    led::AO   ledAo_;
-    audio::AO audioAo_;
+    ctrl::AO       ctrlAo_;
+    radar::RadarAO radarAo_;
+    imu::ImuAO     imuAo_;
+    led::LedAO     ledAo_;
+    audio::AO      audioAo_;
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";
-
-  private:
-    static void imuPollCb(void *arg);
-    static void radarPollCb(void *arg);
 };
 
 } // namespace esphome::smart_signage

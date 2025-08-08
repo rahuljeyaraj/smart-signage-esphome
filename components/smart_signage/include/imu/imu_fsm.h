@@ -68,6 +68,7 @@ class FSM {
     void onFallenExit();
     void onError();
 
+    // Helper
     uint16_t computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const;
 
     ctrl::Q       &ctrlQ_;

@@ -14,7 +14,7 @@ class FSM {
 
   public:
     // Now take IRadarHal& so we can call into the real driver
-    explicit FSM(ctrl::Q &q, hal::IRadarHal &hal, timer::ITimer &t, SimpleKalmanFilter &f);
+    explicit FSM(ctrl::Q &q, hal::IRadarHal &hal, timer::ITimer &t);
 
     auto operator()() noexcept {
         using namespace boost::sml;
@@ -46,10 +46,10 @@ class FSM {
     void onSetSampleInt(const SetSampleInt &);
     void onError();
 
-    ctrl::Q            &ctrlQ_;
-    hal::IRadarHal     &hal_;
-    timer::ITimer      &timer_;
-    SimpleKalmanFilter &filter_;
+    ctrl::Q           &ctrlQ_;
+    hal::IRadarHal    &hal_;
+    timer::ITimer     &timer_;
+    SimpleKalmanFilter filter_{kMeasurementNoise, kInitialError, kProcessNoise};
 
     uint16_t detDistCm_{kDefaultRangeCm};
     uint32_t sampleIntMs_{kDefaultSampleIntMs};

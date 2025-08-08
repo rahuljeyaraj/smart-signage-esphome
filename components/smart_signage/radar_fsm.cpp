@@ -4,8 +4,7 @@
 
 namespace esphome::smart_signage::radar {
 
-FSM::FSM(ctrl::Q &q, hal::IRadarHal &hal, timer::ITimer &t, SimpleKalmanFilter &f)
-    : ctrlQ_(q), hal_(hal), timer_(t), filter_(f) {}
+FSM::FSM(ctrl::Q &q, hal::IRadarHal &hal, timer::ITimer &t) : ctrlQ_(q), hal_(hal), timer_(t) {}
 
 bool FSM::isReadyGuard(const CmdSetup &e) {
 

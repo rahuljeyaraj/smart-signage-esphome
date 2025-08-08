@@ -74,6 +74,7 @@ void FSM::onFallenExit() {
 
 void FSM::onError() { LOGE("Entered Error state"); }
 
+// Helper
 uint16_t FSM::computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const {
     double dotProd = curAccel.dot(refAccel);
     double magProd = curAccel.norm() * refAccel.norm();

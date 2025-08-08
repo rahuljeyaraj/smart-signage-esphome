@@ -19,12 +19,11 @@ namespace sml = boost::sml;
 template <typename QueueType, typename Functor>
 class ActiveObject {
   public:
-    using EventType = typename QueueType::ItemType; // ← ↑ added *typename*
+    using EventType = typename QueueType::ItemType;
 
     explicit ActiveObject(QueueType &queue, Functor &functor, FsmLogger &fsmLogger,
-        const char *taskName, // only one string now
-        uint32_t stackSize = 2048, UBaseType_t priority = tskIDLE_PRIORITY + 1,
-        BaseType_t coreId = tskNO_AFFINITY)
+        const char *taskName, uint32_t stackSize = 8192,
+        UBaseType_t priority = tskIDLE_PRIORITY + 1, BaseType_t coreId = tskNO_AFFINITY)
         : TAG{taskName}, queue_{queue}, fsm_{functor, fsmLogger} {
         if (xTaskCreatePinnedToCore(&ActiveObject::taskEntry,
                 taskName,
@@ -37,9 +36,8 @@ class ActiveObject {
         }
     }
 
-    bool post(const EventType &e, TickType_t wait = 0) {
-        return queue_.post(e, wait); // forward to queue
-    }
+  protected:
+    QueueType &queue_;
 
   private:
     static void taskEntry(void *pv) { static_cast<ActiveObject *>(pv)->run(); }
@@ -53,10 +51,10 @@ class ActiveObject {
         }
     }
 
-    const char                              *TAG;
-    QueueType                               &queue_;
     sml::sm<Functor, sml::logger<FsmLogger>> fsm_;
-    TaskHandle_t                             taskHandle_{nullptr};
+
+    TaskHandle_t taskHandle_{nullptr};
+    const char  *TAG;
 };
 
 } // namespace esphome::smart_signage
