@@ -1,10 +1,9 @@
-// led_fsm.cpp
 #include "led/led_fsm.h"
 
 namespace esphome::smart_signage::led {
 
 /*──────────────────────── Constructor ───────────────────────*/
-FSM::FSM(ctrl::Q &q) : ctrlQ_(q) { LOGI("LED FSM created"); }
+FSM::FSM(ctrl::Q &q, hal::ILedHal &hal, timer::ITimer &t) : ctrlQ_(q), hal_(hal), timer_(t) {}
 
 /*──────────────────────── Guards ────────────────────────────*/
 bool FSM::isReadyGuard(const CmdSetup &) {

@@ -2,10 +2,10 @@
 #include <etl/variant.h>
 #include "sml.hpp"
 #include "log.h"
-
-#include "ctrl/ctrl_q.h"   // send notifications back to controller
-#include "led/led_event.h" // CmdOn, CmdOff, CmdBreathe, CmdFadeIn …
-                           // EvtFadeInEnd, EvtFadeOutEnd, …
+#include "ctrl/ctrl_q.h"
+#include "led/led_event.h"
+#include "led/hal/iled_hal.h"
+#include "timer/itimer.h"
 
 namespace sml = boost::sml;
 
@@ -16,7 +16,7 @@ class FSM {
     using Self = FSM;
 
   public:
-    explicit FSM(ctrl::Q &q);
+    explicit FSM(ctrl::Q &q, hal::ILedHal &hal, timer::ITimer &t);
 
     /*───────── Sub-SM: Breathing (Low ↔ High) ─────────*/
     struct Breathing {
@@ -83,8 +83,9 @@ class FSM {
     /*───────── Helpers / data ─────────*/
     bool stubHardwareInit(); // returns true when LED HW ready
 
-    static constexpr char TAG[] = "led_fsm";
-    ctrl::Q              &ctrlQ_; // notify controller about state changes
+    ctrl::Q       &ctrlQ_;
+    hal::ILedHal  &hal_;
+    timer::ITimer &timer_;
 
     /*───────── State tags (no data) ─────────*/
     struct Idle {};
@@ -95,6 +96,8 @@ class FSM {
     // struct Breathing {}; Sub states:
     struct Low {};
     struct High {};
+
+    static constexpr char TAG[] = "LedFSm";
 };
 
 /*───────────────────────────────────────────────────────────────*/

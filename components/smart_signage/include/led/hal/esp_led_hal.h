@@ -1,5 +1,5 @@
 #pragma once
-#include "led/hal/iled_hal.h"
+#include "iled_hal.h"
 #include "driver/ledc.h"
 #include "esp_err.h"
 
@@ -14,7 +14,7 @@ namespace esphome::smart_signage::led::hal {
         if ((expr) != ESP_OK) return false;                                                        \
     } while (0)
 
-class EspLedHal : public ILedHAL {
+class EspLedHal : public ILedHal {
   public:
     EspLedHal(int pin, ledc_channel_t channel = LEDC_CHANNEL_0, ledc_timer_t timer = LEDC_TIMER_0,
         ledc_mode_t speedMode = LEDC_LOW_SPEED_MODE, uint32_t freqHz = 5000,
@@ -23,9 +23,12 @@ class EspLedHal : public ILedHAL {
           resolution_(resolution), maxDuty_((1u << resolution) - 1), fadeEndCb_(nullptr),
           fadeEndCbCtx_(nullptr) {}
 
-    bool init(FadeEndCb fadeEndCb = nullptr, void *fadeEndCbCtx = nullptr) override {
-        fadeEndCb_    = fadeEndCb;
-        fadeEndCbCtx_ = fadeEndCbCtx;
+    void setFadeEndCallback(FadeEndCb cb, void *cbCtx) override {
+        fadeEndCb_    = cb;
+        fadeEndCbCtx_ = cbCtx;
+    }
+
+    bool init() override {
 
         RETURN_FALSE_IF_ERR(ledc_fade_func_install(0));
 
@@ -45,7 +48,7 @@ class EspLedHal : public ILedHAL {
         ledc_channel.hpoint                = 0;
         ledc_channel.timer_sel             = timer_;
         ledc_channel.flags.output_invert   = 0;
-        ledc_channel.intr_type             = fadeEndCb ? LEDC_INTR_FADE_END : LEDC_INTR_DISABLE;
+        ledc_channel.intr_type             = fadeEndCb_ ? LEDC_INTR_FADE_END : LEDC_INTR_DISABLE;
         RETURN_FALSE_IF_ERR(ledc_channel_config(&ledc_channel));
 
         if (fadeEndCb_) {

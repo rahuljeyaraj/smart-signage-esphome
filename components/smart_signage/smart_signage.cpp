@@ -30,50 +30,19 @@ namespace esphome::smart_signage {
 // AudioDriver audioDriver(Id::FrontSpeaker, controller, audioHal, logger);
 
 SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
-    // clang-format off
-    /*── Helpers ──*/
-    : nvsConfigManager_{kNVSNamespace}
-    , userIntf_{nvsConfigManager_, ui, configJson}
-
-    /*──────  Radar dependencies ────*/
-    , radarSerial_{1}
-    , radarHal_{radarSerial_, RADAR_RX_PIN, RADAR_TX_PIN}
-    , radarTimer_()
-
-    /*──────  Imu dependencies ────*/
-    , imu_(Wire) //ESP32-S3: (I2C 0/1 = Wire/Wire1), ESP32-C3: (I2C 0 = Wire).
-    , imuHal_(imu_, Wire, MPU6500_DEFAULT_ADDRESS, I2C_SDA_PIN, I2C_SCL_PIN)
-    , imuTimer_()
-
-    , ledHal_(LED0_PIN)
-    , ledTimer_()
-
-    /*── Queues ──*/
-    , ctrlQ_{}
-    , radarQ_{}
-    , imuQ_{}
-    , ledQ_{}
-    , audioQ_{}
-    
-    /*── FSMs ──*/
-    , ctrlFsm_{radarQ_, imuQ_, ledQ_, audioQ_}
-    , ledFsm_{ctrlQ_}
-    , audioFsm_{ctrlQ_}
-
-    /*── Loggers ──*/
-    , ctrlFsmLogger_{"ctrlFsmLogger"}
-    , audioFsmLogger_{"audioFsmLogger"}
-
-    /*── Active objects (tasks) ──*/
-    , radarAo_{radarQ_, ctrlQ_, radarHal_, radarTimer_, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1}
-    , imuAo_    {imuQ_,    ctrlQ_, imuHal_, imuTimer_   "imuTask",      8192, tskIDLE_PRIORITY + 2, 1}
-    , ledAo_    {ledQ_,  ctrlQ_, ledHal_,  ledTimer_   "ledTask",      8192, tskIDLE_PRIORITY + 2, 1}
-    , ctrlAo_   {ctrlQ_,    ctrlFsm_,   ctrlFsmLogger_,     "ctrlTask",     8192, tskIDLE_PRIORITY + 2, 1}
-   
-
-    , audioAo_  {audioQ_,   audioFsm_,  audioFsmLogger_,    "audioTask",    8192, tskIDLE_PRIORITY + 2, 1}
-// clang-format on
-{}
+    : nvsConfigManager_{kNVSNamespace}, userIntf_{nvsConfigManager_, ui, configJson},      //
+      ctrlQ_{}, radarQ_{}, imuQ_{}, ledQ_{}, audioQ_{},                                    //
+      radarSerial_{1}, radarHal_{radarSerial_, RADAR_RX_PIN, RADAR_TX_PIN}, radarTimer_{}, //
+      imu_{Wire}, imuTimer_{},
+      imuHal_{imu_, Wire, MPU6500_DEFAULT_ADDRESS, I2C_SDA_PIN, I2C_SCL_PIN}, //
+      ledHal_{LED0_PIN}, ledTimer_{},                                         //
+      ctrlFsm_{radarQ_, imuQ_, ledQ_, audioQ_}, audioFsm_{ctrlQ_},            //
+      ctrlFsmLogger_{"ctrlFsmLogger"}, audioFsmLogger_{"audioFsmLogger"},
+      ctrlAo_{ctrlQ_, ctrlFsm_, ctrlFsmLogger_, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1},
+      radarAo_{radarQ_, ctrlQ_, radarHal_, radarTimer_, "radarTask", 8192, tskIDLE_PRIORITY + 2, 1},
+      imuAo_{imuQ_, ctrlQ_, imuHal_, imuTimer_, "imuTask", 8192, tskIDLE_PRIORITY + 2, 1},
+      ledAo_{ledQ_, ctrlQ_, ledHal_, ledTimer_, "ledTask", 8192, tskIDLE_PRIORITY + 2, 1},
+      audioAo_{audioQ_, audioFsm_, audioFsmLogger_, "audioTask", 8192, tskIDLE_PRIORITY + 2, 1} {}
 
 void SmartSignage::setup() {
     LOGI("SmartSignage setup");

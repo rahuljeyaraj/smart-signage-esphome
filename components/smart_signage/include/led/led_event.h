@@ -24,8 +24,10 @@ struct CmdBreathe {
 };
 
 // Internal
+struct EvtTimerEnd {};
 struct EvtFadeEnd {};
 
-using Event = etl::variant<CmdSetup, CmdTeardown, CmdOn, CmdOff, CmdBreathe, EvtFadeEnd>;
+using Event =
+    etl::variant<CmdSetup, CmdTeardown, CmdOn, CmdOff, CmdBreathe, EvtTimerEnd, EvtFadeEnd>;
 
 } // namespace esphome::smart_signage::led

@@ -2,15 +2,19 @@
 #include <cstdint>
 
 namespace esphome::smart_signage::led::hal {
-class ILedHAL {
+
+class ILedHal {
   public:
     /// Callback prototype fired when a hardware fade finishes.
-    using FadeEndCb = void (*)(void *userCtx);
+    using FadeEndCb = void (*)(void *cbCtx);
 
-    virtual ~ILedHAL() = default;
+    virtual ~ILedHal() = default;
+
+    /// Register a fade-end callback
+    virtual void setFadeEndCallback(FadeEndCb cb, void *cbCtx) = 0;
 
     /// Initialise the peripheral
-    virtual bool init(FadeEndCb cb = nullptr, void *cbCtx = nullptr) = 0;
+    virtual bool init() = 0;
 
     /// Immediately set brightness [0–100%].
     virtual bool setBrightness(uint8_t percent) = 0;
@@ -24,4 +28,5 @@ class ILedHAL {
     /// Convenience alias for full on.
     virtual bool turnOn() { return setBrightness(100); }
 };
+
 } // namespace esphome::smart_signage::led::hal

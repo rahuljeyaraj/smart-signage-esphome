@@ -4,6 +4,7 @@
 #include "led/led_q.h"
 #include "ctrl/ctrl_q.h"
 #include "led/led_fsm.h"
+#include "led/hal/iled_hal.h"
 #include "timer/itimer.h"
 #include "fsm_logger.h"
 #include "log.h"
@@ -12,14 +13,37 @@
 
 namespace esphome::smart_signage::led {
 
+static const IRAM_ATTR EvtFadeEnd kEvt{};
+
+namespace {
+    static void IRAM_ATTR fadeCbStatic(void *arg) {
+        auto *self = static_cast<Q *>(arg);
+
+        BaseType_t hpTaskWoken = pdFALSE;
+        self->postFromISR(kEvt, &hpTaskWoken);
+
+        if (hpTaskWoken) portYIELD_FROM_ISR();
+    }
+} // namespace
+
 class LedAO : public ActiveObject<Q, FSM> {
   public:
-    explicit LedAO(Q &ownQ, ctrl::Q &ctrlQ, hal::ILedHal &hal, timer::ITimer &timer,
-        const char *taskName, uint32_t stackSize = 8192,
-        UBaseType_t priority = tskIDLE_PRIORITY + 1, BaseType_t coreId = tskNO_AFFINITY)
+    explicit LedAO(                      //
+        Q             &ownQ,             // Our own event queue
+        ctrl::Q       &ctrlQ,            // Reference to controller queue
+        hal::ILedHal  &hal,              // Reference to hardware abstraction layer for LEDs
+        timer::ITimer &timer,            // Reference to software/hardware timer
+        const char    *taskName,         // Name for this task
+        uint32_t       stackSize = 8192, // stackSize
+        UBaseType_t    priority  = tskIDLE_PRIORITY + 1, // priority
+        BaseType_t     coreId    = tskNO_AFFINITY        // coreId
+        )
         : ActiveObject<Q, FSM>(ownQ, fsm_, s_logger, taskName, stackSize, priority, coreId),
-          fsm_(ctrlQ, hal, timer), timer_(timer) {
-        if (!timer_.create(taskName, &LedAO::timerCbStatic, this)) {
+          fsm_(ctrlQ, hal, timer), //
+          timer_(timer)            //
+    {
+        hal.setFadeEndCallback(&fadeCbStatic, &queue_);
+        if (!timer_.create(taskName, &timerCbStatic, this)) {
             LOGE("Failed to create polling timer");
         }
     }
@@ -31,11 +55,10 @@ class LedAO : public ActiveObject<Q, FSM> {
     // single logger shared by all LedAO instances
     inline static FsmLogger s_logger{"LedFSMLog"};
 
-    // static to member trampoline for ITimer
-    static void timerCbStatic(void *arg) { static_cast<LedAO *>(arg)->onTimerCb(); }
-
-    // called in the timer task context: enqueue EvtTimerPoll on led::Q
-    void onTimerCb() { queue_.post(EvtTimerPoll{}); }
+    static void timerCbStatic(void *arg) {
+        auto *self = static_cast<LedAO *>(arg);
+        self->queue_.post(EvtTimerEnd{});
+    }
 
     static constexpr char TAG[] = "LedAO";
 };

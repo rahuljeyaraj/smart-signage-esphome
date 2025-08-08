@@ -12,7 +12,8 @@ namespace esphome::smart_signage {
  * @tparam ItemT       The type of object to store.
  * @tparam QueueLength Number of slots in the queue.
  */
-template <typename ItemT, std::size_t QueueLength> class Queue {
+template <typename ItemT, std::size_t QueueLength>
+class Queue {
     static_assert(QueueLength > 0, "QueueLength must be > 0");
 
   public:
@@ -52,6 +53,13 @@ template <typename ItemT, std::size_t QueueLength> class Queue {
      */
     bool post(const ItemType &item, TickType_t wait = 0) const {
         return handle_ && (xQueueSend(handle_, &item, wait) == pdPASS);
+    }
+
+    /** Enqueue from ISR.  If a task is woken, the caller must
+     *  call portYIELD_FROM_ISR(xHigherPriorityTaskWoken).        */
+    bool IRAM_ATTR postFromISR(const ItemType &item, BaseType_t *hpTaskWoken = nullptr) const {
+        configASSERT(xPortInIsrContext());
+        return handle_ && (xQueueSendFromISR(handle_, &item, hpTaskWoken) == pdPASS);
     }
 
     /**
