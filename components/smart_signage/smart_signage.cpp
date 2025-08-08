@@ -38,6 +38,7 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     /*──────  Radar dependencies ────*/
     , radarSerial_{1}
     , radarHal_{radarSerial_, RADAR_RX_PIN, RADAR_TX_PIN}
+    , radarPollTimer_()
     , filter_{radar::kMeasurementNoise, radar::kInitialError, radar::kProcessNoise}
 
     /*──────  Imu dependencies ────*/
@@ -54,7 +55,7 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
     
     /*── FSMs ──*/
     , ctrlFsm_{radarQ_, imuQ_, ledQ_, audioQ_}
-    , radarFsm_{ctrlQ_, radarHal_, filter_}
+    , radarFsm_{ctrlQ_, radarHal_, radarPollTimer_, filter_}
     , imuFsm_{ctrlQ_, imuHal_, imuPollTimer_}
     , ledFsm_{ctrlQ_}
     , audioFsm_{ctrlQ_}
@@ -75,19 +76,29 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
 // clang-format on
 {
     imuPollTimer_.create("imuPoll", &SmartSignage::imuPollCb, this);
+    radarPollTimer_.create("radarPoll", &SmartSignage::radarPollCb, this);
 }
 
 void SmartSignage::setup() {
     LOGI("SmartSignage setup");
     userIntf_.setup();
     ctrlQ_.post(ctrl::CmdSetup{});
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    ctrlQ_.post(ctrl::CmdStart{});
 }
 void SmartSignage::loop() {}
 void SmartSignage::dump_config() { LOGI("SmartSignage ready"); }
 
 void SmartSignage::imuPollCb(void *arg) {
+    LOGD("Imu timer Poll");
     auto *self = static_cast<SmartSignage *>(arg);
     self->imuQ_.post(imu::EvtTimerPoll{});
+}
+
+void SmartSignage::radarPollCb(void *arg) {
+    LOGD("Radar timer Poll");
+    auto *self = static_cast<SmartSignage *>(arg);
+    self->radarQ_.post(radar::EvtTimerPoll{});
 }
 
 } // namespace esphome::smart_signage

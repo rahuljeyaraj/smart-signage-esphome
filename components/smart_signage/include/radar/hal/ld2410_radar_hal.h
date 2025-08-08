@@ -14,7 +14,6 @@ class LD2410RadarHal : public IRadarHal {
 
     bool init() override {
         serial_.begin(256000, SERIAL_8N1, rxPin_, txPin_);
-        while (!serial_) {}
         LOGD("Serial started on RX=%d, TX=%d", rxPin_, txPin_);
 
         auto resp = radar_.begin();

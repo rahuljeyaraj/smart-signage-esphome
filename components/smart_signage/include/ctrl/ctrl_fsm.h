@@ -29,33 +29,33 @@ class FSM {
         using namespace boost::sml;
         return make_transition_table(
             // clang-format off
-            *state<Idle>     + event<CmdSetup>          / &Self::onCmdSetup           = state<Setup>
+            *state<Idle>     + event<CmdSetup>          / &Self::onCmdSetup         = state<Setup>
 
             // For future, if any interface hangs on setup command we need a timeout (currently not used)
-            ,state<Setup>    + event<EvtSetupTimeout>   / &Self::onSetupTimeout         = state<Error>
+            ,state<Setup>    + event<EvtSetupTimeout>   / &Self::onSetupTimeout     = state<Error>
 
             // TODO: Try to make it with just one guard function
-            ,state<Setup>    + event<EvtRadarReady>     [ &Self::guardRadarReady ]      = state<Ready>
-            ,state<Setup>    + event<EvtImuReady>       [ &Self::guardImuReady   ]      = state<Ready>
-            ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]      = state<Ready>
-            ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]      = state<Ready>
+            ,state<Setup>    + event<EvtRadarReady>     [ &Self::guardRadarReady ]  = state<Ready>
+            ,state<Setup>    + event<EvtImuReady>       [ &Self::guardImuReady   ]  = state<Ready>
+            ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]  = state<Ready>
+            ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]  = state<Ready>
 
-            ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart           = state<Active>
-            ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown        = state<Idle>
+            ,state<Ready>    + event<CmdStart>          / &Self::onCmdStart         = state<Active>
+            ,state<Ready>    + event<CmdTeardown>       / &Self::onCmdTeardown      = state<Idle>
 
-            ,state<Active>   + event<CmdStop>       / &Self::onCmdStop            = state<Ready>
-            ,state<Active>   + event<EvtSessionEnd> / &Self::onSessionEnd         = state<Idle>
-            ,state<Active>   + event<EvtRadarData>  / &Self::onEvtRadarData       = state<Active>
-            ,state<Active>   + event<EvtImuFell>    / &Self::onEvtImuFell         = state<Fallen>
+            ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData
+            ,state<Active>   + event<CmdStop>           / &Self::onCmdStop          = state<Ready>
+            ,state<Active>   + event<EvtSessionEnd>     / &Self::onSessionEnd       = state<Idle>
+            ,state<Active>   + event<EvtImuFell>        / &Self::onEvtImuFell       = state<Fallen>
 
-            ,state<Fallen>   + event<EvtImuRose>    / &Self::onEvtImuRose         = state<Active>
+            ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
 
-            ,state<_>        + event<EvtRadarError>                               = state<Error>
-            ,state<_>        + event<EvtImuError>                                 = state<Error>
-            ,state<_>        + event<EvtLedError>                                 = state<Error>
-            ,state<_>        + event<EvtAudioError>                               = state<Error>
+            ,state<_>        + event<EvtRadarError>                                 = state<Error>
+            ,state<_>        + event<EvtImuError>                                   = state<Error>
+            ,state<_>        + event<EvtLedError>                                   = state<Error>
+            ,state<_>        + event<EvtAudioError>                                 = state<Error>
 
-            ,state<Error>    + on_entry<_>          / &Self::onError
+            ,state<Error>    + on_entry<_>              / &Self::onError
             // clang-format on
         );
     }

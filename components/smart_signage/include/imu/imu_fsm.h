@@ -27,8 +27,8 @@ class FSM {
                 // clang-format off
                 *state<Standing> + event<EvtTimerPoll> [  wrap(&Self::isFallenGuard) ]  = state<Fallen>
                 ,state<Fallen>   + event<EvtTimerPoll> [ !wrap(&Self::isFallenGuard) ]  = state<Standing>
-                ,state<Fallen>   + sml::on_entry<_>         / &Self::onFallenEntry
-                ,state<Fallen>   + sml::on_exit<_>          / &Self::onFallenExit
+                ,state<Fallen>   + sml::on_entry<_>    / &Self::onFallenEntry
+                ,state<Fallen>   + sml::on_exit<_>     / &Self::onFallenExit
                 // clang-format on
             );
         }
@@ -38,15 +38,15 @@ class FSM {
         using namespace sml;
         return make_transition_table(
             // clang-format off
-            *state<Idle>     + event<CmdSetup>      [ &Self::isReadyGuard ]          = state<Ready>
-            ,state<Idle>     + event<CmdSetup>                                       = state<Error>
-            ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart              = state<Active>
-            ,state<Active>   + event<CmdStop>       / &Self::onCmdStop               = state<Ready>
-            ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown           = state<Idle>
+            *state<Idle>     + event<CmdSetup>      [ &Self::isReadyGuard ]     = state<Ready>
+            ,state<Idle>     + event<CmdSetup>                                  = state<Error>
+            ,state<Ready>    + event<CmdStart>      / &Self::onCmdStart         = state<Active>
+            ,state<Active>   + event<CmdStop>       / &Self::onCmdStop          = state<Ready>
+            ,state<Ready>    + event<CmdTeardown>   / &Self::onCmdTeardown      = state<Idle>
             ,state<_>        + event<SetFallAngle>  / &Self::onSetFallAngle
             ,state<_>        + event<SetConfirmCnt> / &Self::onSetConfirmCnt
             ,state<_>        + event<SetSampleInt>  / &Self::onSetSampleInt
-            ,state<Error>    + sml::on_entry<_>          / &Self::onError
+            ,state<Error>    + sml::on_entry<_>     / &Self::onError
             // clang-format on
         );
     }

@@ -1,6 +1,7 @@
 #pragma once
 #include "FastIMU.h"
 #include "iimu_hal.h"
+#include "log.h"
 
 namespace esphome::smart_signage::imu::hal {
 
@@ -13,7 +14,13 @@ class I2cImuHal : public IImuHal {
 
     bool init() override {
         wire_.begin(sda_pin_, scl_pin_);
-        if (imu_.init(calib_, address_) == 0) isInitDone_ = true;
+        if (imu_.init(calib_, address_) == 0) {
+            isInitDone_ = true;
+            LOGD("IMU init succeeded (addr=0x%02X)", address_);
+        } else {
+            isInitDone_ = false;
+            LOGE("IMU init FAILED (addr=0x%02X)", address_);
+        }
         return isInitDone_;
     }
 
@@ -64,6 +71,8 @@ class I2cImuHal : public IImuHal {
     int      scl_pin_;
     calData  calib_;
     bool     isInitDone_{false};
+
+    static constexpr char TAG[] = "ImuHal";
 };
 
 } // namespace esphome::smart_signage::imu::hal

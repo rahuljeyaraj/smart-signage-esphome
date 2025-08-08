@@ -36,19 +36,16 @@ bool FSM::isFallenGuard(const EvtTimerPoll &e) {
 
 // Actions
 void FSM::onCmdStart(const CmdStart &e) {
-    LOGI("onCmdStart()");
+    LOGD("onStart: imu polling at %u ms", sampleIntMs_);
     // Save reference acceration vector
     refAcc_ = hal_.getAccel();
     // Clear isfallen state
     isFallenDebounce_.add(false);
     // Starts the timer
-    timer_.startPeriodic(uint64_t(sampleIntMs_) * 1000ULL);
+    // timer_.startPeriodic(uint64_t(sampleIntMs_) * 1000ULL);
 }
 
-void FSM::onCmdStop(const CmdStop &e) {
-    LOGI("onCmdStop()");
-    timer_.stop();
-}
+void FSM::onCmdStop(const CmdStop &e) { timer_.stop(); }
 
 void FSM::onCmdTeardown(const CmdTeardown &e) {
     LOGI("onCmdTeardown()");

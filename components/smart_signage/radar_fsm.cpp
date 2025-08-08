@@ -3,8 +3,8 @@
 
 namespace esphome::smart_signage::radar {
 
-FSM::FSM(ctrl::Q &q, hal::IRadarHal &hal, SimpleKalmanFilter &filter)
-    : ctrlQ_(q), hal_(hal), filter_(filter) {}
+FSM::FSM(ctrl::Q &q, hal::IRadarHal &hal, timer::ITimer &t, SimpleKalmanFilter &f)
+    : ctrlQ_(q), hal_(hal), timer_(t), filter_(f) {}
 
 bool FSM::isReadyGuard(const CmdSetup &e) {
 
@@ -19,18 +19,17 @@ bool FSM::isReadyGuard(const CmdSetup &e) {
     return true;
 }
 
-void FSM::onCmdStart(const CmdStart &) { LOGI("onStart: radar polling at %u ms", sampleIntMs_); }
-
-void FSM::onCmdStop(const CmdStop &) {
-    LOGI("onStop: stopping radar");
-    // esphome teardown will stop EvtTimerPoll events
+void FSM::onCmdStart(const CmdStart &) {
+    LOGD("onStart: radar polling at %u ms", sampleIntMs_);
+    // Starts the timer
+    timer_.startPeriodic(uint64_t(sampleIntMs_) * 1000ULL);
 }
 
-void FSM::onCmdTeardown(const CmdTeardown &) { LOGI("onTeardown: tearing down radar"); }
+void FSM::onCmdStop(const CmdStop &) { timer_.stop(); }
 
-// **Core polling action**: replace stub with HAL + filter + threshold
+void FSM::onCmdTeardown(const CmdTeardown &) { timer_.stop(); }
+
 void FSM::onEvtTimerPoll(const EvtTimerPoll &) {
-    LOGI("onPoll: maxDist=%u cm, interval=%u ms", detDistCm_, sampleIntMs_);
     if (!hal_.hasNewData()) { LOGW("No new radar data"); }
 
     uint16_t raw    = hal_.getDistance();
@@ -38,8 +37,8 @@ void FSM::onEvtTimerPoll(const EvtTimerPoll &) {
     auto     filt   = static_cast<uint16_t>(filter_.updateEstimate(raw) + 0.5f);
     bool     detect = pres && (filt <= detDistCm_);
 
-    LOGI("raw=%u filtered=%u detected=%s", raw, filt, detect ? "YES" : "NO");
-    ctrlQ_.post(ctrl::EvtRadarData{detect, filt});
+    LOGD("raw=%u filtered=%u detected=%s", raw, filt, detect ? "YES" : "NO");
+    ctrlQ_.post(ctrl::EvtRadarData{detect, filt, xTaskGetTickCount()});
 }
 
 void FSM::onSetDist(const SetRangeCm &c) {

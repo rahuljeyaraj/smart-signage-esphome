@@ -43,6 +43,7 @@ class SmartSignage : public Component {
     SimpleKalmanFilter         filter_;
     HardwareSerial             radarSerial_;
     radar::hal::LD2410RadarHal radarHal_;
+    timer::EspTimer            radarPollTimer_;
 
     /*──────  Imu dependencies ────*/
     MPU6500             imu_;
@@ -75,6 +76,7 @@ class SmartSignage : public Component {
 
   private:
     static void imuPollCb(void *arg);
+    static void radarPollCb(void *arg);
 };
 
 } // namespace esphome::smart_signage
