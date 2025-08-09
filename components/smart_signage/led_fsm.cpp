@@ -2,68 +2,94 @@
 
 namespace esphome::smart_signage::led {
 
-/* ctor */
 FSM::FSM(ctrl::Q &ctrlQ, hal::ILedHal &hal, timer::ITimer &timer)
     : ctrlQ_(ctrlQ), hal_(hal), timer_(timer) {}
 
-/* guards */
-bool FSM::hwInitGuard(const CmdSetup &) {
-    LOGI("LED setup: init HAL");
-    if (!hal_.init()) {
-        LOGE("LED setup: HAL init failed");
-        ctrlQ_.post(ctrl::EvtLedError{}); // This is fail action, move it to a action fn
-        return false;
-    }
-    ctrlQ_.post(ctrl::EvtLedReady{}); // This is success action, move it to a action fn
-    LOGI("LED setup: success");
-    return true;
+bool FSM::tryInitHal(const CmdSetup &) { return hal_.init(); }
+
+bool FSM::breathUpGuard(const EvtTimerEnd &) const {
+    return (!breath_.finite) || (breath_.cntLeft > 0);
 }
 
-bool FSM::breatheUpGuard(const EvtFadeEnd &) {
-    if (!breathCfg_.finite) return true;
-    return --breathCfg_.cntLeft > 0;
+void FSM::onSetupOk(const CmdSetup &) {
+    ctrlQ_.post(ctrl::EvtLedReady{});
+    LOGI("setup ok");
 }
 
-/* top-level actions */
+void FSM::onSetupFail(const CmdSetup &) {
+    ctrlQ_.post(ctrl::EvtLedError{});
+    LOGE("setup fail");
+}
+
 void FSM::onTeardown(const CmdTeardown &) {
     hal_.turnOff();
-    LOGI("LED teardown -> Idle");
+    breath_ = BreathCfg{};
+    LOGI("teardown");
 }
 
-void FSM::onError() { LOGE("LED Error state"); }
+void FSM::onError() {
+    LOGE("error");
+    hal_.turnOff();
+    breath_ = BreathCfg{};
+}
 
 void FSM::onCmdOn(const CmdOn &cmd) {
-    hal_.setBrightness(cmd.brightPct);
-    LOGI("LED On %u%%", (unsigned) cmd.brightPct);
+    breath_ = BreathCfg{};
+    LOGI("on %lu%%", cmd.brightPct);
+    hal_.setBrightness(static_cast<uint8_t>(cmd.brightPct));
 }
 
 void FSM::onEnterOff() {
     hal_.turnOff();
-    LOGI("LED off");
+    LOGI("off");
 }
 
-void FSM::setBreathParams(const CmdBreathe &cmd) {
-    breathCfg_.brightPct = cmd.brightPct;
-    breathCfg_.fadeInMs  = cmd.fadeInMs;
-    breathCfg_.fadeOutMs = cmd.fadeOutMs;
-    breathCfg_.cntLeft   = cmd.cnt;
-    breathCfg_.finite    = cmd.cnt > 0;
-    // LOGI("Breath: %u%%, in: %u ms, out: %u ms, cycles: ");
+void FSM::setBreatheParams(const CmdBreathe &cmd) {
+    breath_.brightPct  = static_cast<uint8_t>(cmd.brightPct);
+    breath_.toHighMs   = cmd.toHighMs;
+    breath_.holdHighMs = cmd.holdHighMs;
+    breath_.toLowMs    = cmd.toLowMs;
+    breath_.holdLowMs  = cmd.holdLowMs;
+    breath_.cntLeft    = cmd.cnt;
+    breath_.finite     = cmd.cnt > 0;
+
+    LOGI("breathe bright=%hhu%% toHigh=%hu holdHigh=%hu toLow=%hu holdLow=%hu cnt=%hu%s",
+        breath_.brightPct,
+        breath_.toHighMs,
+        breath_.holdHighMs,
+        breath_.toLowMs,
+        breath_.holdLowMs,
+        breath_.cntLeft,
+        breath_.finite ? "" : " inf");
 }
 
 void FSM::onBreatheUpEntry() {
-    LOGI("onBreatheUpEntry");
-    hal_.fadeTo(breathCfg_.brightPct, breathCfg_.fadeInMs);
+    hal_.fadeTo(breath_.brightPct, breath_.toHighMs);
+    LOGD("enter up -> %hhu%% in %hu ms", breath_.brightPct, breath_.toHighMs);
+}
+
+void FSM::onHoldHighEntry() {
+    const uint64_t us = static_cast<uint64_t>(breath_.holdHighMs) * 1000ULL;
+    timer_.startOnce(us);
+    LOGD("enter holdHigh %hu ms", breath_.holdHighMs);
 }
 
 void FSM::onBreatheDownEntry() {
-    LOGI("onBreatheDownEntry");
-    hal_.fadeTo(0, breathCfg_.fadeOutMs);
+    hal_.fadeTo(0, breath_.toLowMs);
+    LOGD("enter down -> 0 in %hu ms", breath_.toLowMs);
 }
 
-void FSM::onBreatheExit() {
+void FSM::onHoldLowEntry() {
+    if (breath_.finite) --breath_.cntLeft;
+    const uint64_t us = static_cast<uint64_t>(breath_.holdLowMs) * 1000ULL;
+    timer_.startOnce(us);
+    LOGD("enter holdLow %hu ms", breath_.holdLowMs);
+}
+
+void FSM::finishBreathe(const EvtTimerEnd &) {
     ctrlQ_.post(ctrl::EvtLedDone{});
-    LOGD("Breathe completed");
+    LOGI("breathe done");
+    breath_ = BreathCfg{};
 }
 
 } // namespace esphome::smart_signage::led
