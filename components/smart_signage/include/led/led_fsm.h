@@ -1,9 +1,8 @@
 #pragma once
-#include <etl/variant.h>
 #include "sml.hpp"
 #include "log.h"
 #include "ctrl/ctrl_q.h"
-#include "led/led_event.h"
+#include "led/led_event.h" // CmdSetup, CmdTeardown, CmdOn, CmdOff, CmdBreathe, EvtFadeEnd
 #include "led/hal/iled_hal.h"
 #include "timer/itimer.h"
 
@@ -11,94 +10,102 @@ namespace sml = boost::sml;
 
 namespace esphome::smart_signage::led {
 
-/*──────────────────────────  LED FSM  ──────────────────────────*/
 class FSM {
     using Self = FSM;
 
   public:
-    explicit FSM(ctrl::Q &q, hal::ILedHal &hal, timer::ITimer &t);
+    FSM(ctrl::Q &ctrlQ, hal::ILedHal &hal, timer::ITimer &timer);
 
-    /*───────── Sub-SM: Breathing (Low ↔ High) ─────────*/
-    struct Breathing {
+    /*──────── Ready: Off | On | Breath(sub-SM) ─────*/
+
+    struct Breathe {
         auto operator()() const noexcept {
             using namespace sml;
             return make_transition_table(
-                // clang-format off
-                *state<Low>  + event<EvtFadeEnd>  / &Self::onFadeInEnd  = state<High>,
-                 state<High> + event<EvtFadeEnd> / &Self::onFadeOutEnd = state<Low>
                 // clang-format on
-            );
+                *state<BreatheUp> + sml::on_entry<_> / &Self::onBreatheUpEntry,
+                state<BreatheDown> + sml::on_entry<_> / &Self::onBreatheDownEntry,
+                state<BreatheUp> + event<EvtFadeEnd>                          = state<BreatheDown>,
+                state<BreatheDown> + event<EvtFadeEnd>[&Self::breatheUpGuard] = state<BreatheUp>,
+                state<BreatheDown> + event<EvtFadeEnd>                        = state<Off>);
+            // clang-format on
         }
     };
 
-    /*───────── Sub-SM: Ready modes ─────────*/
     struct Ready {
         auto operator()() const noexcept {
             using namespace sml;
             return make_transition_table(
-                // clang-format off
-                *state<Off> + event<CmdOn>      / &Self::onCmdOn      = state<Solid>,
-                state<Off> + event<CmdBreathe> / &Self::onCmdBreathe = state<Breathing>,
-
-                // wildcard handles everything else, but avoids exit/entry when redundant
-                state<_>   + event<CmdOn>      / &Self::onCmdOn      = state<Solid>,
-                state<_>   + event<CmdBreathe> / &Self::onCmdBreathe = state<Breathing>,
-                state<_>   + event<CmdOff>     / &Self::onCmdOff     = state<Off>
+                // clang-format on
+                *state<Off> + sml::on_entry<_> / &Self::onEnterOff,
+                state<_> + event<CmdOff>                                = state<Off>,
+                state<_> + event<CmdOn> / &Self::onCmdOn                = state<On>,
+                state<Off> + event<CmdBreathe> / &Self::setBreathParams = state<Breathe>,
+                state<On> + event<CmdBreathe> / &Self::setBreathParams  = state<Breathe>,
+                state<Breathe> + event<CmdBreathe> / &Self::setBreathParams,
+                state<Breathe> + sml::on_exit<_> / &Self::onBreatheExit
                 // clang-format on
             );
         }
     };
 
-    /*───────── Top-level SM ─────────*/
     auto operator()() noexcept {
         using namespace sml;
         return make_transition_table(
-            // clang-format off
-            *state<Idle>  + event<CmdSetup>     [ &Self::isReadyGuard ]  = state<Ready>,
-             state<Idle>  + event<CmdSetup>                              = state<Error>,
-             state<Ready> + event<CmdTeardown>  / &Self::onCmdTeardown   = state<Idle>,
-             state<Error> + sml::on_entry<_>    / &Self::onError
-            // clang-format on
-        );
+            *state<Idle> + event<CmdSetup>[&Self::hwInitGuard]    = state<Ready>,
+            state<Idle> + event<CmdSetup>                         = state<Error>,
+            state<Ready> + event<CmdTeardown> / &Self::onTeardown = state<Idle>,
+            state<Error> + sml::on_entry<_> / &Self::onError);
     }
 
   private:
-    /*───────── Guards ─────────*/
-    bool isReadyGuard(const CmdSetup &);
+    /*── Tags ─*/
+    struct Idle {};
+    struct Error {};
+    struct Off {};
+    struct On {};
+    struct Breath {};
+    struct BreatheUp {};
+    struct BreatheDown {};
+    // (Future: struct StayUp {}; struct StayDown {};)
 
-    /*───────── Actions ─────────*/
-    void onCmdSetup(const CmdSetup &);
-    void onCmdTeardown(const CmdTeardown &);
+    /*── Breath runtime config ─*/
+    struct BreathCfg {
+        uint8_t  brightPct{100};
+        uint16_t fadeInMs{0};
+        uint16_t fadeOutMs{0};
+        uint16_t cntLeft{0};
+        bool     finite{false};
+    };
 
-    void onCmdOn(const CmdOn &);
-    void onCmdOff(const CmdOff &);
-    void onCmdBreathe(const CmdBreathe &);
+    /*── Guards (decl only) ─*/
+    bool hwInitGuard(const CmdSetup &);
+    bool breatheUpGuard(const EvtFadeEnd &);
 
-    void onFadeInEnd(const EvtFadeEnd &);
-    void onFadeOutEnd(const EvtFadeEnd &);
-
-    /*───────── Error handler ─────────*/
+    /*── Actions (decl only) ─*/
+    void onTeardown(const CmdTeardown &);
     void onError();
 
-    /*───────── Helpers / data ─────────*/
-    bool stubHardwareInit(); // returns true when LED HW ready
+    void onCmdOn(const CmdOn &cmd);
 
+    void onEnterOff();
+
+    void setBreathParams(const CmdBreathe &cmd);
+
+    // void finishBreathe(const EvtFadeEnd &); // Last Down finished → Off + notify
+
+    // Entry hooks start fades
+    void onBreatheUpEntry();
+    void onBreatheDownEntry();
+    void onBreatheExit();
+
+    /*── Deps & data ─*/
     ctrl::Q       &ctrlQ_;
     hal::ILedHal  &hal_;
     timer::ITimer &timer_;
+    BreathCfg      breathCfg_;
 
-    /*───────── State tags (no data) ─────────*/
-    struct Idle {};
-    struct Error {};
-    // struct Ready {}; Sub states:
-    struct Off {};
-    struct Solid {};
-    // struct Breathing {}; Sub states:
-    struct Low {};
-    struct High {};
-
-    static constexpr char TAG[] = "LedFSm";
+    static constexpr char TAG[] = "LedFsm";
 };
 
-/*───────────────────────────────────────────────────────────────*/
 } // namespace esphome::smart_signage::led

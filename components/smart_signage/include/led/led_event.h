@@ -18,9 +18,11 @@ struct CmdBreathe {
     uint32_t brightPct;
     uint16_t fadeInMs;
     uint16_t fadeOutMs;
-    uint16_t maxCycles;
-    CmdBreathe(uint32_t p, uint16_t in, uint16_t out, uint16_t cycles)
-        : brightPct(etl::clamp(p, kMinBrightPct, kMaxBrightPct)) {}
+    uint16_t cnt;
+
+    CmdBreathe(uint32_t p, uint16_t in, uint16_t out, uint16_t n)
+        : brightPct(etl::clamp<uint32_t>(p, kMinBrightPct, kMaxBrightPct)), fadeInMs(in),
+          fadeOutMs(out), cnt(n) {}
 };
 
 // Internal

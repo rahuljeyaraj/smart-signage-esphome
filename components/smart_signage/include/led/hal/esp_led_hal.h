@@ -2,6 +2,7 @@
 #include "iled_hal.h"
 #include "driver/ledc.h"
 #include "esp_err.h"
+#include "log.h"
 
 namespace esphome::smart_signage::led::hal {
 
@@ -69,6 +70,7 @@ class EspLedHal : public ILedHal {
     bool turnOff() override { return ledc_stop(speedMode_, channel_, 0) == ESP_OK; }
 
     bool fadeTo(uint8_t targetPercent, uint32_t durationMs) override {
+        LOGD("Fade to %u%% in %u ms", targetPercent, durationMs);
         uint32_t duty = calcDuty(targetPercent, maxDuty_);
         RETURN_FALSE_IF_ERR(ledc_set_fade_with_time(speedMode_, channel_, duty, durationMs));
         RETURN_FALSE_IF_ERR(ledc_fade_start(speedMode_, channel_, LEDC_FADE_NO_WAIT));
