@@ -14,14 +14,14 @@ class LD2410RadarHal : public IRadarHal {
 
     bool init() override {
         serial_.begin(256000, SERIAL_8N1, rxPin_, txPin_);
-        LOGD("Serial started on RX=%d, TX=%d", rxPin_, txPin_);
+        SS_LOGD("Serial started on RX=%d, TX=%d", rxPin_, txPin_);
 
         auto resp = radar_.begin();
         if (resp != MyLD2410::Response::ACK) {
-            LOGE("radar.begin() returned %d", static_cast<int>(resp));
+            SS_LOGE("radar.begin() returned %d", static_cast<int>(resp));
             return false;
         }
-        LOGD("Radar init OK");
+        SS_LOGD("Radar init OK");
         return true;
     }
 

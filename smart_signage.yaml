@@ -1,21 +1,32 @@
 esphome:
   name: smart-signage
   platformio_options:
+    platform: espressif32@6.9.0
     lib_ldf_mode: deep
+    board_build.filesystem: littlefs
+    board_build.partitions: "large_spiffs_8MB.csv"
+    build_flags:
+      - -DCORE_DEBUG_LEVEL=2        # lower noise to help audio quality
+      - -Wno-unused-variable
+      - -Wno-unused-but-set-variable
+      - -Wno-unused-function
+      - -Wno-format-extra-args
+    
   libraries:
     - "https://github.com/ETLCPP/etl.git"
     - "iavorvel/MyLD2410@^1.2.5"
     - "denyssene/SimpleKalmanFilter"
     - "https://github.com/LiquidCGS/FastIMU.git#1.2.8"
     - "hideakitai/ArduinoEigen@^0.3.2"
+    - "https://github.com/pschatzmann/arduino-audio-tools.git"
+    - "https://github.com/pschatzmann/arduino-libhelix.git"
   includes:
-    - components\smart_signage\include\
+    - components/smart_signage/include/
 
 
 esp32:
   board: seeed_xiao_esp32s3
   flash_size: 8MB
-  # partitions: "custom_partitions.csv"
   framework:
     type: arduino
     # components:
@@ -24,7 +35,7 @@ esp32:
 
 
 logger:
-  level: INFO
+  level: DEBUG
 
 # Enable Home Assistant API
 # api:

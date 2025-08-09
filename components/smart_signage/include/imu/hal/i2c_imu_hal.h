@@ -16,10 +16,10 @@ class I2cImuHal : public IImuHal {
         wire_.begin(sda_pin_, scl_pin_);
         if (imu_.init(calib_, address_) == 0) {
             isInitDone_ = true;
-            LOGD("IMU init succeeded (addr=0x%02X)", address_);
+            SS_LOGD("IMU init succeeded (addr=0x%02X)", address_);
         } else {
             isInitDone_ = false;
-            LOGE("IMU init FAILED (addr=0x%02X)", address_);
+            SS_LOGE("IMU init FAILED (addr=0x%02X)", address_);
         }
         return isInitDone_;
     }

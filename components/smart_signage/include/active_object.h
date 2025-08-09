@@ -32,7 +32,7 @@ class ActiveObject {
                 priority,
                 &taskHandle_,
                 coreId) != pdPASS) {
-            LOGE("Task creation failed");
+            SS_LOGE("Task creation failed");
         }
     }
 

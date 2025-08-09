@@ -44,7 +44,7 @@ class LedAO : public ActiveObject<Q, FSM> {
     {
         hal.setFadeEndCallback(&fadeCbStatic, &queue_);
         if (!timer_.create(taskName, &timerCbStatic, this)) {
-            LOGE("Failed to create polling timer");
+            SS_LOGE("Failed to create polling timer");
         }
     }
 

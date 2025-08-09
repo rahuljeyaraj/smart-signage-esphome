@@ -10,13 +10,13 @@ FSM::FSM(ctrl::Q &q, hal::IImuHal &hal, timer::ITimer &t) : ctrlQ_(q), hal_(hal)
 
 // Guard:
 bool FSM::isReadyGuard(const CmdSetup &e) {
-    LOGI("onSetup: initializing hardware...");
+    SS_LOGI("onSetup: initializing hardware...");
     if (!hal_.init()) {
-        LOGE("onSetup: hardware init failed");
+        SS_LOGE("onSetup: hardware init failed");
         ctrlQ_.post(ctrl::EvtImuError{});
         return false;
     }
-    LOGI("onSetup: success");
+    SS_LOGI("onSetup: success");
     ctrlQ_.post(ctrl::EvtImuReady{});
     return true;
 }
@@ -26,14 +26,14 @@ bool FSM::isFallenGuard(const EvtTimerPoll &e) {
     Vector   acc      = hal_.getAccel();
     uint16_t tiltDeg  = computeTiltAngle(acc, refAcc_);
     bool     isFallen = tiltDeg >= fallAngleDeg_;
-    LOGD("fall angle: %u, curr angle: %u ", fallAngleDeg_, tiltDeg);
+    SS_LOGD("fall angle: %u, curr angle: %u ", fallAngleDeg_, tiltDeg);
     isFallenDebounce_.add(isFallen);
     return isFallenDebounce_.is_set();
 }
 
 // Actions
 void FSM::onCmdStart(const CmdStart &e) {
-    LOGD("onStart: imu polling at %u ms", sampleIntMs_);
+    SS_LOGD("onStart: imu polling at %u ms", sampleIntMs_);
     hal_.read();
     refAcc_ = hal_.getAccel();                              // Save reference acceration vector
     isFallenDebounce_.add(false);                           // Clear isfallen state
@@ -43,36 +43,36 @@ void FSM::onCmdStart(const CmdStart &e) {
 void FSM::onCmdStop(const CmdStop &e) { timer_.stop(); }
 
 void FSM::onCmdTeardown(const CmdTeardown &e) {
-    LOGI("onCmdTeardown()");
+    SS_LOGI("onCmdTeardown()");
     timer_.stop();
 }
 
 void FSM::onSetFallAngle(const SetFallAngle &e) {
     fallAngleDeg_ = e.deg;
-    LOGI("onSetFallAngle(): %u°", fallAngleDeg_);
+    SS_LOGI("onSetFallAngle(): %u°", fallAngleDeg_);
 }
 
 void FSM::onSetConfirmCnt(const SetConfirmCnt &e) {
     confirmCnt_ = e.cnt;
-    LOGI("onSetConfirmCnt(): %u", confirmCnt_);
+    SS_LOGI("onSetConfirmCnt(): %u", confirmCnt_);
 }
 
 void FSM::onSetSampleInt(const SetSampleInt &e) {
     sampleIntMs_ = e.ms;
-    LOGI("onSetSampleInt(): %u ms", sampleIntMs_);
+    SS_LOGI("onSetSampleInt(): %u ms", sampleIntMs_);
 }
 
 void FSM::onFallenEntry() {
-    LOGI("Is fallen");
+    SS_LOGI("Is fallen");
     ctrlQ_.post(ctrl::EvtImuFell{}, portMAX_DELAY); // Blocking
 }
 
 void FSM::onFallenExit() {
-    LOGI("Is upright");
+    SS_LOGI("Is upright");
     ctrlQ_.post(ctrl::EvtImuRose{}, portMAX_DELAY); // Blocking
 }
 
-void FSM::onError() { LOGE("Entered Error state"); }
+void FSM::onError() { SS_LOGE("Entered Error state"); }
 
 // Helper
 uint16_t FSM::computeTiltAngle(const Vector &curAccel, const Vector &refAccel) const {

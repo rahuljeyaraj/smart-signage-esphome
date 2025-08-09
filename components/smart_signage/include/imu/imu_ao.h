@@ -20,7 +20,7 @@ class ImuAO : public ActiveObject<Q, FSM> {
         : ActiveObject<Q, FSM>(ownQ, fsm_, s_logger, taskName, stackSize, priority, coreId),
           fsm_(ctrlQ, hal, timer), timer_(timer) {
         if (!timer_.create(taskName, &ImuAO::timerCbStatic, this)) {
-            LOGE("Failed to create polling timer");
+            SS_LOGE("Failed to create polling timer");
         }
     }
 

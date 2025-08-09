@@ -39,12 +39,12 @@ bool UserIntf::setup() {
 bool UserIntf::parseConfig() {
     DeserializationError err = deserializeJson(configJsondoc_, configJsonstr_);
     if (err) {
-        LOGE("Config Json parse failed: %s", err.c_str());
+        SS_LOGE("Config Json parse failed: %s", err.c_str());
         return false;
     }
     JsonArray profiles = configJsondoc_["profiles"].as<JsonArray>();
     if (profiles.isNull() || profiles.size() == 0) {
-        LOGE("No profiles found in JSON!");
+        SS_LOGE("No profiles found in JSON!");
         return false;
     }
     return true;
@@ -108,31 +108,31 @@ void UserIntf::registerCallbacks() {
 //  UI callbacks
 // ───────────────────────────────────────────────────────────────────────────
 void UserIntf::onKnobFnUpdated(const std::string &, uint32_t idx) {
-    LOGI("onKnobFnUpdated");
+    SS_LOGI("onKnobFnUpdated");
     setNumber(kKnobFnKey, idx);
 }
 
 void UserIntf::onSessionMinsUpdated(float v) {
-    LOGI("onSessionMinsUpdated");
+    SS_LOGI("onSessionMinsUpdated");
     setNumber(kSessionMinsKey, v);
 }
 
 void UserIntf::onRadarRangeCmUpdated(float v) {
-    LOGI("onRadarRangeCmUpdated");
+    SS_LOGI("onRadarRangeCmUpdated");
     setNumber(kRadarRangeCmKey, v);
 }
 
 void UserIntf::onAudioVolPctUpdated(float v) {
-    LOGI("onAudioVolPctUpdated");
+    SS_LOGI("onAudioVolPctUpdated");
     setNumber(kAudioVolPctKey, v);
 }
 
 void UserIntf::onLedBrightPctUpdated(float v) {
-    LOGI("onLedBrightPctUpdated");
+    SS_LOGI("onLedBrightPctUpdated");
     setNumber(kLedBrightPctKey, v);
 }
 
-void UserIntf::onStartButtonPressed() { LOGI("startButton pressed"); }
+void UserIntf::onStartButtonPressed() { SS_LOGI("startButton pressed"); }
 
 void UserIntf::onCurrProfileUpdated(const std::string &, uint32_t idx) {
     cfg_.setValue(kCurrProfileKey, idx);
@@ -152,7 +152,7 @@ uint32_t UserIntf::getNumber(Key key, uint32_t defaultValue) {
 
     uint32_t v = defaultValue;
     cfg_.getValue(key, v, defaultValue);
-    LOGI("get %s → %u (profile %u)", key.c_str(), v, idx);
+    SS_LOGI("get %s → %u (profile %u)", key.c_str(), v, idx);
     return v;
 }
 
@@ -161,7 +161,7 @@ void UserIntf::setNumber(Key key, float v) {
     etl::to_string(idx, key, etl::format_spec(), true); // append profile index
 
     cfg_.setValue(key, static_cast<uint32_t>(v));
-    LOGI("set %s → %.1f (profile %u)", key.c_str(), v, idx);
+    SS_LOGI("set %s → %.1f (profile %u)", key.c_str(), v, idx);
 }
 
 uint32_t UserIntf::getCurrProfileIndex() const {

@@ -3,47 +3,47 @@
 namespace esphome::smart_signage::audio {
 
 /*──────────────────────── Ctor ─────────────────────────*/
-FSM::FSM(ctrl::Q &q) : ctrlQ_(q) { LOGI("Audio FSM created"); }
+FSM::FSM(ctrl::Q &q) : ctrlQ_(q) { SS_LOGI("Audio FSM created"); }
 
 /*──────────────────────── Guards ───────────────────────*/
 bool FSM::isReadyGuard(const CmdSetup &) {
-    LOGI("onSetup: initializing hardware...");
+    SS_LOGI("onSetup: initializing hardware...");
     if (!stubHardwareInit()) {
-        LOGE("onSetup: hardware init failed");
+        SS_LOGE("onSetup: hardware init failed");
         ctrlQ_.post(ctrl::EvtAudioError{});
         return false;
     }
-    LOGI("onSetup: success");
+    SS_LOGI("onSetup: success");
     ctrlQ_.post(ctrl::EvtAudioReady{});
     return true;
 }
 
 /*──────────────────────── Actions ──────────────────────*/
 void FSM::onCmdTeardown(const CmdTeardown &) {
-    LOGI("CmdTeardown → shutting down audio subsystem");
+    SS_LOGI("CmdTeardown → shutting down audio subsystem");
     // hwAudioTeardown();
 }
 
 void FSM::onCmdPlay(const CmdPlay &cmd) {
-    LOGI("CmdPlay → \"%s\" vol=%u%%", cmd.filePath, static_cast<unsigned>(cmd.volPct));
+    SS_LOGI("CmdPlay → \"%s\" vol=%u%%", cmd.filePath, static_cast<unsigned>(cmd.volPct));
     // hwAudioPlay(cmd.filePath, cmd.volPct);
 }
 
 void FSM::onCmdStop(const CmdStop &) {
-    LOGI("CmdStop → stopping playback");
+    SS_LOGI("CmdStop → stopping playback");
     // hwAudioStop();
 }
 
 /*──────────────────────── Error handler ─────────────────────*/
 void FSM::onError() {
-    LOGE("Entered Error state!");
+    SS_LOGE("Entered Error state!");
     // Optionally inform controller
 }
 
 /*──────────────────────── Hardware stub ─────────────────────*/
 bool FSM::stubHardwareInit() {
     /* Replace with real I²S/DAC init; return true on success */
-    LOGI("stubHardwareInit()");
+    SS_LOGI("stubHardwareInit()");
     return true;
 }
 

@@ -27,25 +27,25 @@ struct FsmLogger {
     void log_process_event(const TEvent &) {
         const char *name = strip_prefix(sml::aux::get_type_name<TEvent>());
         if (name[0] != '\0') { // Only print if not empty
-            LOGD("[process_event] %s", name);
+            SS_LOGD("[process_event] %s", name);
         }
     }
 
     template <class SM, class TGuard, class TEvent>
     void log_guard(const TGuard &, const TEvent &, bool result) {
-        LOGD("[guard] %s %s",
+        SS_LOGD("[guard] %s %s",
             strip_prefix(sml::aux::get_type_name<TEvent>()),
             (result ? "[OK]" : "[Reject]"));
     }
 
     template <class SM, class TAction, class TEvent>
     void log_action(const TAction &, const TEvent &) {
-        // LOGD("[action] %s", strip_prefix(sml::aux::get_type_name<TAction>()));
+        // SS_LOGD("[action] %s", strip_prefix(sml::aux::get_type_name<TAction>()));
     }
 
     template <class SM, class TSrcState, class TDstState>
     void log_state_change(const TSrcState &src, const TDstState &dst) {
-        LOGD("[transition] %s -> %s", strip_prefix(src.c_str()), strip_prefix(dst.c_str()));
+        SS_LOGD("[transition] %s -> %s", strip_prefix(src.c_str()), strip_prefix(dst.c_str()));
     }
 
   private:

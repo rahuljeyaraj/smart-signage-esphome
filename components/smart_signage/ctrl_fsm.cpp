@@ -10,7 +10,7 @@ FSM::FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ)
 bool FSM::guardRadarReady(const EvtRadarReady &) {
     readyBits_.set(static_cast<size_t>(Intf::Radar));
     const bool all = readyBits_.all();
-    LOGI("Guard: RadarReady - %u/%u ready → all=%s",
+    SS_LOGI("Guard: RadarReady - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -20,7 +20,7 @@ bool FSM::guardRadarReady(const EvtRadarReady &) {
 bool FSM::guardImuReady(const EvtImuReady &) {
     readyBits_.set(static_cast<size_t>(Intf::Imu));
     const bool all = readyBits_.all();
-    LOGI("Guard: ImuReady   - %u/%u ready → all=%s",
+    SS_LOGI("Guard: ImuReady   - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -28,9 +28,16 @@ bool FSM::guardImuReady(const EvtImuReady &) {
 }
 
 bool FSM::guardLedReady(const EvtLedReady &) {
+
+    ledQ_.post(led::CmdBreathe(100, 1000, 0, 1000, 0, 0));
+    vTaskDelay(pdMS_TO_TICKS(4500));
+    ledQ_.post(led::CmdBreathe(100, 2000, 0, 2000, 0, 2));
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    return true;
     readyBits_.set(static_cast<size_t>(Intf::Led));
     const bool all = readyBits_.all();
-    LOGI("Guard: LedReady   - %u/%u ready → all=%s",
+    SS_LOGI("Guard: LedReady   - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -40,7 +47,7 @@ bool FSM::guardLedReady(const EvtLedReady &) {
 bool FSM::guardAudioReady(const EvtAudioReady &) {
     readyBits_.set(static_cast<size_t>(Intf::Audio));
     const bool all = readyBits_.all();
-    LOGI("Guard: AudioReady - %u/%u ready → all=%s",
+    SS_LOGI("Guard: AudioReady - %u/%u ready → all=%s",
         static_cast<unsigned>(readyBits_.count()),
         static_cast<unsigned>(kIntfCnt),
         all ? "YES" : "NO");
@@ -49,29 +56,29 @@ bool FSM::guardAudioReady(const EvtAudioReady &) {
 
 /*──────────────────────── Actions ──────────────────────*/
 void FSM::onCmdSetup(const CmdSetup &) {
-    LOGI("Action: onCmdSetup -> broadcast CmdSetup");
+    SS_LOGI("Action: onCmdSetup -> broadcast CmdSetup");
     readyBits_.reset(); // fresh round
-    radarQ_.post(radar::CmdSetup{});
-    imuQ_.post(imu::CmdSetup{});
+    // radarQ_.post(radar::CmdSetup{});
+    // imuQ_.post(imu::CmdSetup{});
     ledQ_.post(led::CmdSetup{});
-    audioQ_.post(audio::CmdSetup{});
+    // audioQ_.post(audio::CmdSetup{});
 }
 
 void FSM::onCmdStart(const CmdStart &e) {
-    LOGI("Action: onCmdStart -> broadcast CmdStart (sessionMins=%u)", e.sessionMins);
+    SS_LOGI("Action: onCmdStart -> broadcast CmdStart (sessionMins=%u)", e.sessionMins);
     sessionMins_ = e.sessionMins;
     radarQ_.post(radar::CmdStart{});
     imuQ_.post(imu::CmdStart{});
 }
 
 void FSM::onCmdStop(const CmdStop &) {
-    LOGI("Action: onCmdStop -> broadcast CmdStop");
+    SS_LOGI("Action: onCmdStop -> broadcast CmdStop");
     radarQ_.post(radar::CmdStop{});
     imuQ_.post(imu::CmdStop{});
 }
 
 void FSM::onCmdTeardown(const CmdTeardown &) {
-    LOGI("Action: onCmdTeardown -> broadcast CmdTeardown");
+    SS_LOGI("Action: onCmdTeardown -> broadcast CmdTeardown");
     radarQ_.post(radar::CmdTeardown{});
     imuQ_.post(imu::CmdTeardown{});
     ledQ_.post(led::CmdTeardown{});
@@ -79,25 +86,27 @@ void FSM::onCmdTeardown(const CmdTeardown &) {
 }
 
 void FSM::onEvtRadarData(const EvtRadarData &e) {
-    LOGI("Data: Radar detected=%s, distance=%u cm, timestamp=%u",
+    SS_LOGI("Data: Radar detected=%s, distance=%u cm, timestamp=%u",
         e.detected ? "YES" : "NO",
         static_cast<unsigned>(e.distanceCm),
         static_cast<unsigned>(e.timestampTicks));
 }
 
-void FSM::onEvtImuFell(const EvtImuFell &) { LOGI("Event: IMU reports a fall detected!"); }
+void FSM::onEvtImuFell(const EvtImuFell &) { SS_LOGI("Event: IMU reports a fall detected!"); }
 void FSM::onEvtImuRose(const EvtImuRose &) {
-    LOGI("Event: IMU reports device has been restored (rose)");
+    SS_LOGI("Event: IMU reports device has been restored (rose)");
 }
 
-void FSM::onSetupTimeout() { LOGI("Timeout: Setup phase timed out! Transitioning to Error state"); }
+void FSM::onSetupTimeout() {
+    SS_LOGI("Timeout: Setup phase timed out! Transitioning to Error state");
+}
 
 void FSM::onSessionEnd() {
-    LOGI("Timeout: Active phase timed out - stopping & tearing down all interfaces");
+    SS_LOGI("Timeout: Active phase timed out - stopping & tearing down all interfaces");
     onCmdStop({});
     onCmdTeardown({});
 }
 
-void FSM::onError() { LOGE("Entered Error state!"); }
+void FSM::onError() { SS_LOGE("Entered Error state!"); }
 
 } // namespace esphome::smart_signage::ctrl

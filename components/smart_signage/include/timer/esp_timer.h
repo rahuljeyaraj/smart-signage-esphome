@@ -11,7 +11,7 @@ class EspTimer : public ITimer {
     ~EspTimer() override {
         if (handle_) {
             esp_timer_delete(handle_);
-            LOGI("Deleted timer");
+            SS_LOGI("Deleted timer");
         }
     }
 
@@ -24,30 +24,30 @@ class EspTimer : public ITimer {
 
         esp_err_t err = esp_timer_create(&args, &handle_);
         if (err != ESP_OK) {
-            LOGE("esp_timer_create(%s) failed: %d", name, err);
+            SS_LOGE("esp_timer_create(%s) failed: %d", name, err);
             handle_ = nullptr;
             return false;
         }
-        LOGI("Created timer %s", name);
+        SS_LOGI("Created timer %s", name);
         return true;
     }
 
     void startOnce(uint64_t timeout_us) override {
         if (!handle_) return;
         esp_err_t err = esp_timer_start_once(handle_, timeout_us);
-        if (err != ESP_OK) { LOGE("startOnce failed: %d", err); }
+        if (err != ESP_OK) { SS_LOGE("startOnce failed: %d", err); }
     }
 
     void startPeriodic(uint64_t period_us) override {
         if (!handle_) return;
         esp_err_t err = esp_timer_start_periodic(handle_, period_us);
-        if (err != ESP_OK) { LOGE("startPeriodic failed: %d", err); }
+        if (err != ESP_OK) { SS_LOGE("startPeriodic failed: %d", err); }
     }
 
     void stop() override {
         if (!handle_) return;
         esp_err_t err = esp_timer_stop(handle_);
-        if (err != ESP_OK) { LOGE("stop failed: %d", err); }
+        if (err != ESP_OK) { SS_LOGE("stop failed: %d", err); }
     }
 
   private:

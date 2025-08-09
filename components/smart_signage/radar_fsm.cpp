@@ -8,19 +8,19 @@ FSM::FSM(ctrl::Q &q, hal::IRadarHal &hal, timer::ITimer &t) : ctrlQ_(q), hal_(ha
 
 bool FSM::isReadyGuard(const CmdSetup &e) {
 
-    LOGI("onSetup: Initializing hardware...");
+    SS_LOGI("onSetup: Initializing hardware...");
     if (!hal_.init()) {
-        LOGE("onSetup: HAL init failed");
+        SS_LOGE("onSetup: HAL init failed");
         ctrlQ_.post(ctrl::EvtRadarError{});
         return false;
     }
-    LOGI("onSetup: success");
+    SS_LOGI("onSetup: success");
     ctrlQ_.post(ctrl::EvtRadarReady{});
     return true;
 }
 
 void FSM::onCmdStart(const CmdStart &) {
-    LOGD("onStart: radar polling at %u ms", sampleIntMs_);
+    SS_LOGD("onStart: radar polling at %u ms", sampleIntMs_);
     // Starts the timer
     timer_.startPeriodic(uint64_t(sampleIntMs_) * 1000ULL);
 }
@@ -40,27 +40,29 @@ void FSM::onEvtTimerPoll(const EvtTimerPoll &) {
         pres    = hal_.presenceDetected();
         hadData = true;
     }
-    if (flushCnt == kMaxFlushCnt) { LOGW("Radar flush: max flush count %d reached", kMaxFlushCnt); }
+    if (flushCnt == kMaxFlushCnt) {
+        SS_LOGW("Radar flush: max flush count %d reached", kMaxFlushCnt);
+    }
     if (!hadData) { return; }
 
     auto filt   = static_cast<uint16_t>(filter_.updateEstimate(raw) + 0.5f);
     bool detect = pres && (filt <= detDistCm_);
     // Serial.printf(">raw:%u,filt:%u\r\n", raw, filt);
 
-    LOGD("raw=%u filtered=%u detected=%s", raw, filt, detect ? "YES" : "NO");
+    SS_LOGD("raw=%u filtered=%u detected=%s", raw, filt, detect ? "YES" : "NO");
     ctrlQ_.post(ctrl::EvtRadarData{detect, filt, xTaskGetTickCount()});
 }
 
 void FSM::onSetDist(const SetRangeCm &c) {
     detDistCm_ = c.cm;
-    LOGI("onSetDist: max distance = %u cm", detDistCm_);
+    SS_LOGI("onSetDist: max distance = %u cm", detDistCm_);
 }
 
 void FSM::onSetSampleInt(const SetSampleInt &c) {
     sampleIntMs_ = c.ms;
-    LOGI("onSetSampleInt: interval = %u ms", sampleIntMs_);
+    SS_LOGI("onSetSampleInt: interval = %u ms", sampleIntMs_);
 }
 
-void FSM::onError() { LOGE("Entered Error state!"); }
+void FSM::onError() { SS_LOGE("Entered Error state!"); }
 
 } // namespace esphome::smart_signage::radar
