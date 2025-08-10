@@ -1,7 +1,7 @@
 esphome:
   name: smart-signage
   platformio_options:
-    platform: espressif32@6.9.0
+    platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.21/platform-espressif32.zip
     lib_ldf_mode: deep
     board_build.filesystem: littlefs
     board_build.partitions: "large_spiffs_8MB.csv"
@@ -29,6 +29,7 @@ esp32:
   flash_size: 8MB
   framework:
     type: arduino
+    version: 3.2.1
     # components:
     #   - name: esp_littlefs
     #     source: https://github.com/joltwallet/esp_littlefs.git
