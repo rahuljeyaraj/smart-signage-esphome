@@ -2,3 +2,5 @@
 /secrets.yaml
 __pycache__/
 .vscode/
+.lfstools
+*.img
