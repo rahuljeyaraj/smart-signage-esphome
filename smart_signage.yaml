@@ -4,7 +4,7 @@ esphome:
     platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.21/platform-espressif32.zip
     lib_ldf_mode: deep
     board_build.filesystem: littlefs
-    board_build.partitions: "large_spiffs_8MB.csv"
+    board_build.partitions: "../../../custom_partitions.csv" # absolute path doesnt work, 
     build_flags:
       - -DCORE_DEBUG_LEVEL=2        # lower noise to help audio quality
       - -Wno-unused-variable
@@ -30,21 +30,18 @@ esp32:
   framework:
     type: arduino
     version: 3.2.1
-    # components:
-    #   - name: esp_littlefs
-    #     source: https://github.com/joltwallet/esp_littlefs.git
 
 
 logger:
   level: DEBUG
 
 # Enable Home Assistant API
-# api:
-#   password: ""
+api:
+  password: ""
 
-# ota:
-#   - platform: esphome
-#     password: ""
+ota:
+  - platform: esphome
+    password: ""
 
 wifi:
   ssid: !secret wifi_ssid
