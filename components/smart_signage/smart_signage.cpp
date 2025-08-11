@@ -21,6 +21,7 @@
 
 #include "esp_partition.h"
 #include "esp_log.h"
+#include "helper.h"
 
 namespace esphome::smart_signage {
 namespace {
@@ -58,45 +59,16 @@ SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
 
       audioAo_{audioQ_, audioFsm_, audioFsmLogger_, "audioTask", 8192, tskIDLE_PRIORITY + 2, 1} {}
 
-void print_partition_table() {
-    const char              *TAG = "PartitionTable";
-    esp_partition_iterator_t it =
-        esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
-    if (!it) {
-        ESP_LOGE(TAG, "No partitions found!");
-        return;
-    }
-
-    while (it != NULL) {
-        const esp_partition_t *part = esp_partition_get(it);
-        if (part) {
-            ESP_LOGI(TAG,
-                "Name: %-10s Type: 0x%02X SubType: 0x%02X Offset: 0x%06X Size: %u KB",
-                part->label,
-                part->type,
-                part->subtype,
-                part->address,
-                part->size / 1024);
-        }
-        it = esp_partition_next(it);
-    }
-    esp_partition_iterator_release(it);
-}
-
-
-
 void SmartSignage::setup() {
     SS_LOGI("SmartSignage setup");
-
-    print_partition_table();
-
-    // 1) mount FS (format on first run if you want)
+    
     if (!LittleFS.begin(true)) {
         SS_LOGE("LittleFS mount failed");
         return;
     }
 
-    list_dir_(LittleFS, "/");
+    print_partition_table();
+    list_all_files();
 
     // 2) I2S out
     g_cfg          = g_i2s.defaultConfig(audio_tools::TX_MODE);
@@ -113,9 +85,9 @@ void SmartSignage::setup() {
     g_vol.begin();
 
     // 4) open and start
-    g_file = LittleFS.open("/warning_1.mp3", "r");
+    g_file = LittleFS.open("/test/welcome_2.mp3", "r");
     if (!g_file) {
-        SS_LOGE("open /test.mp3 failed");
+        SS_LOGE("open /test/welcome_2.mp3 failed");
         return;
     }
     g_dec.begin();

@@ -69,38 +69,7 @@ class SmartSignage : public Component {
     led::LedAO     ledAo_;
     audio::AO      audioAo_;
 
-    static void print_indent_(int depth) {
-        for (int i = 0; i < depth; ++i) Serial.print("  ");
-    }
-
-    static void list_dir_(fs::FS &fs, const char *dir, int depth = 0) {
-
-        File root = fs.open(dir);
-        if (!root) {
-            SS_LOGE("open '%s' failed", dir);
-            return;
-        }
-        if (!root.isDirectory()) {
-            SS_LOGE("'%s' is not a dir", dir);
-            return;
-        }
-
-        for (File f = root.openNextFile(); f; f = root.openNextFile()) {
-            const bool is_dir = f.isDirectory();
-            // build child path for recursion
-            String child = String(dir);
-            if (!child.endsWith("/")) child += "/";
-            child += f.name();
-
-            print_indent_(depth);
-            if (is_dir) {
-                SS_LOGI("<DIR> %s", child.c_str());
-                list_dir_(fs, child.c_str(), depth + 1);
-            } else {
-                SS_LOGI("%8u %s", (unsigned) f.size(), child.c_str());
-            }
-        }
-    }
+   
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";
