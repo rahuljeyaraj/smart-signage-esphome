@@ -75,3 +75,24 @@ inline void list_all_files() {
 #endif
     list_dir_(LittleFS, "/");
 }
+
+#include <cstring>
+#include "esp_ota_ops.h"
+
+static void pin_current_boot_partition_if_factory() {
+    static const char     *TAG     = "PinBoot";
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    if (!running) return;
+
+    // Pin only if we're on the factory app, so serial flashes stick,
+    // while OTA flows (ota_0/ota_1) remain under OTA control.
+    if (std::strncmp(running->label, "ota_", 4) != 0) {
+        if (esp_ota_set_boot_partition(running) == ESP_OK) {
+            SS_LOGI("Pinned boot partition to: %s", running->label);
+        } else {
+            SS_LOGE("Failed to pin boot partition");
+        }
+    } else {
+        SS_LOGD("Running from %s; leaving OTA selection unchanged", running->label);
+    }
+}

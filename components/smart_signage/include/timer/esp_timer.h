@@ -10,6 +10,8 @@ class EspTimer : public ITimer {
     EspTimer() = default;
     ~EspTimer() override {
         if (handle_) {
+            // Best effort: stop if running, then delete
+            (void) esp_timer_stop(handle_);
             esp_timer_delete(handle_);
             SS_LOGI("Deleted timer");
         }
@@ -34,25 +36,33 @@ class EspTimer : public ITimer {
 
     void startOnce(uint64_t timeout_us) override {
         if (!handle_) return;
+        // If already active, stop first to avoid EBUSY
+        if (esp_timer_is_active(handle_)) { (void) esp_timer_stop(handle_); }
         esp_err_t err = esp_timer_start_once(handle_, timeout_us);
         if (err != ESP_OK) { SS_LOGE("startOnce failed: %d", err); }
     }
 
     void startPeriodic(uint64_t period_us) override {
         if (!handle_) return;
+        // If already active, stop first to avoid EBUSY
+        if (esp_timer_is_active(handle_)) { (void) esp_timer_stop(handle_); }
         esp_err_t err = esp_timer_start_periodic(handle_, period_us);
         if (err != ESP_OK) { SS_LOGE("startPeriodic failed: %d", err); }
     }
 
     void stop() override {
         if (!handle_) return;
+        // Return quietly if not active
+        if (!esp_timer_is_active(handle_)) {
+            SS_LOGD("stop: not active");
+            return;
+        }
         esp_err_t err = esp_timer_stop(handle_);
         if (err != ESP_OK) { SS_LOGE("stop failed: %d", err); }
     }
 
   private:
-    esp_timer_handle_t handle_{nullptr};
-
+    esp_timer_handle_t    handle_{nullptr};
     static constexpr char TAG[] = "EspTimer";
 };
 
