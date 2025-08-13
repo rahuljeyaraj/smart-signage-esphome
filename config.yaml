@@ -1,5 +1,31 @@
 profiles:
-  - name: Wet Floor Warning
+  - name: abcd
+    events:
+      setup_done:
+        audio:
+          playCnt: 1
+          playList:
+            - {src: /common/setup_done.mp3, delayMs: 0}
+
+      sensor_error:
+        audio:
+          playCnt: 1
+          playList:
+            - {src: /common/setup_error.mp3, delayMs: 0}
+
+      start:
+        audio:
+          playCnt: 1
+          playList:
+            - {src: /wet_floor/start.mp3, delayMs: 0}
+
+      detected:
+        audio:
+          playCnt: 0
+          playList:
+            - {src: /wet_floor/detected1.mp3, delayMs: 2000}
+            - {src: /wet_floor/detected2.mp3, delayMs: 3000}
+  - name: pqrs
     events:
       setup_done:
         audio:

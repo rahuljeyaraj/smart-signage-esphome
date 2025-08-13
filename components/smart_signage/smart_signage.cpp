@@ -4,18 +4,19 @@
 #include "helper.h"
 
 #include <LittleFS.h>
+#include <cstdio>
 
 static constexpr char TAG[] = "SmartSignage";
 
 namespace esphome::smart_signage {
 
 SmartSignage::SmartSignage(const UiHandles &ui, const char *configJson)
-    : configJson_{configJson}, profilesCfg_{} {}
+    : ctrlQ_{}, radarQ_{}, imuQ_{}, ledQ_{}, audioQ_{}, configJson_{configJson}, profilesCfg_{},
+      ui_{ui, ctrlQ_} {}
 // :  profileDb_{configJson}
 //   ,nvsConfigManager_{kNVSNamespace}, userIntf_{nvsConfigManager_, ui, configJson}
 
 //   ,
-//   ctrlQ_{}, radarQ_{}, imuQ_{}, ledQ_{}, audioQ_{}
 
 //   ,
 //   ctrlFsm_{radarQ_, imuQ_, ledQ_, audioQ_},
@@ -51,6 +52,15 @@ void SmartSignage::setup() {
         SS_LOGE("Config Json Parsing Failed.");
         return;
     }
+
+    etl::vector<ProfileName, SS_MAX_PROFILES> names;
+    profilesCfg_.getProfileList(names);
+
+    // Push options to UI (stateless)
+    ui_.set_profile_options(names);
+
+    // Jump to a specific label (stateless)
+    // ui_.set_current_profile_label(ProfilesConfigT::Label("Silent Mode"));
 
     // for (uint8_t i = 0; i < count; ++i) {
     //     ProfileSummary summary{};

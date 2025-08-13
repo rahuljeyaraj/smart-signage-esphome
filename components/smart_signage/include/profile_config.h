@@ -1,23 +1,24 @@
-// profiles_config_flat.h
 #pragma once
 
 #include <ArduinoJson.h> // ArduinoJson v7
 #include <etl/flat_map.h>
+#include <etl/array.h>
+#include <etl/vector.h>
 #include <algorithm>
 #include <cstring>
 
-#include "log.h"               // ASCII-only logging
+#include "log.h"               // SS_LOGx (ASCII-only)
 #include "audio/audio_const.h" // audio::kSourceStrLen, audio::kMaxPlaylist
 #include "audio/audio_event.h" // audio::AudioPlaySpec
+#include "types.h"
 
-namespace esphome::smart_signage::profiles_config {
+namespace esphome::smart_signage {
 
 // ────────────────────────────────────────────────────────────────────────────
 // Event enumeration (plain enum class)
 // ────────────────────────────────────────────────────────────────────────────
 enum class EventId : uint8_t { SetupDone, SensorError, Start, Detected, Unknown };
 
-// Map enum -> string (switch-case)
 inline const char *eventToCStr(EventId e) {
     switch (e) {
     case EventId::SetupDone: return "setup_done";
@@ -28,7 +29,6 @@ inline const char *eventToCStr(EventId e) {
     }
 }
 
-// Map string -> enum (strcmp chain)
 inline EventId eventFromCStr(const char *s) {
     if (!s || s[0] == '\0') return EventId::Unknown;
     if (std::strcmp(s, "setup_done") == 0) return EventId::SetupDone;
@@ -39,28 +39,30 @@ inline EventId eventFromCStr(const char *s) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-/** Composite key: (profileIdx, event) for the flat_map */
+/** Composite key: (profileName, event) for the flat_map */
 struct Key {
-    uint16_t profile{0};
-    EventId  event{EventId::Unknown};
+    ProfileName name{};
+    EventId     event{EventId::Unknown};
 
     // flat_map needs strict weak ordering
     bool operator<(const Key &other) const {
-        if (profile < other.profile) return true;
-        if (profile > other.profile) return false;
+        if (name < other.name) return true;
+        if (other.name < name) return false; // ensure strict ordering
         return static_cast<uint8_t>(event) < static_cast<uint8_t>(other.event);
     }
 };
 
 // ────────────────────────────────────────────────────────────────────────────
-// ProfilesConfig: construct-empty, init(json) later, heap-free lookups
-// Choose capacities via template args.
-//   MAX_PROFILES:       maximum number of profiles you expect
-//   MAX_EVENTS_TOTAL:   total (profile,event) pairs with audio you expect
+// ProfilesConfig
+//   • Parses JSON (ArduinoJson v7) at init()
+//   • Stores audio specs keyed by (ProfileName, EventId)
+//   • getProfileList(...) returns the list of ProfileName (no indices)
 // ────────────────────────────────────────────────────────────────────────────
 template <size_t MAX_PROFILES, size_t MAX_EVENTS_TOTAL>
 class ProfilesConfig {
   public:
+    static constexpr const char *TAG = "ProfilesConfig";
+
     ProfilesConfig() = default;
 
     /** Clear current data and load from JSON. Returns false on first failure. */
@@ -72,7 +74,6 @@ class ProfilesConfig {
             return false;
         }
 
-        // Parse into a temporary doc (v7 heap used only here)
         JsonDocument         doc;
         DeserializationError err = deserializeJson(doc, jsonUtf8);
         if (err) {
@@ -101,9 +102,24 @@ class ProfilesConfig {
                 continue;
             }
 
+            // ── Profile name (truncate to 15 chars if longer) ──
+            const char *name = profile["name"] | "";
+            ProfileName pname;
+            if (name[0] != '\0') {
+                pname = name; // ETL string truncates to capacity
+            } else {
+                // Fallback: "Profile <pi>"
+                char buf[20];
+                std::snprintf(buf, sizeof(buf), "Profile %u", (unsigned) pi);
+                pname = buf;
+            }
+
+            // Store the name for list API
+            profileNames_[pi] = pname;
+
             auto events = profile["events"].as<JsonObjectConst>();
             if (events.isNull()) {
-                SS_LOGE("%s: profile %zu has no 'events' object", TAG, pi);
+                SS_LOGE("%s: profile '%s' has no 'events' object", TAG, pname.c_str());
                 continue;
             }
 
@@ -114,7 +130,7 @@ class ProfilesConfig {
 
                 EventId ev = eventFromCStr(evKey);
                 if (ev == EventId::Unknown) {
-                    SS_LOGE("%s: unknown event '%s' in profile %zu", TAG, evKey, pi);
+                    SS_LOGE("%s: profile '%s' has unknown event '%s'", TAG, pname.c_str(), evKey);
                     continue;
                 }
 
@@ -140,18 +156,18 @@ class ProfilesConfig {
                     for (size_t i = 0; i < maxN; ++i) {
                         auto item = list[i].as<JsonObjectConst>();
                         if (item.isNull()) {
-                            SS_LOGE("%s: profile %zu '%s' playList[%zu] not an object",
+                            SS_LOGE("%s: profile '%s' '%s' playList[%zu] not an object",
                                 TAG,
-                                pi,
+                                pname.c_str(),
                                 evKey,
                                 i);
                             continue;
                         }
                         const char *src = item["src"] | "";
                         if (src[0] == '\0') {
-                            SS_LOGE("%s: profile %zu '%s' playList[%zu] missing src",
+                            SS_LOGE("%s: profile '%s' '%s' playList[%zu] missing src",
                                 TAG,
-                                pi,
+                                pname.c_str(),
                                 evKey,
                                 i);
                             continue;
@@ -168,8 +184,7 @@ class ProfilesConfig {
                 }
 
                 if (ingestedPairs >= MAX_EVENTS_TOTAL) {
-                    SS_LOGE(
-                        "%s: (profile,event) pairs exceed MAX_EVENTS_TOTAL=%zu; ingestion stopped",
+                    SS_LOGE("%s: (profile,event) pairs exceed MAX_EVENTS_TOTAL=%zu; stop",
                         TAG,
                         MAX_EVENTS_TOTAL);
                     return false; // caller should increase capacity
@@ -180,13 +195,15 @@ class ProfilesConfig {
                     return false;
                 }
 
-                const Key k{static_cast<uint16_t>(pi), ev};
+                const Key k{pname, ev};
                 auto      it = table_.find(k);
                 if (it == table_.end()) {
                     const bool inserted = table_.insert(std::make_pair(k, spec)).second;
                     if (!inserted) {
-                        SS_LOGE(
-                            "%s: flat_map insert failed at profile %zu event '%s'", TAG, pi, evKey);
+                        SS_LOGE("%s: flat_map insert failed at profile '%s' event '%s'",
+                            TAG,
+                            pname.c_str(),
+                            evKey);
                         return false;
                     }
                     ++ingestedPairs;
@@ -197,24 +214,19 @@ class ProfilesConfig {
             }
         }
 
-        // Dump everything we loaded (debug)
         dumpAll_();
         return true;
     }
 
-    /** Heap-free lookup at runtime */
-    bool getAudioPlaySpec(uint32_t profileIdx, EventId ev, audio::AudioPlaySpec &out) const {
-        if (profileIdx > 0xFFFFu) {
-            SS_LOGE("%s: profileIdx too large: %u", TAG, static_cast<unsigned int>(profileIdx));
-            return false;
-        }
-
-        const Key k{static_cast<uint16_t>(profileIdx), ev};
+    /** Heap-free lookup at runtime by profile NAME (no index). */
+    bool getAudioPlaySpec(
+        const ProfileName &profileName, EventId ev, audio::AudioPlaySpec &out) const {
+        const Key k{profileName, ev};
         auto      it = table_.find(k);
         if (it == table_.end()) {
-            SS_LOGE("%s: not found (profile=%u, event=%s)",
+            SS_LOGE("%s: not found (profile='%s', event=%s)",
                 TAG,
-                static_cast<unsigned int>(profileIdx),
+                profileName.c_str(),
                 eventToCStr(ev));
             return false;
         }
@@ -222,19 +234,31 @@ class ProfilesConfig {
         return true;
     }
 
-    void clear() { table_.clear(); }
+    void clear() {
+        table_.clear();
+        for (size_t i = 0; i < MAX_PROFILES; ++i) profileNames_[i].clear();
+    }
+
+    // Return list of profile NAMES (labels). No indices.
+    void getProfileList(etl::vector<ProfileName, MAX_PROFILES> &out) const {
+        out.clear();
+        for (uint32_t i = 0; i < MAX_PROFILES; ++i) {
+            if (!profileNames_[i].empty()) {
+                out.push_back(profileNames_[i]);
+                if (out.full()) break;
+            }
+        }
+    }
 
   private:
-    static constexpr const char *TAG = "ProfilesConfig";
-
     void dumpAll_() const {
         SS_LOGD("%s: dump begin (entries=%zu)", TAG, table_.size());
         for (auto it = table_.begin(); it != table_.end(); ++it) {
             const Key  &k    = it->first;
             const auto &spec = it->second;
-            SS_LOGD("%s: profile=%hu, event=%s, playCnt=%hu, n=%hhu",
+            SS_LOGD("%s: profile='%s', event=%s, playCnt=%hu, n=%hhu",
                 TAG,
-                k.profile,
+                k.name.c_str(),
                 eventToCStr(k.event),
                 spec.playCnt,
                 spec.n);
@@ -250,6 +274,7 @@ class ProfilesConfig {
     }
 
     etl::flat_map<Key, audio::AudioPlaySpec, MAX_EVENTS_TOTAL> table_;
+    etl::array<ProfileName, MAX_PROFILES>                      profileNames_{};
 };
 
-} // namespace esphome::smart_signage::profiles_config
+} // namespace esphome::smart_signage

@@ -8,7 +8,6 @@ import esphome.components.number as number
 import esphome.components.button as button
 
 CONF_CURR_PROFILE    = "currProfile"
-CONF_KNOB_FN         = "knobFn"
 CONF_SESSION_MINS    = "sessionMins"
 CONF_RADAR_RANGE_CM  = "radarRangeCm"
 CONF_AUDIO_VOL_PCT   = "audioVolPct"
@@ -25,7 +24,6 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID():                 cv.declare_id(SmartSignage),
 
     cv.Required(CONF_CURR_PROFILE):  cv.use_id(select.Select),
-    cv.Required(CONF_KNOB_FN):       cv.use_id(select.Select),
     cv.Required(CONF_SESSION_MINS):  cv.use_id(number.Number),
     cv.Required(CONF_RADAR_RANGE_CM):cv.use_id(number.Number),
     cv.Required(CONF_AUDIO_VOL_PCT): cv.use_id(number.Number),
@@ -37,7 +35,6 @@ CONFIG_SCHEMA = cv.Schema({
 
 def to_code(config):
     currProfile   = yield cg.get_variable(config[CONF_CURR_PROFILE])
-    knobFn        = yield cg.get_variable(config[CONF_KNOB_FN])
     sessionMins   = yield cg.get_variable(config[CONF_SESSION_MINS])
     radarRangeCm  = yield cg.get_variable(config[CONF_RADAR_RANGE_CM])
     audioVolPct   = yield cg.get_variable(config[CONF_AUDIO_VOL_PCT])
@@ -50,8 +47,7 @@ def to_code(config):
         f"{radarRangeCm}, "
         f"{audioVolPct}, "
         f"{ledBrightPct}, "
-        f"{startButton}, "
-        f"{knobFn}}}"
+        f"{startButton}}} "
     )
 
     profile_cfg   = config[CONF_PROFILE_CONFIG]

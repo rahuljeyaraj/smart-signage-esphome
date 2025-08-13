@@ -2,6 +2,7 @@
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
 #include "ctrl/ctrl_const.h"
+#include "types.h"
 
 namespace esphome::smart_signage::ctrl {
 
@@ -14,22 +15,23 @@ struct CmdStop {};
 struct CmdTeardown {};
 
 // UI -> Controller commands (no dynamic allocations)
-struct CmdUiSelectProfile {
-    uint32_t idx;
+
+struct EvtUiProfileUpdate {
+    ProfileName profileName;
 };
-struct CmdUiSetSessionMins {
+struct EvtUiSessionMinsUpdate {
     uint32_t mins;
 };
-struct CmdUiSetRangeCm {
+struct EvtUiRangeCmUpdate {
     uint32_t cm;
 };
-struct CmdUiSetAudioVol {
+struct EvtUiAudioVolUpdate {
     uint8_t pct;
 };
-struct CmdUiSetLedBright {
+struct EvtUiLedBrightUpdate {
     uint8_t pct;
 };
-struct CmdUiPressStart {};
+struct EvtUiStartPressed {};
 
 struct EvtSetupTimeout {};
 struct EvtSessionEnd {};
@@ -59,8 +61,8 @@ using Event = etl::variant<
     // core commands
     CmdSetup, CmdStart, CmdStop, CmdTeardown,
     // UI commands
-    CmdUiSelectProfile, CmdUiSetSessionMins, CmdUiSetRangeCm, CmdUiSetAudioVol, CmdUiSetLedBright,
-    CmdUiPressStart,
+    EvtUiProfileUpdate, EvtUiSessionMinsUpdate, EvtUiRangeCmUpdate, EvtUiAudioVolUpdate,
+    EvtUiLedBrightUpdate, EvtUiStartPressed,
     // timer
     EvtSetupTimeout, EvtSessionEnd,
     // radar events

@@ -60,7 +60,6 @@ web_server:
 smart_signage:
   id: ss1
   currProfile:    currProfile
-  knobFn:         knobFn
   sessionMins:    sessionMins
   radarRangeCm:   radarRangeCm
   audioVolPct:    audioVolPct
@@ -74,14 +73,6 @@ select:
   - platform: template
     name: "Profile"
     id: currProfile
-    optimistic: true
-    options:
-      - "__placeholder__"
-
-
-  - platform: template
-    name: "Knob Fn"
-    id: knobFn
     optimistic: true
     options:
       - "__placeholder__"
