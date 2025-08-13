@@ -128,5 +128,17 @@ button:
     name: "Start"
     id: startButton
 
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 3
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Physical Start Button"
+    on_press:
+      then:
+        - button.press: startButton
+
 external_components:
   - source: components      # ← folder that holds this component

@@ -23,8 +23,8 @@ struct AudioPlayItem {
 };
 
 struct AudioPlaySpec {
-    uint8_t       n{0};         // number of valid items
-    uint16_t      loopCount{1}; // 0 = infinite
+    uint8_t       n{0};       // number of valid items
+    uint16_t      playCnt{1}; // 0 = infinite
     AudioPlayItem items[kMaxPlaylist];
 };
 

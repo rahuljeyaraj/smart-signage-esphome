@@ -28,13 +28,6 @@ bool FSM::guardImuReady(const EvtImuReady &) {
 }
 
 bool FSM::guardLedReady(const EvtLedReady &) {
-
-    ledQ_.post(led::CmdBreathe(100, 1000, 0, 1000, 0, 0));
-    vTaskDelay(pdMS_TO_TICKS(4500));
-    ledQ_.post(led::CmdBreathe(100, 2000, 0, 2000, 0, 2));
-    vTaskDelay(pdMS_TO_TICKS(2000));
-
-    return true;
     readyBits_.set(static_cast<size_t>(Intf::Led));
     const bool all = readyBits_.all();
     SS_LOGI("Guard: LedReady   - %u/%u ready → all=%s",
@@ -57,11 +50,11 @@ bool FSM::guardAudioReady(const EvtAudioReady &) {
 /*──────────────────────── Actions ──────────────────────*/
 void FSM::onCmdSetup(const CmdSetup &) {
     SS_LOGI("Action: onCmdSetup -> broadcast CmdSetup");
-    readyBits_.reset(); // fresh round
-    // radarQ_.post(radar::CmdSetup{});
-    // imuQ_.post(imu::CmdSetup{});
+    readyBits_.reset();
+    radarQ_.post(radar::CmdSetup{});
+    imuQ_.post(imu::CmdSetup{});
     ledQ_.post(led::CmdSetup{});
-    // audioQ_.post(audio::CmdSetup{});
+    audioQ_.post(audio::CmdSetup{});
 }
 
 void FSM::onCmdStart(const CmdStart &e) {

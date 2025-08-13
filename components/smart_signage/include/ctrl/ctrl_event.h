@@ -13,6 +13,24 @@ struct CmdStart {
 struct CmdStop {};
 struct CmdTeardown {};
 
+// UI -> Controller commands (no dynamic allocations)
+struct CmdUiSelectProfile {
+    uint32_t idx;
+};
+struct CmdUiSetSessionMins {
+    uint32_t mins;
+};
+struct CmdUiSetRangeCm {
+    uint32_t cm;
+};
+struct CmdUiSetAudioVol {
+    uint8_t pct;
+};
+struct CmdUiSetLedBright {
+    uint8_t pct;
+};
+struct CmdUiPressStart {};
+
 struct EvtSetupTimeout {};
 struct EvtSessionEnd {};
 
@@ -24,6 +42,7 @@ struct EvtRadarData {
     uint16_t   distanceCm     = 0;
     TickType_t timestampTicks = 0;
 };
+
 struct EvtImuError {};
 struct EvtImuReady {};
 struct EvtImuFell {};
@@ -37,21 +56,19 @@ struct EvtAudioDone {};
 
 // unified event variant
 using Event = etl::variant<
-    // commands
+    // core commands
     CmdSetup, CmdStart, CmdStop, CmdTeardown,
-
+    // UI commands
+    CmdUiSelectProfile, CmdUiSetSessionMins, CmdUiSetRangeCm, CmdUiSetAudioVol, CmdUiSetLedBright,
+    CmdUiPressStart,
     // timer
     EvtSetupTimeout, EvtSessionEnd,
-
     // radar events
     EvtRadarError, EvtRadarReady, EvtRadarData,
-
     // imu events
     EvtImuError, EvtImuReady, EvtImuFell, EvtImuRose,
-
     // led events
     EvtLedError, EvtLedReady, EvtLedDone,
-
     // audio events
     EvtAudioError, EvtAudioReady, EvtAudioDone>;
 

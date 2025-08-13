@@ -18,6 +18,7 @@
 #include "fsm_logger.h"
 #include "config/nvs_config_manager.h"
 #include "user_intf.h"
+#include "profile_config.h"
 
 namespace esphome::smart_signage {
 
@@ -30,38 +31,46 @@ class SmartSignage : public Component {
     void dump_config() override;
 
   private:
+    const char *configJson_;
+
+    profiles_config::ProfilesConfig</*MAX_PROFILES=*/8, /*MAX_EVENTS_TOTAL=*/32> profilesCfg_;
+
     /*────── High-level helpers ────*/
-    NVSConfigManager nvsConfigManager_;
-    UserIntf         userIntf_;
+    // profiles::ProfilesDB profileDb_;
+    // NVSConfigManager     nvsConfigManager_;
+    // UserIntf             userIntf_;
 
-    /*────── Message queues ────────*/
-    ctrl::Q  ctrlQ_;
-    radar::Q radarQ_;
-    imu::Q   imuQ_;
-    led::Q   ledQ_;
-    audio::Q audioQ_;
+    // /*────── Message queues ────────*/
+    // ctrl::Q  ctrlQ_;
+    // radar::Q radarQ_;
+    // imu::Q   imuQ_;
+    // led::Q   ledQ_;
+    // audio::Q audioQ_;
 
-    /*──────  Radar  ────*/
-    HardwareSerial             radarSerial_;
-    radar::hal::LD2410RadarHal radarHal_;
-    timer::EspTimer            radarTimer_;
-    radar::RadarAO             radarAo_;
+    // /*──────  Radar  ────*/
+    // HardwareSerial             radarSerial_;
+    // radar::hal::LD2410RadarHal radarHal_;
+    // timer::EspTimer            radarTimer_;
+    // radar::RadarAO             radarAo_;
 
-    /*──────  Imu ────*/
-    MPU6500             imu_;
-    imu::hal::I2cImuHal imuHal_;
-    timer::EspTimer     imuTimer_;
-    imu::ImuAO          imuAo_;
+    // /*──────  Imu ────*/
+    // MPU6500             imu_;
+    // imu::hal::I2cImuHal imuHal_;
+    // timer::EspTimer     imuTimer_;
+    // imu::ImuAO          imuAo_;
 
-    /*──────  Led  ────*/
-    led::hal::EspLedHal ledHal_;
-    timer::EspTimer     ledTimer_;
-    led::LedAO          ledAo_;
+    // /*──────  Led  ────*/
+    // led::hal::EspLedHal ledHal_;
+    // timer::EspTimer     ledTimer_;
+    // led::LedAO          ledAo_;
 
-    /*──────  Audio  ────*/
-    audio::hal::I2SAudioHal audioHal_;
-    timer::EspTimer         audioTimer_;
-    audio::AO               audioAo_;
+    // /*──────  Audio  ────*/
+    // audio::hal::I2SAudioHal audioHal_;
+    // timer::EspTimer         audioTimer_;
+    // audio::AO               audioAo_;
+
+    // /*──────  Ctrl ───────*/
+    // ctrl::AO ctrlAo_;
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";

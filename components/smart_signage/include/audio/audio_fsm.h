@@ -84,7 +84,7 @@ class FSM {
         loopDone_ = 0;
         gapArmed_ = false;
 
-        SS_LOGI("play: n=%hhu loops=%hu", spec_.n, spec_.loopCount);
+        SS_LOGI("play: n=%hhu loops=%hu", spec_.n, spec_.playCnt);
         if (spec_.n == 0) {
             SS_LOGE("empty list");
             // treat as immediate completion from ctrl POV
@@ -113,7 +113,7 @@ class FSM {
             return;
         }
 
-        const uint16_t loops     = spec_.loopCount;
+        const uint16_t loops     = spec_.playCnt;
         const bool     infinite  = (loops == 0);
         const bool     moreLoops = infinite || (loopDone_ + 1u < loops);
 

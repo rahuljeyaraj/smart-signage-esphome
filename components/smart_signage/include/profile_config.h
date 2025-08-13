@@ -68,7 +68,7 @@ class ProfilesConfig {
         clear();
 
         if (!jsonUtf8 || jsonUtf8[0] == '\0') {
-            LOGE("%s: input json is null or empty", TAG);
+            SS_LOGE("%s: input json is null or empty", TAG);
             return false;
         }
 
@@ -76,19 +76,19 @@ class ProfilesConfig {
         JsonDocument         doc;
         DeserializationError err = deserializeJson(doc, jsonUtf8);
         if (err) {
-            LOGE("%s: deserializeJson failed: %s", TAG, err.c_str());
+            SS_LOGE("%s: deserializeJson failed: %s", TAG, err.c_str());
             return false;
         }
 
         auto profiles = doc["profiles"].as<JsonArrayConst>();
         if (profiles.isNull()) {
-            LOGE("%s: 'profiles' missing or not an array", TAG);
+            SS_LOGE("%s: 'profiles' missing or not an array", TAG);
             return false;
         }
 
         const size_t psize = profiles.size();
         if (psize > MAX_PROFILES) {
-            LOGE("%s: profiles size %zu exceeds MAX_PROFILES %zu", TAG, psize, MAX_PROFILES);
+            SS_LOGE("%s: profiles size %zu exceeds MAX_PROFILES %zu", TAG, psize, MAX_PROFILES);
             // Not fatal; we ingest up to MAX_PROFILES.
         }
 
@@ -97,13 +97,13 @@ class ProfilesConfig {
         for (size_t pi = 0; pi < std::min(psize, (size_t) MAX_PROFILES); ++pi) {
             auto profile = profiles[pi].as<JsonObjectConst>();
             if (profile.isNull()) {
-                LOGE("%s: profile %zu is not an object", TAG, pi);
+                SS_LOGE("%s: profile %zu is not an object", TAG, pi);
                 continue;
             }
 
             auto events = profile["events"].as<JsonObjectConst>();
             if (events.isNull()) {
-                LOGE("%s: profile %zu has no 'events' object", TAG, pi);
+                SS_LOGE("%s: profile %zu has no 'events' object", TAG, pi);
                 continue;
             }
 
@@ -114,7 +114,7 @@ class ProfilesConfig {
 
                 EventId ev = eventFromCStr(evKey);
                 if (ev == EventId::Unknown) {
-                    LOGE("%s: unknown event '%s' in profile %zu", TAG, evKey, pi);
+                    SS_LOGE("%s: unknown event '%s' in profile %zu", TAG, evKey, pi);
                     continue;
                 }
 
@@ -125,9 +125,9 @@ class ProfilesConfig {
                 }
 
                 audio::AudioPlaySpec spec{}; // zero-initialized
-                // playCnt -> loopCount (0 = infinite)
+                // playCnt -> playCnt (0 = infinite)
                 uint32_t playCnt = audioObj["playCnt"] | 1u;
-                spec.loopCount   = static_cast<uint16_t>(std::min<uint32_t>(playCnt, 0xFFFFu));
+                spec.playCnt     = static_cast<uint16_t>(std::min<uint32_t>(playCnt, 0xFFFFu));
 
                 // playList
                 auto list = audioObj["playList"].as<JsonArrayConst>();
@@ -140,7 +140,7 @@ class ProfilesConfig {
                     for (size_t i = 0; i < maxN; ++i) {
                         auto item = list[i].as<JsonObjectConst>();
                         if (item.isNull()) {
-                            LOGE("%s: profile %zu '%s' playList[%zu] not an object",
+                            SS_LOGE("%s: profile %zu '%s' playList[%zu] not an object",
                                 TAG,
                                 pi,
                                 evKey,
@@ -149,7 +149,7 @@ class ProfilesConfig {
                         }
                         const char *src = item["src"] | "";
                         if (src[0] == '\0') {
-                            LOGE("%s: profile %zu '%s' playList[%zu] missing src",
+                            SS_LOGE("%s: profile %zu '%s' playList[%zu] missing src",
                                 TAG,
                                 pi,
                                 evKey,
@@ -168,14 +168,15 @@ class ProfilesConfig {
                 }
 
                 if (ingestedPairs >= MAX_EVENTS_TOTAL) {
-                    LOGE("%s: (profile,event) pairs exceed MAX_EVENTS_TOTAL=%zu; ingestion stopped",
+                    SS_LOGE(
+                        "%s: (profile,event) pairs exceed MAX_EVENTS_TOTAL=%zu; ingestion stopped",
                         TAG,
                         MAX_EVENTS_TOTAL);
                     return false; // caller should increase capacity
                 }
 
                 if (table_.full()) {
-                    LOGE("%s: flat_map full (MAX_EVENTS_TOTAL=%zu)", TAG, MAX_EVENTS_TOTAL);
+                    SS_LOGE("%s: flat_map full (MAX_EVENTS_TOTAL=%zu)", TAG, MAX_EVENTS_TOTAL);
                     return false;
                 }
 
@@ -184,7 +185,7 @@ class ProfilesConfig {
                 if (it == table_.end()) {
                     const bool inserted = table_.insert(std::make_pair(k, spec)).second;
                     if (!inserted) {
-                        LOGE(
+                        SS_LOGE(
                             "%s: flat_map insert failed at profile %zu event '%s'", TAG, pi, evKey);
                         return false;
                     }
@@ -196,20 +197,22 @@ class ProfilesConfig {
             }
         }
 
+        // Dump everything we loaded (debug)
+        dumpAll_();
         return true;
     }
 
     /** Heap-free lookup at runtime */
     bool getAudioPlaySpec(uint32_t profileIdx, EventId ev, audio::AudioPlaySpec &out) const {
         if (profileIdx > 0xFFFFu) {
-            LOGE("%s: profileIdx too large: %u", TAG, static_cast<unsigned int>(profileIdx));
+            SS_LOGE("%s: profileIdx too large: %u", TAG, static_cast<unsigned int>(profileIdx));
             return false;
         }
 
         const Key k{static_cast<uint16_t>(profileIdx), ev};
         auto      it = table_.find(k);
         if (it == table_.end()) {
-            LOGE("%s: not found (profile=%u, event=%s)",
+            SS_LOGE("%s: not found (profile=%u, event=%s)",
                 TAG,
                 static_cast<unsigned int>(profileIdx),
                 eventToCStr(ev));
@@ -223,6 +226,28 @@ class ProfilesConfig {
 
   private:
     static constexpr const char *TAG = "ProfilesConfig";
+
+    void dumpAll_() const {
+        SS_LOGD("%s: dump begin (entries=%zu)", TAG, table_.size());
+        for (auto it = table_.begin(); it != table_.end(); ++it) {
+            const Key  &k    = it->first;
+            const auto &spec = it->second;
+            SS_LOGD("%s: profile=%hu, event=%s, playCnt=%hu, n=%hhu",
+                TAG,
+                k.profile,
+                eventToCStr(k.event),
+                spec.playCnt,
+                spec.n);
+            for (uint8_t i = 0; i < spec.n; ++i) {
+                SS_LOGD("%s:   [%hhu] src=\"%s\", gapMs=%hu",
+                    TAG,
+                    i,
+                    spec.items[i].source,
+                    spec.items[i].gapMs);
+            }
+        }
+        SS_LOGD("%s: dump end", TAG);
+    }
 
     etl::flat_map<Key, audio::AudioPlaySpec, MAX_EVENTS_TOTAL> table_;
 };
