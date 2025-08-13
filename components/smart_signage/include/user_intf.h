@@ -30,7 +30,6 @@ template <size_t MAX_PROFILES>
 class UserIntf {
   public:
     static constexpr const char *TAG = "UserIntf";
-    using Label                      = ProfileName; // 15-char ETL string
 
     explicit UserIntf(const UiHandles &ui, ctrl::Q &ctrlQ) : ui_(ui), ctrlQ_(ctrlQ) {
         attach_callbacks_();
@@ -40,7 +39,7 @@ class UserIntf {
     // ─────────────── CTRL → UI (no echo back) ───────────────
 
     // Set the select's options (ETL -> std::vector<std::string>)
-    void set_profile_options(const etl::vector<Label, MAX_PROFILES> &opts) {
+    void set_profile_options(const etl::vector<ProfileName, MAX_PROFILES> &opts) {
         std::vector<std::string> std_opts;
         std_opts.reserve(opts.size());
         for (const auto &lbl : opts) std_opts.emplace_back(lbl.c_str());
@@ -51,19 +50,11 @@ class UserIntf {
         SS_LOGI("%s: profile options set, count=%u", TAG, (unsigned) opts.size());
     }
 
-    // Select a profile by LABEL (publish the label directly)
-    void set_current_profile_label(const Label &label) {
+    // Select a profile by ProfileName
+    void set_current_profile(const ProfileName &name) {
         if (ui_.currProfile) {
-            suppress_([&] { ui_.currProfile->publish_state(label.c_str()); });
-            SS_LOGI("%s: current profile -> \"%s\"", TAG, label.c_str());
-        }
-    }
-    // convenience overload
-    void set_current_profile_label(const char *label_cstr) {
-        if (!label_cstr) label_cstr = "";
-        if (ui_.currProfile) {
-            suppress_([&] { ui_.currProfile->publish_state(label_cstr); });
-            SS_LOGI("%s: current profile -> \"%s\"", TAG, label_cstr);
+            suppress_([&] { ui_.currProfile->publish_state(name.c_str()); });
+            SS_LOGI("%s: current profile -> \"%s\"", TAG, name.c_str());
         }
     }
 

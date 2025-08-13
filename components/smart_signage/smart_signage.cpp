@@ -59,8 +59,8 @@ void SmartSignage::setup() {
     // Push options to UI (stateless)
     ui_.set_profile_options(names);
 
-    // Jump to a specific label (stateless)
-    // ui_.set_current_profile_label(ProfilesConfigT::Label("Silent Mode"));
+    // Jump to a specific label(stateless)
+    ui_.set_current_profile(names[1]);
 
     // for (uint8_t i = 0; i < count; ++i) {
     //     ProfileSummary summary{};
