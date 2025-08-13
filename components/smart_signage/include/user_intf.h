@@ -32,49 +32,53 @@ class UserIntf {
     static constexpr const char *TAG = "UserIntf";
 
     explicit UserIntf(const UiHandles &ui, ctrl::Q &ctrlQ) : ui_(ui), ctrlQ_(ctrlQ) {
-        attach_callbacks_();
+        attachCallbacks_();
         SS_LOGD("%s: constructed", TAG);
     }
 
     // ─────────────── CTRL → UI (no echo back) ───────────────
 
     // Set the select's options (ETL -> std::vector<std::string>)
-    void set_profile_options(const etl::vector<ProfileName, MAX_PROFILES> &opts) {
-        std::vector<std::string> std_opts;
-        std_opts.reserve(opts.size());
-        for (const auto &lbl : opts) std_opts.emplace_back(lbl.c_str());
+    void setProfileOptions(const etl::vector<ProfileName, MAX_PROFILES> &opts) {
+        std::vector<std::string> stdOpts;
+        stdOpts.reserve(opts.size());
+        for (const auto &lbl : opts) stdOpts.emplace_back(lbl.c_str());
 
         if (ui_.currProfile) {
-            suppress_([&] { ui_.currProfile->traits.set_options(std_opts); });
+            suppressEvents_([&] { ui_.currProfile->traits.set_options(stdOpts); });
         }
         SS_LOGI("%s: profile options set, count=%u", TAG, (unsigned) opts.size());
     }
 
     // Select a profile by ProfileName
-    void set_current_profile(const ProfileName &name) {
+    void setCurrentProfile(const ProfileName &name) {
         if (ui_.currProfile) {
-            suppress_([&] { ui_.currProfile->publish_state(name.c_str()); });
+            suppressEvents_([&] { ui_.currProfile->publish_state(name.c_str()); });
             SS_LOGI("%s: current profile -> \"%s\"", TAG, name.c_str());
         }
     }
 
     // Numbers: just publish (stateless); clamp where it makes sense
-    void set_session_mins(uint32_t mins) {
-        if (ui_.sessionMins) suppress_([&] { ui_.sessionMins->publish_state((float) mins); });
+    void setSessionMins(uint32_t mins) {
+        if (ui_.sessionMins) suppressEvents_([&] { ui_.sessionMins->publish_state((float) mins); });
         SS_LOGI("%s: session mins -> %u", TAG, mins);
     }
-    void set_radar_range_cm(uint32_t cm) {
-        if (ui_.radarRangeCm) suppress_([&] { ui_.radarRangeCm->publish_state((float) cm); });
+
+    void setRadarRangeCm(uint32_t cm) {
+        if (ui_.radarRangeCm) suppressEvents_([&] { ui_.radarRangeCm->publish_state((float) cm); });
         SS_LOGI("%s: radar range cm -> %u", TAG, cm);
     }
-    void set_audio_vol_pct(uint8_t pct) {
+
+    void setAudioVolPct(uint8_t pct) {
         if (pct > 100) pct = 100;
-        if (ui_.audioVolPct) suppress_([&] { ui_.audioVolPct->publish_state((float) pct); });
+        if (ui_.audioVolPct) suppressEvents_([&] { ui_.audioVolPct->publish_state((float) pct); });
         SS_LOGI("%s: audio vol pct -> %hhu", TAG, pct);
     }
-    void set_led_bright_pct(uint8_t pct) {
+
+    void setLedBrightPct(uint8_t pct) {
         if (pct > 100) pct = 100;
-        if (ui_.ledBrightPct) suppress_([&] { ui_.ledBrightPct->publish_state((float) pct); });
+        if (ui_.ledBrightPct)
+            suppressEvents_([&] { ui_.ledBrightPct->publish_state((float) pct); });
         SS_LOGI("%s: led bright pct -> %hhu", TAG, pct);
     }
 
@@ -84,7 +88,7 @@ class UserIntf {
     bool      suppressing_{false}; // only to prevent echo during programmatic publishes
 
     template <typename F>
-    void suppress_(F &&f) {
+    void suppressEvents_(F &&f) {
         bool old     = suppressing_;
         suppressing_ = true;
         f();
@@ -92,7 +96,7 @@ class UserIntf {
     }
 
     // ─────────────── UI → CTRL wiring ───────────────
-    void attach_callbacks_() {
+    void attachCallbacks_() {
         // Start button
         if (ui_.startButton) {
             // prefer add_on_press_callback if available

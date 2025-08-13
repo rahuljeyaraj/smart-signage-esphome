@@ -1,197 +1,105 @@
 profiles:
-  - name: abcd
+  - name: WetFloor
     events:
-      setup_done:
-        audio:
-          playCnt: 1
-          playList:
-            - {src: /common/setup_done.mp3, delayMs: 0}
-
-      sensor_error:
-        audio:
-          playCnt: 1
-          playList:
-            - {src: /common/setup_error.mp3, delayMs: 0}
-
-      start:
-        audio:
-          playCnt: 1
-          playList:
-            - {src: /wet_floor/start.mp3, delayMs: 0}
-
-      detected:
+      SetupDone:
+        audio: { playCnt: 1, playList: [ { src: /common/setup_done.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 800, cnt: 2 }
+      Error:
+        audio: { playCnt: 1, playList: [ { src: /common/setup_error.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 150, cnt: 0 }   # rapid infinite blink
+      Start:
+        audio: { playCnt: 1, playList: [ { src: /wet_floor/start.mp3, delayMs: 0 } ] }
+        led:   { pattern: triangle, periodMs: 120, cnt: 3 }
+      Stop:
+        audio: { playCnt: 1, playList: [ { src: /common/stop.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 600, cnt: 1 }
+      UiUpdate:
+        audio: { playCnt: 1, playList: [ { src: /common/ui_update.mp3, delayMs: 0 } ] }
+      Detected:
         audio:
           playCnt: 0
           playList:
-            - {src: /wet_floor/detected1.mp3, delayMs: 2000}
-            - {src: /wet_floor/detected2.mp3, delayMs: 3000}
-  - name: pqrs
+            - { src: /wet_floor/detected1.mp3, delayMs: 2000 }
+            - { src: /wet_floor/detected2.mp3, delayMs: 3000 }
+        led: { pattern: triangle, periodMs: 2000, cnt: 0 }
+      Detected0Cm:
+        led: { pattern: triangle, periodMs: 120, cnt: 0 }   # very close -> fast blink
+      Fell:
+        audio: { playCnt: 1, playList: [ { src: /common/fell.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 300, cnt: 5 }
+      Rose:
+        audio: { playCnt: 1, playList: [ { src: /common/rose.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 500, cnt: 3 }
+      SessionEnd:
+        audio: { playCnt: 1, playList: [ { src: /common/session_end.mp3, delayMs: 0 } ] }
+        led:   { pattern: triangle, periodMs: 800, cnt: 2 }
+
+  - name: Halloween
     events:
-      setup_done:
-        audio:
-          playCnt: 1
-          playList:
-            - {src: /common/setup_done.mp3, delayMs: 0}
-
-      sensor_error:
-        audio:
-          playCnt: 1
-          playList:
-            - {src: /common/setup_error.mp3, delayMs: 0}
-
-      start:
-        audio:
-          playCnt: 1
-          playList:
-            - {src: /wet_floor/start.mp3, delayMs: 0}
-
-      detected:
+      SetupDone:
+        audio: { playCnt: 1, playList: [ { src: /common/setup_done.mp3, delayMs: 0 } ] }
+        led:   { pattern: triangle, periodMs: 600, cnt: 2 }
+      Error:
+        audio: { playCnt: 1, playList: [ { src: /common/setup_error.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 120, cnt: 0 }
+      Start:
+        audio: { playCnt: 1, playList: [ { src: /halloween/start.mp3, delayMs: 0 } ] }
+        led:   { pattern: triangle, periodMs: 150, cnt: 6 }
+      Stop:
+        audio: { playCnt: 1, playList: [ { src: /common/stop.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 700, cnt: 2 }
+      UiUpdate:
+        audio: { playCnt: 1, playList: [ { src: /common/ui_update.mp3, delayMs: 0 } ] }
+      Detected:
         audio:
           playCnt: 0
           playList:
-            - {src: /wet_floor/detected1.mp3, delayMs: 2000}
-            - {src: /wet_floor/detected2.mp3, delayMs: 3000}
-            
-# name: Wet Floor Warning
-# events:
-#   setup_done:
-#     audio:
-#       playCnt: 1 // default,
-#       playList:
-#         - {src: /common/setup_done.mp3,           delayMs: 0}
-#   sensor_error:
-#     audio:
-#       sources:
-#         - src: /common/setup_error.mp3
-#           delayMs: 0
+            - { src: /halloween/spook1.mp3, delayMs: 1500 }
+            - { src: /halloween/spook2.mp3, delayMs: 2500 }
+        led: { pattern: triangle, periodMs: 900, cnt: 0 }
+      Detected0Cm:
+        led: { pattern: triangle, periodMs: 100, cnt: 0 }
+      Fell:
+        audio: { playCnt: 1, playList: [ { src: /common/fell.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 220, cnt: 6 }
+      Rose:
+        audio: { playCnt: 1, playList: [ { src: /common/rose.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 450, cnt: 4 }
+      SessionEnd:
+        audio: { playCnt: 1, playList: [ { src: /common/session_end.mp3, delayMs: 0 } ] }
+        led:   { pattern: triangle, periodMs: 700, cnt: 3 }
 
-#   start:
-#     audio:
-#       sources:
-#         - src: /wet_floor/start.mp3
-#           delayMs: 0
-#       count: 1
-#   detected:
-#     audio:
-#       sources:
-#         - src: /wet_floor/detected1.mp3
-#           delayMs: 2000
-#         - src: /wet_floor/detected2.mp3
-#           delayMs: 3000
-#       count: 0
-#     ledBreathMaxPeriodMs: 2000
-#     ledBreathMinPeriodMs: 500
-
-
-# {
-#   "profiles": [
-#     {
-#       "name": "Wet Floor Warning",
-#       "events": {
-#         "setup_done": {
-#           "audio": {"sources": [{ "src": "/common/setup_done.mp3", "delayMs": 0 }],"count": 1}
-#         },
-#         "sensor_error": {
-#           "audio": {"sources": [{ "src": "/common/setup_error.mp3", "delayMs": 0 }],"count": 1},
-#         },
-#         "start": {
-#           "audio": {"sources": [{ "src": "/wet_floor/start.mp3", "delayMs": 0 }],"count": 1},
-#         },
-#         "detected": {
-#           "audio": {
-#             "sources": [{ "src": "/wet_floor/detected1.mp3", "delayMs": 2000 },{ "src": "/wet_floor/detected2.mp3", "delayMs": 3000 }],
-#             "count": 0
-#           },
-#           "ledBreathMaxPeriodMs": 2000,
-#           "ledBreathMinPeriodMs": 500,
-#         },
-#       }
-#     }
-
-#         "detected": {
-#           "audio": [
-#             { "audio": "/wet_floor/detected1.mp3", "repeat_s": 2 },
-#             { "audio": "/wet_floor/detected2.mp3", "repeat_s": 3 }
-#           ],
-#           "led": {
-#             "effect": "breathe_by_distance",
-#             "invert": true,
-#             "freq_hz": { "min": 0.5, "max": 2.0 }
-#           }
-#         },
-
-
-
-#         "not_detected": {
-#           "audio": "/wet_floor/not_detected.mp3",
-#           "led": { "effect": "on" }
-#         },
-#         "fallen": {
-#           "audio": [
-#             { "audio": "/wet_floor/fall1.mp3", "repeat_s": 5 },
-#             { "audio": "/wet_floor/fall2.mp3", "repeat_s": 7 }
-#           ],
-#           "led": { "effect": "blink", "on_ms": 150, "off_ms": 150, "count": 6 }
-#         },
-#         "rose": {
-#           "audio": "/wet_floor/rose.mp3",
-#           "led": { "effect": "breathe", "rise_ms": 400, "fall_ms": 400, "count": 1 }
-#         },
-#         "run_end": {
-#           "audio": "/wet_floor/run_end.mp3",
-#           "led": { "effect": "breathe", "rise_ms": 800, "fall_ms": 800, "count": 2 }
-#         },
-#         "low_battery": {
-#           "audio": "/wet_floor/low_batt.mp3",
-#           "led": { "effect": "blink", "on_ms": 200, "off_ms": 200, "count": 5 }
-#         }
-#       }
-#     },
-#     {
-#       "id": "p1",
-#       "name": "General Alarm",
-#       "events": {
-#         "setup_done": {
-#           "audio": "/general/setup_done.mp3",
-#           "led": { "effect": "on" }
-#         },
-#         "setup_error": {
-#           "audio": "/general/setup_error.mp3",
-#           "led": { "effect": "blink", "on_ms": 150, "off_ms": 150, "count": 3 }
-#         },
-#         "start": {
-#           "audio": "/general/start.mp3",
-#           "led": { "effect": "breathe", "rise_ms": 600, "fall_ms": 600, "count": 1 }
-#         },
-#         "detected": {
-#           "audio": "/general/detected.mp3",
-#           "led": {
-#             "effect": "breathe_by_distance",
-#             "invert": false,
-#             "freq_hz": { "min": 0.3, "max": 1.5 }
-#           }
-#         },
-#         "not_detected": {
-#           "audio": "/general/not_detected.mp3",
-#           "led": { "effect": "on" }
-#         },
-#         "fallen": {
-#           "audio": "/general/fall.mp3",
-#           "led": { "effect": "blink", "on_ms": 120, "off_ms": 120, "count": 5 }
-#         },
-#         "rose": {
-#           "audio": "/general/rose.mp3",
-#           "led": { "effect": "breathe", "rise_ms": 500, "fall_ms": 500, "count": 1 }
-#         },
-#         "run_end": {
-#           "audio": "/general/run_end.mp3",
-#           "led": { "effect": "breathe", "rise_ms": 700, "fall_ms": 700, "count": 2 }
-#         },
-#         "low_battery": {
-#           "audio": "/general/low_batt.mp3",
-#           "led": { "effect": "blink", "on_ms": 300, "off_ms": 300, "count": 4 }
-#         }
-#       }
-#     }
-#   ]
-# }
+  - name: LunchBreak
+    events:
+      SetupDone:
+        audio: { playCnt: 1, playList: [ { src: /common/setup_done.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 1000, cnt: 1 }
+      Error:
+        audio: { playCnt: 1, playList: [ { src: /common/setup_error.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 180, cnt: 0 }
+      Start:
+        audio: { playCnt: 1, playList: [ { src: /lunch_break/start.mp3, delayMs: 0 } ] }
+        led:   { pattern: triangle, periodMs: 200, cnt: 3 }
+      Stop:
+        audio: { playCnt: 1, playList: [ { src: /common/stop.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 800, cnt: 2 }
+      UiUpdate:
+        audio: { playCnt: 1, playList: [ { src: /common/ui_update.mp3, delayMs: 0 } ] }
+      Detected:
+        audio:
+          playCnt: 0
+          playList:
+            - { src: /lunch_break/detected1.mp3, delayMs: 2500 }
+            - { src: /lunch_break/detected2.mp3, delayMs: 3000 }
+        led: { pattern: triangle, periodMs: 1200, cnt: 0 }
+      Detected0Cm:
+        led: { pattern: triangle, periodMs: 150, cnt: 0 }
+      Fell:
+        audio: { playCnt: 1, playList: [ { src: /common/fell.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 300, cnt: 4 }
+      Rose:
+        audio: { playCnt: 1, playList: [ { src: /common/rose.mp3, delayMs: 0 } ] }
+        led:   { pattern: square, periodMs: 550, cnt: 3 }
+      SessionEnd:
+        audio: { playCnt: 1, playList: [ { src: /common/session_end.mp3, delayMs: 0 } ] }
+        led:   { pattern: triangle, periodMs: 900, cnt: 2 }
