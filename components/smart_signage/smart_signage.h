@@ -18,7 +18,7 @@
 #include "audio/audio_ao.h"
 
 #include "fsm_logger.h"
-#include "config/nvs_config_manager.h"
+#include "nvs_smart_signage.h"
 
 // NEW: Profiles + UI bridge live in esphome::smart_signage
 #include "profile_config.h" // ProfilesConfig<...>, ProfileName
@@ -33,7 +33,6 @@
 #endif
 
 namespace esphome::smart_signage {
-
 
 // Handy aliases matching your new classes
 using ProfilesConfigT = ProfilesConfig<SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL>;
@@ -61,7 +60,6 @@ class SmartSignage : public Component {
     // ── Profiles + UI bridge
     ProfilesConfigT profilesCfg_{};
     UserIntfT       ui_;
-
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";
