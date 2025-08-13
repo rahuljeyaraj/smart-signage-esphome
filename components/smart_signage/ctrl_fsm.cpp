@@ -3,8 +3,10 @@
 namespace esphome::smart_signage::ctrl {
 
 /*──────────────────────── Ctor ─────────────────────────*/
-FSM::FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ)
-    : radarQ_(radarQ), imuQ_(imuQ), ledQ_(ledQ), audioQ_(audioQ) {}
+FSM::FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ, timer::ITimer &timer,
+    ProfilesConfigT &cfg, UserIntfT &ui)
+    : radarQ_(radarQ), imuQ_(imuQ), ledQ_(ledQ), audioQ_(audioQ), timer_(timer), cfg_(cfg),
+      ui_(ui) {}
 
 /*──────────────────────── Guards ───────────────────────*/
 bool FSM::guardRadarReady(const EvtRadarReady &) {

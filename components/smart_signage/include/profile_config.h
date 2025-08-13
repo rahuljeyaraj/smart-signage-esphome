@@ -11,51 +11,72 @@
 #include "log.h"               // SS_LOGx (ASCII-only)
 #include "audio/audio_const.h" // audio::kSourceStrLen, audio::kMaxPlaylist
 #include "audio/audio_event.h" // audio::AudioPlaySpec
+#include "common.h"
 
 namespace esphome::smart_signage {
 
 // ────────────────────────────────────────────────────────────────────────────
-// ProfileName type (15-char ETL) — already standardized in your codebase
-// ────────────────────────────────────────────────────────────────────────────
-using ProfileName = etl::string<15>;
-
-// ────────────────────────────────────────────────────────────────────────────
-// Event enumeration (added Detected0Cm)
+// Events (camelCase)
 // ────────────────────────────────────────────────────────────────────────────
 enum class EventId : uint8_t {
     SetupDone,
-    SensorError,
+    Error,
     Start,
+    Stop,
+    UiUpdate,
     Detected,
-    Detected0Cm, // ← NEW to match your YAML
+    Detected0Cm,
+    Fell,
+    Rose,
+    SessionEnd,
     Unknown
 };
 
 inline const char *eventToCStr(EventId e) {
     switch (e) {
-    case EventId::SetupDone: return "setup_done";
-    case EventId::SensorError: return "sensor_error";
-    case EventId::Start: return "start";
-    case EventId::Detected: return "detected";
-    case EventId::Detected0Cm: return "detected0Cm";
-    default: return "unknown";
+    case EventId::SetupDone: return "SetupDone";
+    case EventId::Error: return "Error";
+    case EventId::Start: return "Start";
+    case EventId::Stop: return "Stop";
+    case EventId::UiUpdate: return "UiUpdate";
+    case EventId::Detected: return "Detected";
+    case EventId::Detected0Cm: return "Detected0Cm";
+    case EventId::Fell: return "Fell";
+    case EventId::Rose: return "Rose";
+    case EventId::SessionEnd: return "SessionEnd";
+    default: return "Unknown";
     }
 }
 
+inline bool streq_(const char *a, const char *b) { return std::strcmp(a, b) == 0; }
+
 inline EventId eventFromCStr(const char *s) {
     if (!s || s[0] == '\0') return EventId::Unknown;
-    if (std::strcmp(s, "setup_done") == 0) return EventId::SetupDone;
-    if (std::strcmp(s, "sensor_error") == 0) return EventId::SensorError;
-    if (std::strcmp(s, "start") == 0) return EventId::Start;
-    if (std::strcmp(s, "detected") == 0) return EventId::Detected;
-    if (std::strcmp(s, "detected0Cm") == 0) return EventId::Detected0Cm; // ← NEW
+    if (streq_(s, "SetupDone")) return EventId::SetupDone;
+    if (streq_(s, "Error")) return EventId::Error;
+    if (streq_(s, "Start")) return EventId::Start;
+    if (streq_(s, "Stop")) return EventId::Stop;
+    if (streq_(s, "UiUpdate")) return EventId::UiUpdate;
+    if (streq_(s, "Detected")) return EventId::Detected;
+    if (streq_(s, "Detected0Cm")) return EventId::Detected0Cm;
+    if (streq_(s, "Fell")) return EventId::Fell;
+    if (streq_(s, "Rose")) return EventId::Rose;
+    if (streq_(s, "SessionEnd")) return EventId::SessionEnd;
     return EventId::Unknown;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// LED play spec & helpers (NEW)
+// LED spec
 // ────────────────────────────────────────────────────────────────────────────
 enum class LedPattern : uint8_t { Unknown, Square, Triangle };
+
+inline const char *ledPatternToCStr(LedPattern p) {
+    switch (p) {
+    case LedPattern::Square: return "square";
+    case LedPattern::Triangle: return "triangle";
+    default: return "unknown";
+    }
+}
 
 inline LedPattern ledPatternFromCStr(const char *s) {
     if (!s || s[0] == '\0') return LedPattern::Unknown;
@@ -66,31 +87,22 @@ inline LedPattern ledPatternFromCStr(const char *s) {
 
 struct LedPlaySpec {
     LedPattern pattern{LedPattern::Unknown};
-    uint16_t   periodMs{0}; // blink/animate period
-    uint16_t   cnt{0};      // 0 = infinite (like audio playCnt=0)
+    uint16_t   periodMs{0}; // blink period
+    uint16_t   cnt{0};      // 0 = infinite
 };
 
-// ────────────────────────────────────────────────────────────────────────────
-/** Composite key: (profileName, event) for the flat_map */
+// Composite key: (profileName, event)
 struct Key {
     ProfileName name{};
     EventId     event{EventId::Unknown};
 
     bool operator<(const Key &other) const {
         if (name < other.name) return true;
-        if (other.name < name) return false; // strict ordering
+        if (other.name < name) return false;
         return static_cast<uint8_t>(event) < static_cast<uint8_t>(other.event);
     }
 };
 
-// ────────────────────────────────────────────────────────────────────────────
-// ProfilesConfig
-//   • Parses JSON (ArduinoJson v7) at init()
-//   • Stores audio specs keyed by (ProfileName, EventId)
-//   • Stores LED specs keyed by (ProfileName, EventId)  ← NEW
-//   • getProfileList(...) returns the list of ProfileName (no indices)
-//   • getAudioPlaySpec(...) and getLedPlaySpec(...) lookups
-// ────────────────────────────────────────────────────────────────────────────
 template <size_t MAX_PROFILES, size_t MAX_EVENTS_TOTAL>
 class ProfilesConfig {
   public:
@@ -98,7 +110,6 @@ class ProfilesConfig {
 
     ProfilesConfig() = default;
 
-    /** Clear current data and load from JSON. Returns false on first failure. */
     bool init(const char *jsonUtf8) {
         clear();
 
@@ -123,11 +134,7 @@ class ProfilesConfig {
         const size_t psize = profiles.size();
         if (psize > MAX_PROFILES) {
             SS_LOGE("%s: profiles size %zu exceeds MAX_PROFILES %zu", TAG, psize, MAX_PROFILES);
-            // Not fatal; we ingest up to MAX_PROFILES.
         }
-
-        size_t ingestedPairsAudio = 0;
-        size_t ingestedPairsLed   = 0;
 
         for (size_t pi = 0; pi < std::min(psize, (size_t) MAX_PROFILES); ++pi) {
             auto profile = profiles[pi].as<JsonObjectConst>();
@@ -136,11 +143,10 @@ class ProfilesConfig {
                 continue;
             }
 
-            // Profile name (truncate to 15 chars if longer)
             const char *name = profile["name"] | "";
             ProfileName pname;
             if (name[0] != '\0') {
-                pname = name; // ETL string truncates to capacity
+                pname = name; // ETL truncates to 15
             } else {
                 char buf[20];
                 std::snprintf(buf, sizeof(buf), "Profile %u", (unsigned) pi);
@@ -154,7 +160,6 @@ class ProfilesConfig {
                 continue;
             }
 
-            // Iterate event entries in this profile
             for (auto kvp : events) {
                 const char *evKey = kvp.key().c_str();
                 auto        evObj = kvp.value().as<JsonObjectConst>();
@@ -165,13 +170,11 @@ class ProfilesConfig {
                     continue;
                 }
 
-                // ── AUDIO (unchanged) ───────────────────────────────────────────────
-                auto audioObj = evObj["audio"].as<JsonObjectConst>();
-                if (!audioObj.isNull()) {
-                    audio::AudioPlaySpec spec{}; // zero-initialized
-
-                    uint32_t playCnt = audioObj["playCnt"] | 1u;
-                    spec.playCnt     = static_cast<uint16_t>(std::min<uint32_t>(playCnt, 0xFFFFu));
+                // AUDIO
+                if (auto audioObj = evObj["audio"].as<JsonObjectConst>(); !audioObj.isNull()) {
+                    audio::AudioPlaySpec spec{};
+                    uint32_t             playCnt = audioObj["playCnt"] | 1u;
+                    spec.playCnt = static_cast<uint16_t>(std::min<uint32_t>(playCnt, 0xFFFFu));
 
                     auto list = audioObj["playList"].as<JsonArrayConst>();
                     if (!list.isNull()) {
@@ -199,7 +202,6 @@ class ProfilesConfig {
                                 continue;
                             }
                             uint32_t dms = item["delayMs"] | 0u;
-
                             std::strncpy(spec.items[n].source, src, audio::kSourceStrLen - 1);
                             spec.items[n].source[audio::kSourceStrLen - 1] = '\0';
                             spec.items[n].gapMs =
@@ -218,27 +220,24 @@ class ProfilesConfig {
                     const Key k{pname, ev};
                     auto      it = audioTable_.find(k);
                     if (it == audioTable_.end()) {
-                        const bool inserted = audioTable_.insert(std::make_pair(k, spec)).second;
-                        if (!inserted) {
-                            SS_LOGE("%s: audio flat_map insert failed at profile '%s' event '%s'",
+                        if (!audioTable_.insert(std::make_pair(k, spec)).second) {
+                            SS_LOGE("%s: audio insert failed at profile '%s' event '%s'",
                                 TAG,
                                 pname.c_str(),
                                 evKey);
                             return false;
                         }
-                        ++ingestedPairsAudio;
                     } else {
-                        it->second = spec; // replace duplicate
+                        it->second = spec;
                     }
                 }
 
-                // ── LED (NEW) ───────────────────────────────────────────────────────
-                auto ledObj = evObj["led"].as<JsonObjectConst>();
-                if (!ledObj.isNull()) {
+                // LED
+                if (auto ledObj = evObj["led"].as<JsonObjectConst>(); !ledObj.isNull()) {
                     LedPlaySpec lspec{};
                     lspec.pattern  = ledPatternFromCStr((const char *) (ledObj["pattern"] | ""));
                     uint32_t pms   = ledObj["periodMs"] | 0u;
-                    uint32_t cnt   = ledObj["cnt"] | (ledObj["nt"] | 0u); // accept typo "nt" too
+                    uint32_t cnt   = ledObj["cnt"] | (ledObj["nt"] | 0u); // accept "nt"
                     lspec.periodMs = static_cast<uint16_t>(std::min<uint32_t>(pms, 0xFFFFu));
                     lspec.cnt      = static_cast<uint16_t>(std::min<uint32_t>(cnt, 0xFFFFu));
 
@@ -250,27 +249,24 @@ class ProfilesConfig {
                     const Key k{pname, ev};
                     auto      it = ledTable_.find(k);
                     if (it == ledTable_.end()) {
-                        const bool inserted = ledTable_.insert(std::make_pair(k, lspec)).second;
-                        if (!inserted) {
-                            SS_LOGE("%s: led flat_map insert failed at profile '%s' event '%s'",
+                        if (!ledTable_.insert(std::make_pair(k, lspec)).second) {
+                            SS_LOGE("%s: led insert failed at profile '%s' event '%s'",
                                 TAG,
                                 pname.c_str(),
                                 evKey);
                             return false;
                         }
-                        ++ingestedPairsLed;
                     } else {
-                        it->second = lspec; // replace duplicate
+                        it->second = lspec;
                     }
                 }
-            } // events loop
-        } // profiles loop
+            }
+        }
 
         dumpAll_();
         return true;
     }
 
-    /** Lookup audio by profile NAME and event. */
     bool getAudioPlaySpec(
         const ProfileName &profileName, EventId ev, audio::AudioPlaySpec &out) const {
         const Key k{profileName, ev};
@@ -286,7 +282,6 @@ class ProfilesConfig {
         return true;
     }
 
-    /** Lookup LED by profile NAME and event. (NEW) */
     bool getLedPlaySpec(const ProfileName &profileName, EventId ev, LedPlaySpec &out) const {
         const Key k{profileName, ev};
         auto      it = ledTable_.find(k);
@@ -307,7 +302,6 @@ class ProfilesConfig {
         for (size_t i = 0; i < MAX_PROFILES; ++i) profileNames_[i].clear();
     }
 
-    // Return list of profile NAMES (labels). No indices.
     void getProfileList(etl::vector<ProfileName, MAX_PROFILES> &out) const {
         out.clear();
         for (uint32_t i = 0; i < MAX_PROFILES; ++i) {
@@ -321,36 +315,56 @@ class ProfilesConfig {
   private:
     void dumpAll_() const {
         SS_LOGD("%s: dump begin (audio=%zu, led=%zu)", TAG, audioTable_.size(), ledTable_.size());
+
+        // Print rows for all audio keys, merging LED if present
         for (auto it = audioTable_.begin(); it != audioTable_.end(); ++it) {
-            const Key  &k    = it->first;
-            const auto &spec = it->second;
-            SS_LOGD("%s: AUDIO profile='%s', event=%s, playCnt=%hu, n=%hhu",
-                TAG,
-                k.name.c_str(),
-                eventToCStr(k.event),
-                spec.playCnt,
-                spec.n);
+            const Key  &k  = it->first;
+            const auto &as = it->second;
+            const auto  lt = ledTable_.find(k);
+            if (lt != ledTable_.end()) {
+                const auto &ls = lt->second;
+                SS_LOGD("%s: profile='%s' event=%s | audio{cnt=%hu,n=%hhu} "
+                        "led{pattern=%s,periodMs=%hu,cnt=%hu}",
+                    TAG,
+                    k.name.c_str(),
+                    eventToCStr(k.event),
+                    as.playCnt,
+                    as.n,
+                    ledPatternToCStr(ls.pattern),
+                    ls.periodMs,
+                    ls.cnt);
+            } else {
+                SS_LOGD("%s: profile='%s' event=%s | audio{cnt=%hu,n=%hhu} led{-}",
+                    TAG,
+                    k.name.c_str(),
+                    eventToCStr(k.event),
+                    as.playCnt,
+                    as.n);
+            }
         }
+
+        // Print rows for LED-only keys
         for (auto it = ledTable_.begin(); it != ledTable_.end(); ++it) {
-            const Key  &k    = it->first;
-            const auto &spec = it->second;
-            const char *pat  = (spec.pattern == LedPattern::Square)     ? "square"
-                               : (spec.pattern == LedPattern::Triangle) ? "triangle"
-                                                                        : "unknown";
-            SS_LOGD("%s: LED   profile='%s', event=%s, pattern=%s, periodMs=%hu, cnt=%hu",
+            const Key &k = it->first;
+            if (audioTable_.find(k) != audioTable_.end()) continue; // already printed above
+            const auto &ls = it->second;
+            SS_LOGD("%s: profile='%s' event=%s | audio{-} led{pattern=%s,periodMs=%hu,cnt=%hu}",
                 TAG,
                 k.name.c_str(),
                 eventToCStr(k.event),
-                pat,
-                spec.periodMs,
-                spec.cnt);
+                ledPatternToCStr(ls.pattern),
+                ls.periodMs,
+                ls.cnt);
         }
+
         SS_LOGD("%s: dump end", TAG);
     }
 
     etl::flat_map<Key, audio::AudioPlaySpec, MAX_EVENTS_TOTAL> audioTable_;
-    etl::flat_map<Key, LedPlaySpec, MAX_EVENTS_TOTAL>          ledTable_; // ← NEW
+    etl::flat_map<Key, LedPlaySpec, MAX_EVENTS_TOTAL>          ledTable_;
     etl::array<ProfileName, MAX_PROFILES>                      profileNames_;
 };
+
+using ProfilesConfigT = ProfilesConfig<SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL>;
 
 } // namespace esphome::smart_signage

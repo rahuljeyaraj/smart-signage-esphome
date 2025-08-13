@@ -2,7 +2,7 @@
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
 #include "ctrl/ctrl_const.h"
-#include "types.h"
+#include "common.h"
 
 namespace esphome::smart_signage::ctrl {
 
@@ -33,8 +33,7 @@ struct EvtUiLedBrightUpdate {
 };
 struct EvtUiStartPressed {};
 
-struct EvtSetupTimeout {};
-struct EvtSessionEnd {};
+struct EvtTimerEnd {};
 
 // TODO: move these to respective intf headers
 struct EvtRadarError {};
@@ -64,7 +63,7 @@ using Event = etl::variant<
     EvtUiProfileUpdate, EvtUiSessionMinsUpdate, EvtUiRangeCmUpdate, EvtUiAudioVolUpdate,
     EvtUiLedBrightUpdate, EvtUiStartPressed,
     // timer
-    EvtSetupTimeout, EvtSessionEnd,
+    EvtTimerEnd,
     // radar events
     EvtRadarError, EvtRadarReady, EvtRadarData,
     // imu events

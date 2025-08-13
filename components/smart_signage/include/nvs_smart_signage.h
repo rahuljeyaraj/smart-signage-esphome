@@ -4,7 +4,7 @@
 #include <cstring>
 
 #include "log.h"
-#include "types.h"
+#include "common.h"
 #include "ctrl/ctrl_const.h"
 #include "radar/radar_const.h"
 #include "led/led_const.h"

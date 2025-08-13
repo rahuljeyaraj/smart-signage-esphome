@@ -1,8 +1,8 @@
 #pragma once
 
 #include <etl/variant.h>
-#include <etl/bitset.h> // NEW – readiness tracking
-#include <type_traits>  // NEW – for compile-time dispatch
+#include <etl/bitset.h>
+#include <type_traits>
 #include "sml.hpp"
 #include "log.h"
 
@@ -11,6 +11,11 @@
 #include "imu/imu_q.h"
 #include "led/led_q.h"
 #include "audio/audio_q.h"
+#include "timer/itimer.h"
+#include "nvs_smart_signage.h"
+#include "profile_config.h"
+#include "user_intf.h"
+#include "common.h"
 
 namespace radar = esphome::smart_signage::radar;
 namespace imu   = esphome::smart_signage::imu;
@@ -22,7 +27,8 @@ class FSM {
     using Self = FSM;
 
   public:
-    explicit FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ);
+    explicit FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ,
+        timer::ITimer &timer, ProfilesConfigT &cfg, UserIntfT &ui);
 
     /*──────────────────────── State machine ────────────────────────*/
     auto operator()() noexcept {
@@ -31,31 +37,31 @@ class FSM {
             // clang-format off
             *state<Idle>     + event<CmdSetup>          / &Self::onCmdSetup         = state<Setup>
 
-            // For future, if any interface hangs on setup command we need a timeout (currently not used)
-            ,state<Setup>    + event<EvtSetupTimeout>   / &Self::onSetupTimeout     = state<Error>
+            // // For future, if any interface hangs on setup command we need a timeout (currently not used)
+            // ,state<Setup>    + event<EvtTimerEnd>   / &Self::onSetupTimeout     = state<Error>
 
-            // TODO: Try to make it with just one guard function
-            ,state<Setup>    + event<EvtRadarReady>     [ &Self::guardRadarReady ]  = state<Ready>
-            ,state<Setup>    + event<EvtImuReady>       [ &Self::guardImuReady   ]  = state<Ready>
-            ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]  = state<Ready>
-            ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]  = state<Ready>
+            // // TODO: Try to make it with just one guard function
+            // ,state<Setup>    + event<EvtRadarReady>     [ &Self::guardRadarReady ]  = state<Ready>
+            // ,state<Setup>    + event<EvtImuReady>       [ &Self::guardImuReady   ]  = state<Ready>
+            // ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]  = state<Ready>
+            // ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]  = state<Ready>
 
-            ,state<Ready>    + event<CmdStart>          / &Self::onCmdStart         = state<Active>
-            ,state<Ready>    + event<CmdTeardown>       / &Self::onCmdTeardown      = state<Idle>
+            // ,state<Ready>    + event<CmdStart>          / &Self::onCmdStart         = state<Active>
+            // ,state<Ready>    + event<CmdTeardown>       / &Self::onCmdTeardown      = state<Idle>
 
-            ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData
-            ,state<Active>   + event<CmdStop>           / &Self::onCmdStop          = state<Ready>
-            ,state<Active>   + event<EvtSessionEnd>     / &Self::onSessionEnd       = state<Idle>
-            ,state<Active>   + event<EvtImuFell>        / &Self::onEvtImuFell       = state<Fallen>
+            // ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData
+            // ,state<Active>   + event<CmdStop>           / &Self::onCmdStop          = state<Ready>
+            // ,state<Active>   + event<EvtTimerEnd>       / &Self::onSessionEnd       = state<Idle>
+            // ,state<Active>   + event<EvtImuFell>        / &Self::onEvtImuFell       = state<Fallen>
 
-            ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
+            // ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
 
-            ,state<_>        + event<EvtRadarError>                                 = state<Error>
-            ,state<_>        + event<EvtImuError>                                   = state<Error>
-            ,state<_>        + event<EvtLedError>                                   = state<Error>
-            ,state<_>        + event<EvtAudioError>                                 = state<Error>
+            // ,state<_>        + event<EvtRadarError>                                 = state<Error>
+            // ,state<_>        + event<EvtImuError>                                   = state<Error>
+            // ,state<_>        + event<EvtLedError>                                   = state<Error>
+            // ,state<_>        + event<EvtAudioError>                                 = state<Error>
 
-            ,state<Error>    + on_entry<_>              / &Self::onError
+            // ,state<Error>    + on_entry<_>              / &Self::onError
             // clang-format on
         );
     }
@@ -85,11 +91,16 @@ class FSM {
 
     static constexpr char TAG[] = "ctrlFSM";
 
+    /*──────────── Resources ────────────────────────────────────────────*/
+    radar::Q        &radarQ_;
+    imu::Q          &imuQ_;
+    led::Q          &ledQ_;
+    audio::Q        &audioQ_;
+    timer::ITimer   &timer_;
+    ProfilesConfigT &cfg_;
+    UserIntfT       &ui_;
+
     /*──────────── Data ────────────────────────────────────────────*/
-    radar::Q             &radarQ_;
-    imu::Q               &imuQ_;
-    led::Q               &ledQ_;
-    audio::Q             &audioQ_;
     uint32_t              sessionMins_{0};
     etl::bitset<kIntfCnt> readyBits_{};
 

@@ -12,7 +12,7 @@
 #include "esphome/components/number/number.h"
 #include "esphome/components/button/button.h"
 
-#include "types.h"
+#include "common.h"
 #include "ctrl/ctrl_q.h" // ctrl::Q with post(...)
 
 namespace esphome::smart_signage {
@@ -161,5 +161,6 @@ class UserIntf {
         }
     }
 };
+using UserIntfT = UserIntf<SS_MAX_PROFILES>;
 
 } // namespace esphome::smart_signage
