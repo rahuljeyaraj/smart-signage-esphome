@@ -3,7 +3,6 @@
 
 #include <ArduinoJson.h> // ArduinoJson v7
 #include <etl/flat_map.h>
-#include <etl/array.h>
 #include <etl/vector.h>
 #include <algorithm>
 #include <cstring>
@@ -11,8 +10,8 @@
 #include "log.h"               // SS_LOGx (ASCII-only)
 #include "audio/audio_const.h" // audio::kSourceStrLen, audio::kMaxPlaylist
 #include "audio/audio_event.h" // audio::AudioPlaySpec
-#include "common.h"
-#include "led/led_play_spec.h"
+#include "common.h"            // SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL, ProfileName, ProfileNames
+#include "led/led_play_spec.h" // led::LedPlaySpec, ledPatternFromCStr, ledPatternToCStr
 
 namespace esphome::smart_signage {
 
@@ -81,40 +80,42 @@ struct Key {
 template <size_t MAX_PROFILES, size_t MAX_EVENTS_TOTAL>
 class ProfileCatalogT {
   public:
-    static constexpr const char *TAG = "ProfileCatalog";
+    static constexpr char TAG[] = "ProfileCatalog";
 
     ProfileCatalogT() = default;
 
+    // Parse and fill from JSON string; returns true on success.
     bool init(const char *jsonUtf8) {
         clear();
 
         if (!jsonUtf8 || jsonUtf8[0] == '\0') {
-            SS_LOGE("%s: input json is null or empty", TAG);
+            SS_LOGE("input json is null or empty");
             return false;
         }
 
-        JsonDocument         doc;
-        DeserializationError err = deserializeJson(doc, jsonUtf8);
+        ArduinoJson::JsonDocument doc;
+        auto                      err = deserializeJson(doc, jsonUtf8);
         if (err) {
-            SS_LOGE("%s: deserializeJson failed: %s", TAG, err.c_str());
+            SS_LOGE("deserializeJson failed: %s", err.c_str());
             return false;
         }
 
-        auto profiles = doc["profiles"].as<JsonArrayConst>();
+        auto profiles = doc["profiles"].as<ArduinoJson::JsonArrayConst>();
         if (profiles.isNull()) {
-            SS_LOGE("%s: 'profiles' missing or not an array", TAG);
+            SS_LOGE("'profiles' missing or not an array");
             return false;
         }
 
         const size_t psize = profiles.size();
         if (psize > MAX_PROFILES) {
-            SS_LOGE("%s: profiles size %zu exceeds MAX_PROFILES %zu", TAG, psize, MAX_PROFILES);
+            SS_LOGE("profiles size %zu exceeds MAX_PROFILES %zu", psize, (size_t) MAX_PROFILES);
         }
 
+        // Build profile name list using push_back (no raw indexing).
         for (size_t pi = 0; pi < std::min(psize, (size_t) MAX_PROFILES); ++pi) {
-            auto profile = profiles[pi].as<JsonObjectConst>();
+            auto profile = profiles[pi].as<ArduinoJson::JsonObjectConst>();
             if (profile.isNull()) {
-                SS_LOGE("%s: profile %zu is not an object", TAG, pi);
+                SS_LOGE("profile %zu is not an object", pi);
                 continue;
             }
 
@@ -127,41 +128,47 @@ class ProfileCatalogT {
                 std::snprintf(buf, sizeof(buf), "Profile %u", (unsigned) pi);
                 pname = buf;
             }
-            profileNames_[pi] = pname;
 
-            auto events = profile["events"].as<JsonObjectConst>();
+            if (!profileNames_.full()) {
+                profileNames_.push_back(pname);
+            } else {
+                SS_LOGW("profile name list full; dropping '%s'", pname.c_str());
+            }
+
+            auto events = profile["events"].as<ArduinoJson::JsonObjectConst>();
             if (events.isNull()) {
-                SS_LOGE("%s: profile '%s' has no 'events' object", TAG, pname.c_str());
+                SS_LOGE("profile '%s' has no 'events' object", pname.c_str());
                 continue;
             }
 
             for (auto kvp : events) {
                 const char *evKey = kvp.key().c_str();
-                auto        evObj = kvp.value().as<JsonObjectConst>();
+                auto        evObj = kvp.value().as<ArduinoJson::JsonObjectConst>();
 
                 EventId ev = eventFromCStr(evKey);
                 if (ev == EventId::Unknown) {
-                    SS_LOGE("%s: profile '%s' has unknown event '%s'", TAG, pname.c_str(), evKey);
+                    SS_LOGE(
+                        "profile '%s' has unknown event '%s'", pname.c_str(), evKey ? evKey : "");
                     continue;
                 }
 
                 // AUDIO
-                if (auto audioObj = evObj["audio"].as<JsonObjectConst>(); !audioObj.isNull()) {
+                if (auto audioObj = evObj["audio"].as<ArduinoJson::JsonObjectConst>();
+                    !audioObj.isNull()) {
                     audio::AudioPlaySpec spec{};
                     uint32_t             playCnt = audioObj["playCnt"] | 1u;
                     spec.playCnt = static_cast<uint16_t>(std::min<uint32_t>(playCnt, 0xFFFFu));
 
-                    auto list = audioObj["playList"].as<JsonArrayConst>();
+                    auto list = audioObj["playList"].as<ArduinoJson::JsonArrayConst>();
                     if (!list.isNull()) {
                         const size_t  listSz = list.size();
                         const uint8_t maxN =
                             static_cast<uint8_t>(std::min<size_t>(audio::kMaxPlaylist, listSz));
                         uint8_t n = 0;
                         for (size_t i = 0; i < maxN; ++i) {
-                            auto item = list[i].as<JsonObjectConst>();
+                            auto item = list[i].as<ArduinoJson::JsonObjectConst>();
                             if (item.isNull()) {
-                                SS_LOGE("%s: profile '%s' '%s' playList[%zu] not an object",
-                                    TAG,
+                                SS_LOGE("profile '%s' '%s' playList[%zu] not an object",
                                     pname.c_str(),
                                     evKey,
                                     i);
@@ -169,8 +176,7 @@ class ProfileCatalogT {
                             }
                             const char *src = item["src"] | "";
                             if (src[0] == '\0') {
-                                SS_LOGE("%s: profile '%s' '%s' playList[%zu] missing src",
-                                    TAG,
+                                SS_LOGE("profile '%s' '%s' playList[%zu] missing src",
                                     pname.c_str(),
                                     evKey,
                                     i);
@@ -187,17 +193,15 @@ class ProfileCatalogT {
                     }
 
                     if (audioTable_.full()) {
-                        SS_LOGE("%s: audio flat_map full (MAX_EVENTS_TOTAL=%zu)",
-                            TAG,
-                            MAX_EVENTS_TOTAL);
+                        SS_LOGE("audio flat_map full (MAX_EVENTS_TOTAL=%zu)",
+                            (size_t) MAX_EVENTS_TOTAL);
                         return false;
                     }
                     const Key k{pname, ev};
                     auto      it = audioTable_.find(k);
                     if (it == audioTable_.end()) {
                         if (!audioTable_.insert(std::make_pair(k, spec)).second) {
-                            SS_LOGE("%s: audio insert failed at profile '%s' event '%s'",
-                                TAG,
+                            SS_LOGE("audio insert failed at profile '%s' event '%s'",
                                 pname.c_str(),
                                 evKey);
                             return false;
@@ -208,26 +212,26 @@ class ProfileCatalogT {
                 }
 
                 // LED
-                if (auto ledObj = evObj["led"].as<JsonObjectConst>(); !ledObj.isNull()) {
+                if (auto ledObj = evObj["led"].as<ArduinoJson::JsonObjectConst>();
+                    !ledObj.isNull()) {
                     led::LedPlaySpec lspec{};
                     lspec.pattern =
                         led::ledPatternFromCStr((const char *) (ledObj["pattern"] | ""));
                     uint32_t pms   = ledObj["periodMs"] | 0u;
-                    uint32_t cnt   = ledObj["cnt"] | (ledObj["nt"] | 0u); // accept "nt"
+                    uint32_t cnt   = ledObj["cnt"] | (ledObj["nt"] | 0u); // accept legacy "nt"
                     lspec.periodMs = static_cast<uint16_t>(std::min<uint32_t>(pms, 0xFFFFu));
                     lspec.cnt      = static_cast<uint16_t>(std::min<uint32_t>(cnt, 0xFFFFu));
 
                     if (ledTable_.full()) {
                         SS_LOGE(
-                            "%s: led flat_map full (MAX_EVENTS_TOTAL=%zu)", TAG, MAX_EVENTS_TOTAL);
+                            "led flat_map full (MAX_EVENTS_TOTAL=%zu)", (size_t) MAX_EVENTS_TOTAL);
                         return false;
                     }
                     const Key k{pname, ev};
                     auto      it = ledTable_.find(k);
                     if (it == ledTable_.end()) {
                         if (!ledTable_.insert(std::make_pair(k, lspec)).second) {
-                            SS_LOGE("%s: led insert failed at profile '%s' event '%s'",
-                                TAG,
+                            SS_LOGE("led insert failed at profile '%s' event '%s'",
                                 pname.c_str(),
                                 evKey);
                             return false;
@@ -248,10 +252,8 @@ class ProfileCatalogT {
         const Key k{profileName, ev};
         auto      it = audioTable_.find(k);
         if (it == audioTable_.end()) {
-            SS_LOGE("%s: audio not found (profile='%s', event=%s)",
-                TAG,
-                profileName.c_str(),
-                eventToCStr(ev));
+            SS_LOGE(
+                "audio not found (profile='%s', event=%s)", profileName.c_str(), eventToCStr(ev));
             return false;
         }
         out = it->second;
@@ -262,10 +264,7 @@ class ProfileCatalogT {
         const Key k{profileName, ev};
         auto      it = ledTable_.find(k);
         if (it == ledTable_.end()) {
-            SS_LOGE("%s: led not found (profile='%s', event=%s)",
-                TAG,
-                profileName.c_str(),
-                eventToCStr(ev));
+            SS_LOGE("led not found (profile='%s', event=%s)", profileName.c_str(), eventToCStr(ev));
             return false;
         }
         out = it->second;
@@ -275,22 +274,18 @@ class ProfileCatalogT {
     void clear() {
         audioTable_.clear();
         ledTable_.clear();
-        for (size_t i = 0; i < MAX_PROFILES; ++i) profileNames_[i].clear();
+        profileNames_.clear(); // safe reset; avoids touching internals of contained strings
     }
 
     void getProfileNames(ProfileNames &out) const {
-        out.clear();
-        for (uint32_t i = 0; i < MAX_PROFILES; ++i) {
-            if (!profileNames_[i].empty()) {
-                out.push_back(profileNames_[i]);
-                if (out.full()) break;
-            }
-        }
+        out = profileNames_; // ETL vector supports copy assignment
     }
 
   private:
     void dumpAll_() const {
-        SS_LOGD("%s: dump begin (audio=%zu, led=%zu)", TAG, audioTable_.size(), ledTable_.size());
+        SS_LOGD("dump begin (audio=%zu, led=%zu)",
+            (size_t) audioTable_.size(),
+            (size_t) ledTable_.size());
 
         // Print rows for all audio keys, merging LED if present
         for (auto it = audioTable_.begin(); it != audioTable_.end(); ++it) {
@@ -299,9 +294,8 @@ class ProfileCatalogT {
             const auto  lt = ledTable_.find(k);
             if (lt != ledTable_.end()) {
                 const auto &ls = lt->second;
-                SS_LOGD("%s: profile='%s' event=%s | audio{cnt=%hu,n=%hhu} "
+                SS_LOGD("profile='%s' event=%s | audio{cnt=%hu,n=%hhu} "
                         "led{pattern=%s,periodMs=%hu,cnt=%hu}",
-                    TAG,
                     k.name.c_str(),
                     eventToCStr(k.event),
                     as.playCnt,
@@ -310,8 +304,7 @@ class ProfileCatalogT {
                     ls.periodMs,
                     ls.cnt);
             } else {
-                SS_LOGD("%s: profile='%s' event=%s | audio{cnt=%hu,n=%hhu} led{-}",
-                    TAG,
+                SS_LOGD("profile='%s' event=%s | audio{cnt=%hu,n=%hhu} led{-}",
                     k.name.c_str(),
                     eventToCStr(k.event),
                     as.playCnt,
@@ -324,8 +317,7 @@ class ProfileCatalogT {
             const Key &k = it->first;
             if (audioTable_.find(k) != audioTable_.end()) continue; // already printed above
             const auto &ls = it->second;
-            SS_LOGD("%s: profile='%s' event=%s | audio{-} led{pattern=%s,periodMs=%hu,cnt=%hu}",
-                TAG,
+            SS_LOGD("profile='%s' event=%s | audio{-} led{pattern=%s,periodMs=%hu,cnt=%hu}",
                 k.name.c_str(),
                 eventToCStr(k.event),
                 ledPatternToCStr(ls.pattern),
@@ -333,7 +325,7 @@ class ProfileCatalogT {
                 ls.cnt);
         }
 
-        SS_LOGD("%s: dump end", TAG);
+        SS_LOGD("dump end");
     }
 
     etl::flat_map<Key, audio::AudioPlaySpec, MAX_EVENTS_TOTAL> audioTable_;
@@ -341,6 +333,7 @@ class ProfileCatalogT {
     ProfileNames                                               profileNames_;
 };
 
+// Bind to your project-wide capacities from common.h
 using ProfileCatalog = ProfileCatalogT<SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL>;
 
 } // namespace esphome::smart_signage

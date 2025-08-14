@@ -4,7 +4,7 @@ namespace esphome::smart_signage::ctrl {
 
 /*──────────────────────── Ctor ─────────────────────────*/
 FSM::FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ, timer::ITimer &timer,
-    ProfileSettings &profiles, UserIntfT &ui)
+    ProfileSettings &profiles, UserIntf &ui)
     : radarQ_(radarQ), imuQ_(imuQ), ledQ_(ledQ), audioQ_(audioQ), timer_(timer),
       profiles_(profiles), ui_(ui) {}
 
@@ -54,9 +54,20 @@ void FSM::onCmdSetup(const CmdSetup &) {
     SS_LOGI("Action: onCmdSetup -> broadcast CmdSetup");
 
     // // Build the profile list from ProfileSettings and push to UI
-    // etl::vector<ProfileName, SS_MAX_PROFILES> profiles;
-    // profiles_.getProfileNames(profiles);
-    // ui_.setProfileOptions(profiles);
+    // ProfileNames names;
+    // profiles_.catalog_.getProfileNames(names);
+
+    // // Print options
+    // SS_LOGI("Found %u profile option(s)", (unsigned) names.size());
+    // if (names.empty()) {
+    //     SS_LOGW("No profiles found");
+    // } else {
+    //     for (size_t i = 0; i < names.size(); ++i) {
+    //         SS_LOGI("Option %u: %s", (unsigned) i, names[i].c_str());
+    //     }
+    // }
+
+    // ui_.setProfileOptions(names);
 
     // // Load current (or default=first) and publish its values
     // ProfileName   currName;

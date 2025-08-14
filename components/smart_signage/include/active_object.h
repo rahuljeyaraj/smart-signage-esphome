@@ -45,9 +45,11 @@ class ActiveObject {
     void run() {
         EventType evt;
         for (;;) {
+            LOGI("sending something");
             if (xQueueReceive(queue_.handle(), &evt, portMAX_DELAY) == pdPASS) {
                 etl::visit([this](auto const &ev) { fsm_.process_event(ev); }, evt);
             }
+            LOGI("returned back");
         }
     }
 

@@ -27,11 +27,11 @@ struct UiHandles {
 };
 
 template <size_t MAX_PROFILES>
-class UserIntf {
+class UserIntfT {
   public:
     static constexpr const char *TAG = "UserIntf";
 
-    explicit UserIntf(const UiHandles &ui, ctrl::Q &ctrlQ) : ui_(ui), ctrlQ_(ctrlQ) {
+    explicit UserIntfT(const UiHandles &ui, ctrl::Q &ctrlQ) : ui_(ui), ctrlQ_(ctrlQ) {
         attachCallbacks_();
         SS_LOGD("constructed");
     }
@@ -159,6 +159,6 @@ class UserIntf {
         }
     }
 };
-using UserIntfT = UserIntf<SS_MAX_PROFILES>;
+using UserIntf = UserIntfT<SS_MAX_PROFILES>;
 
 } // namespace esphome::smart_signage

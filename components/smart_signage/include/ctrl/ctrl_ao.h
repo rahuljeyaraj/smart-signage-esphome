@@ -12,7 +12,7 @@ namespace esphome::smart_signage::ctrl {
 class CtrlAO : public ActiveObject<Q, FSM> {
   public:
     explicit CtrlAO(Q &ownQ, radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ,
-        timer::ITimer &timer, ProfileSettings &profiles, UserIntfT &ui, const char *taskName,
+        timer::ITimer &timer, ProfileSettings &profiles, UserIntf &ui, const char *taskName,
         uint32_t stackSize = 8192, UBaseType_t priority = tskIDLE_PRIORITY + 1,
         BaseType_t coreId = tskNO_AFFINITY)
         : ActiveObject<Q, FSM>(ownQ, fsm_, s_logger, taskName, stackSize, priority, coreId),

@@ -44,7 +44,7 @@ class SmartSignage : public Component {
     audio::Q audioQ_;
 
     /*────── User UI ────────*/
-    UserIntfT ui_;
+    UserIntf ui_;
 
     /*──────  Radar  ────*/
     HardwareSerial             radarSerial_;

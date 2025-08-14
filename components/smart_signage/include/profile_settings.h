@@ -121,6 +121,7 @@ class ProfileSettings {
     }
     void getCurrentProfile(ProfileName &out) { (void) loadCurrentProfileName_(out); }
 
+    ProfileCatalog catalog_; // TODO, mae it private later
   private:
     // Choose default profile name only when needed (no caching in members)
     ProfileName pickDefaultName_() const {
@@ -190,7 +191,6 @@ class ProfileSettings {
 
   private:
     storage::IStorage &st_;
-    ProfileCatalog     catalog_;
 };
 
 } // namespace esphome::smart_signage

@@ -42,6 +42,8 @@ SmartSignage::SmartSignage(const UiHandles &uiHandles, const char *catalogJson)
 {} // clang-format on
 
 void SmartSignage::setup() {
+    pin_current_boot_partition_if_factory();
+    SS_LOGE("---------------------------------123");
     // Initialize NVS (explicit)
     if (!storage_.init()) {
         SS_LOGE("NVS init failed");
@@ -51,6 +53,17 @@ void SmartSignage::setup() {
     if (!profileCatalog_.init(catalogJson_)) {
         SS_LOGE("Config Json Parsing Failed.");
         return;
+    }
+
+    ProfileNames names;
+    profileCatalog_.getProfileNames(names);
+    SS_LOGI("Found %u profile option(s)", (unsigned) names.size());
+    if (names.empty()) {
+        SS_LOGW("No profiles found");
+    } else {
+        for (size_t i = 0; i < names.size(); ++i) {
+            SS_LOGI("Option %u: %s", (unsigned) i, names[i].c_str());
+        }
     }
 
     // Filesystem mount (optional based on your project)
