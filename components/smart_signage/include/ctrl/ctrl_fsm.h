@@ -36,7 +36,7 @@ class FSM {
         using namespace boost::sml;
         return make_transition_table(
             // clang-format off
-            *state<Idle>     + event<CmdSetup>          / &Self::onCmdSetup         = state<Setup>
+            *state<Idle>     + event<CmdSetup>          / &Self::boot         = state<Setup>
 
             // For future, if any interface hangs on setup command we need a timeout (currently not used)
             ,state<Setup>    + event<EvtTimerEnd>   / &Self::onSetupTimeout     = state<Error>
@@ -47,11 +47,11 @@ class FSM {
             ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]  = state<Ready>
             ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]  = state<Ready>
 
-            ,state<Ready>    + event<CmdStart>          / &Self::onCmdStart         = state<Active>
-            ,state<Ready>    + event<CmdTeardown>       / &Self::onCmdTeardown      = state<Idle>
+            ,state<Ready>    + event<CmdStart>          / &Self::start         = state<Ready>
+            ,state<Ready>    + event<CmdTeardown>       / &Self::teardown      = state<Idle>
 
             ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData
-            ,state<Active>   + event<CmdStop>           / &Self::onCmdStop          = state<Ready>
+            ,state<Active>   + event<CmdStop>           / &Self::stop          = state<Ready>
             ,state<Active>   + event<EvtTimerEnd>       / &Self::onSessionEnd       = state<Idle>
             ,state<Active>   + event<EvtImuFell>        / &Self::onEvtImuFell       = state<Fallen>
 
@@ -75,7 +75,7 @@ class FSM {
             ,state<_>        + event<EvtAudioError>                                 = state<Error>
 
 
-            ,state<Ready>    + on_entry<_>              / &Self::onReady  
+            ,state<Ready>    + on_entry<_>              / &Self::enterReady  
             ,state<Error>    + on_entry<_>              / &Self::onError
             // clang-format on
         );
@@ -93,13 +93,13 @@ class FSM {
     bool guardAudioReady(const EvtAudioReady &);
 
     /*──────────── Actions ─────────────────────────────────────────*/
-    void onCmdSetup(const CmdSetup &);
-    void onCmdStart(const CmdStart &);
-    void onCmdStop(const CmdStop &);
-    void onCmdTeardown(const CmdTeardown &);
+    void boot();
+    void start();
+    void stop();
+    void teardown();
     void onEvtRadarData(const EvtRadarData &);
-    void onEvtImuFell(const EvtImuFell &);
-    void onEvtImuRose(const EvtImuRose &);
+    void onEvtImuFell();
+    void onEvtImuRose();
     void onSetupTimeout();
     void onSessionEnd();
     void onUiProfileUpdate(const EvtUiProfileUpdate &);
@@ -107,14 +107,14 @@ class FSM {
     void onUiRangeCmUpdate(const EvtUiRangeCmUpdate &);
     void onUiAudioVolUpdate(const EvtUiAudioVolUpdate &);
     void onUiLedBrightUpdate(const EvtUiLedBrightUpdate &);
-    void onReady();
+    void enterReady();
     void onError();
     void doNothing() {}
 
     /*──────────── Helpers ─────────────────────────────────────────*/
     bool hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut);
     void getDefaultCurrProfile(ProfileName &defultProfile);
-    void updateValuesToUi(ProfileName &curr);
+    void updateValuesToAll(ProfileName &curr);
     void driveOutput(profile::EventId ev);
 
     static constexpr char TAG[] = "ctrlFSM";

@@ -2,52 +2,57 @@ profiles:
   - name: WetFloor
     events:
       Ready:
-        audio: { playCnt: 1, playList: [ { src: /test/welcome_1.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 800, cnt: 2 }
+        audio: { playCnt: 2, playList: [ { src: /test/ready_1.mp3, delayMs: 100 } ] }
+        led:   { pattern: blink, periodMs: 800, cnt: 2 }
       Error:
-        audio: { playCnt: 1, playList: [ { src: /common/setup_error.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 150, cnt: 0 }   # rapid infinite blink
+        audio: { playCnt: 1, playList: [ { src: /test/error_1.mp3, delayMs: 0 } ] }
+        led:   { pattern: blink, periodMs: 150, cnt: 0 }   # rapid infinite blink
       Start:
-        audio: { playCnt: 1, playList: [ { src: /wet_floor/start.mp3, delayMs: 0 } ] }
-        led:   { pattern: triangle, periodMs: 120, cnt: 3 }
+        audio: { playCnt: 1, playList: [ { src: /test/welcome_1.mp3, delayMs: 0 } ] }
+        led:   { pattern: twinkle, periodMs: 120, cnt: 3 }
       Stop:
         audio: { playCnt: 1, playList: [ { src: /common/stop.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 600, cnt: 1 }
+        led:   { pattern: blink, periodMs: 600, cnt: 1 }
       UiUpdate:
         audio: { playCnt: 1, playList: [ { src: /common/ui_update.mp3, delayMs: 0 } ] }
       Detected:
         audio:
           playCnt: 0
           playList:
-            - { src: /wet_floor/detected1.mp3, delayMs: 2000 }
-            - { src: /wet_floor/detected2.mp3, delayMs: 3000 }
-        led: { pattern: triangle, periodMs: 2000, cnt: 0 }
+            - { src: /test/warning_1.mp3, delayMs: 5000 }
+            - { src: /test/warning_2.mp3, delayMs: 5000 }
+            - { src: /test/warning_3.mp3, delayMs: 5000 }
+        led: { pattern: twinkle, periodMs: 2000, cnt: 0 }
       Detected0Cm:
-        led: { pattern: triangle, periodMs: 120, cnt: 0 }   # very close -> fast blink
+        led: { pattern: twinkle, periodMs: 120, cnt: 0 }   # very close -> fast blink
       Fell:
-        audio: { playCnt: 1, playList: [ { src: /common/fell.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 300, cnt: 5 }
+        audio:
+          playCnt: 0
+          playList:
+            - { src: /test/fallen_1.mp3, delayMs: 5000 }
+            - { src: /test/fallen_2.mp3, delayMs: 5000 }
+        led:   { pattern: blink, periodMs: 300, cnt: 5 }
       Rose:
-        audio: { playCnt: 1, playList: [ { src: /common/rose.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 500, cnt: 3 }
+        audio: { playCnt: 1, playList: [ { src: /test/ready_3.mp3, delayMs: 0 } ] }
+        led:   { pattern: blink, periodMs: 500, cnt: 3 }
       SessionEnd:
         audio: { playCnt: 1, playList: [ { src: /common/session_end.mp3, delayMs: 0 } ] }
-        led:   { pattern: triangle, periodMs: 800, cnt: 2 }
+        led:   { pattern: twinkle, periodMs: 800, cnt: 2 }
 
   - name: Halloween
     events:
       Ready:
         audio: { playCnt: 1, playList: [ { src: /test/welcome_2.mp3, delayMs: 0 } ] }
-        led:   { pattern: triangle, periodMs: 600, cnt: 2 }
+        led:   { pattern: twinkle, periodMs: 600, cnt: 2 }
       Error:
         audio: { playCnt: 1, playList: [ { src: /common/setup_error.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 120, cnt: 0 }
+        led:   { pattern: blink, periodMs: 120, cnt: 0 }
       Start:
         audio: { playCnt: 1, playList: [ { src: /halloween/start.mp3, delayMs: 0 } ] }
-        led:   { pattern: triangle, periodMs: 150, cnt: 6 }
+        led:   { pattern: twinkle, periodMs: 150, cnt: 6 }
       Stop:
         audio: { playCnt: 1, playList: [ { src: /common/stop.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 700, cnt: 2 }
+        led:   { pattern: blink, periodMs: 700, cnt: 2 }
       UiUpdate:
         audio: { playCnt: 1, playList: [ { src: /common/ui_update.mp3, delayMs: 0 } ] }
       Detected:
@@ -56,33 +61,33 @@ profiles:
           playList:
             - { src: /halloween/spook1.mp3, delayMs: 1500 }
             - { src: /halloween/spook2.mp3, delayMs: 2500 }
-        led: { pattern: triangle, periodMs: 900, cnt: 0 }
+        led: { pattern: twinkle, periodMs: 900, cnt: 0 }
       Detected0Cm:
-        led: { pattern: triangle, periodMs: 100, cnt: 0 }
+        led: { pattern: twinkle, periodMs: 100, cnt: 0 }
       Fell:
         audio: { playCnt: 1, playList: [ { src: /common/fell.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 220, cnt: 6 }
+        led:   { pattern: blink, periodMs: 220, cnt: 6 }
       Rose:
         audio: { playCnt: 1, playList: [ { src: /common/rose.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 450, cnt: 4 }
+        led:   { pattern: blink, periodMs: 450, cnt: 4 }
       SessionEnd:
         audio: { playCnt: 1, playList: [ { src: /common/session_end.mp3, delayMs: 0 } ] }
-        led:   { pattern: triangle, periodMs: 700, cnt: 3 }
+        led:   { pattern: twinkle, periodMs: 700, cnt: 3 }
 
   - name: LunchBreak
     events:
       Ready:
         audio: { playCnt: 1, playList: [ { src: /test/welcome_3.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 1000, cnt: 1 }
+        led:   { pattern: blink, periodMs: 1000, cnt: 1 }
       Error:
         audio: { playCnt: 1, playList: [ { src: /common/setup_error.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 180, cnt: 0 }
+        led:   { pattern: blink, periodMs: 180, cnt: 0 }
       Start:
         audio: { playCnt: 1, playList: [ { src: /lunch_break/start.mp3, delayMs: 0 } ] }
-        led:   { pattern: triangle, periodMs: 200, cnt: 3 }
+        led:   { pattern: twinkle, periodMs: 200, cnt: 3 }
       Stop:
         audio: { playCnt: 1, playList: [ { src: /common/stop.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 800, cnt: 2 }
+        led:   { pattern: blink, periodMs: 800, cnt: 2 }
       UiUpdate:
         audio: { playCnt: 1, playList: [ { src: /common/ui_update.mp3, delayMs: 0 } ] }
       Detected:
@@ -91,15 +96,15 @@ profiles:
           playList:
             - { src: /lunch_break/detected1.mp3, delayMs: 2500 }
             - { src: /lunch_break/detected2.mp3, delayMs: 3000 }
-        led: { pattern: triangle, periodMs: 1200, cnt: 0 }
+        led: { pattern: twinkle, periodMs: 1200, cnt: 0 }
       Detected0Cm:
-        led: { pattern: triangle, periodMs: 150, cnt: 0 }
+        led: { pattern: twinkle, periodMs: 150, cnt: 0 }
       Fell:
         audio: { playCnt: 1, playList: [ { src: /common/fell.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 300, cnt: 4 }
+        led:   { pattern: blink, periodMs: 300, cnt: 4 }
       Rose:
         audio: { playCnt: 1, playList: [ { src: /common/rose.mp3, delayMs: 0 } ] }
-        led:   { pattern: square, periodMs: 550, cnt: 3 }
+        led:   { pattern: blink, periodMs: 550, cnt: 3 }
       SessionEnd:
         audio: { playCnt: 1, playList: [ { src: /common/session_end.mp3, delayMs: 0 } ] }
-        led:   { pattern: triangle, periodMs: 900, cnt: 2 }
+        led:   { pattern: twinkle, periodMs: 900, cnt: 2 }

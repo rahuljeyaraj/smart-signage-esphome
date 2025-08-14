@@ -50,8 +50,9 @@ bool FSM::guardAudioReady(const EvtAudioReady &) {
 }
 
 /*──────────────────────── Actions ──────────────────────*/
-void FSM::onCmdSetup(const CmdSetup &) {
-    SS_LOGI("Action: onCmdSetup");
+void FSM::boot() {
+    SS_LOGI("Action: boot");
+
     SS_LOGI("Setup dashboard");
     ProfileNames names;
     ProfileName  curr;
@@ -63,7 +64,7 @@ void FSM::onCmdSetup(const CmdSetup &) {
     }
     ui_.setProfileOptions(names);
     ui_.setCurrentProfile(curr);
-    updateValuesToUi(curr);
+    updateValuesToAll(curr);
 
     SS_LOGI("broadcast CmdSetup");
     readyBits_.reset();
@@ -73,21 +74,22 @@ void FSM::onCmdSetup(const CmdSetup &) {
     audioQ_.post(audio::CmdSetup{});
 }
 
-void FSM::onCmdStart(const CmdStart &e) {
-    SS_LOGI("Action: onCmdStart -> broadcast CmdStart (sessionMins=%u)", e.sessionMins);
-    sessionMins_ = e.sessionMins;
-    radarQ_.post(radar::CmdStart{});
-    imuQ_.post(imu::CmdStart{});
+void FSM::start() {
+    SS_LOGI("Action: start -> broadcast CmdStart");
+    // radarQ_.post(radar::CmdStart{});
+    // imuQ_.post(imu::CmdStart{});
+    driveOutput(profile::EventId::Start);
 }
 
-void FSM::onCmdStop(const CmdStop &) {
-    SS_LOGI("Action: onCmdStop -> broadcast CmdStop");
+void FSM::stop() {
+    SS_LOGI("Action: stop -> broadcast CmdStop");
     radarQ_.post(radar::CmdStop{});
     imuQ_.post(imu::CmdStop{});
+    driveOutput(profile::EventId::Stop);
 }
 
-void FSM::onCmdTeardown(const CmdTeardown &) {
-    SS_LOGI("Action: onCmdTeardown -> broadcast CmdTeardown");
+void FSM::teardown() {
+    SS_LOGI("Action: teardown -> broadcast CmdTeardown");
     radarQ_.post(radar::CmdTeardown{});
     imuQ_.post(imu::CmdTeardown{});
     ledQ_.post(led::CmdTeardown{});
@@ -101,9 +103,13 @@ void FSM::onEvtRadarData(const EvtRadarData &e) {
         static_cast<unsigned>(e.timestampTicks));
 }
 
-void FSM::onEvtImuFell(const EvtImuFell &) { SS_LOGI("Event: IMU reports a fall detected!"); }
-void FSM::onEvtImuRose(const EvtImuRose &) {
+void FSM::onEvtImuFell() {
+    SS_LOGI("Event: IMU reports a fall detected!");
+    driveOutput(profile::EventId::Fell);
+}
+void FSM::onEvtImuRose() {
     SS_LOGI("Event: IMU reports device has been restored (rose)");
+    driveOutput(profile::EventId::Rose);
 }
 
 void FSM::onSetupTimeout() {
@@ -112,15 +118,17 @@ void FSM::onSetupTimeout() {
 
 void FSM::onSessionEnd() {
     SS_LOGI("Timeout: Active phase timed out - stopping & tearing down all interfaces");
-    onCmdStop({});
-    onCmdTeardown({});
+    stop();
+    teardown();
 }
 
 void FSM::onUiProfileUpdate(const EvtUiProfileUpdate &e) {
+    stop();
     ProfileName   curr = e.profileName;
     ProfileValues values{};
     settings_.writeCurrentProfile(curr);
-    updateValuesToUi(curr);
+    updateValuesToAll(curr);
+    enterReady();
 }
 void FSM::onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &e) {
     ProfileName   curr;
@@ -155,12 +163,16 @@ void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
     settings_.writeProfileValues(curr, values);
 }
 
-void FSM::onReady() {
+void FSM::enterReady() {
     SS_LOGI("Entered Ready state");
+    radarQ_.post(radar::SetRangeCm());
     driveOutput(profile::EventId::Ready);
 }
 
-void FSM::onError() { SS_LOGE("Entered Error state!"); }
+void FSM::onError() {
+    SS_LOGE("Entered Error state!");
+    driveOutput(profile::EventId::Error);
+}
 
 bool FSM::hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut) {
     ProfileName curr{};
@@ -190,7 +202,7 @@ void FSM::getDefaultCurrProfile(ProfileName &defultProfile) {
     return;
 }
 
-void FSM::updateValuesToUi(ProfileName &curr) {
+void FSM::updateValuesToAll(ProfileName &curr) {
     ProfileValues values{};
     if (!settings_.readProfileValues(curr, values)) settings_.writeProfileValues(curr, values);
 
@@ -198,6 +210,11 @@ void FSM::updateValuesToUi(ProfileName &curr) {
     ui_.setRadarRangeCm(values.radarRangeCm);
     ui_.setAudioVolPct(values.audioVolPct);
     ui_.setLedBrightPct(values.ledBrightPct);
+
+    // sessionMins_ = values.sessionMins;
+    // radarQ_.post(radar::SetRangeCm(values.radarRangeCm));
+    // audioQ_.post(audio::SetVolume(values.audioVolPct));
+    // ledQ_.post(led::SetBrightness(values.ledBrightPct));
 
     SS_LOGI("UI updated for profile \"%s\"", curr.c_str());
 }
@@ -212,22 +229,24 @@ void FSM::driveOutput(profile::EventId ev) {
     // ── Audio ────────────────────────────────────────────────────────────────
     audio::AudioPlaySpec audioPlaySpec;
     if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
+        SS_LOGW("play audio");
         audioQ_.post(audio::CmdPlay(audioPlaySpec));
     }
 
     // ── LED ─────────────────────────────────────────────────────────────────
     led::LedPatternSpec ledPatternSpec;
     if (catalog_.getLedPatternSpec(curr, ev, ledPatternSpec)) {
+        SS_LOGW("play led");
         uint16_t t = static_cast<uint16_t>(ledPatternSpec.periodMs / 2u);
         uint16_t n = ledPatternSpec.cnt;
 
         switch (ledPatternSpec.pattern) {
-        case led::LedPattern::Square:
+        case led::LedPattern::Blink:
             // immediate high, hold t; immediate low, hold t
             ledQ_.post(led::CmdBreathe{0, t, 0, t, n});
             break;
 
-        case led::LedPattern::Triangle:
+        case led::LedPattern::Twinkle:
             // ramp up t, no high hold; ramp down t, no low hold
             ledQ_.post(led::CmdBreathe{t, 0, t, 0, n});
             break;

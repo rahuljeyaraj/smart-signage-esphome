@@ -4,19 +4,19 @@
 
 namespace esphome::smart_signage::led {
 
-enum class LedPattern : uint8_t { Unknown, Square, Triangle };
+enum class LedPattern : uint8_t { Unknown, Blink, Twinkle };
 
 inline const char *ledPatternToCStr(LedPattern p) {
     switch (p) {
-    case LedPattern::Square: return "square";
-    case LedPattern::Triangle: return "triangle";
+    case LedPattern::Blink: return "blink";
+    case LedPattern::Twinkle: return "twinkle";
     default: return "unknown";
     }
 }
 inline LedPattern ledPatternFromCStr(const char *s) {
     if (!s || s[0] == '\0') return LedPattern::Unknown;
-    if (std::strcmp(s, "square") == 0) return LedPattern::Square;
-    if (std::strcmp(s, "triangle") == 0) return LedPattern::Triangle;
+    if (std::strcmp(s, "blink") == 0) return LedPattern::Blink;
+    if (std::strcmp(s, "twinkle") == 0) return LedPattern::Twinkle;
     return LedPattern::Unknown;
 }
 
