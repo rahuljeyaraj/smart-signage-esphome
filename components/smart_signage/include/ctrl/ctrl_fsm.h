@@ -47,7 +47,7 @@ class FSM {
             ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]  = state<Ready>
             ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]  = state<Ready>
 
-            ,state<Ready>    + event<CmdStart>          / &Self::start         = state<Ready>
+            ,state<Ready>    + event<CmdStart>          / &Self::start         = state<Active>
             ,state<Ready>    + event<CmdTeardown>       / &Self::teardown      = state<Idle>
 
             ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData

@@ -36,7 +36,6 @@ class FSM {
     };
 
     bool tryInitHal(const CmdSetup &);
-    bool finishingAfterHoldLow(const EvtTimerEnd &) const;
     bool breathUpGuard(const EvtTimerEnd &) const;
 
     void onSetupOk(const CmdSetup &);
@@ -76,40 +75,28 @@ class FSM {
      *            |   | holdHighMs |   | holdLowMs |
      *          toHighMs          toLowMs
      */
-
-    struct Breathe {
-        auto operator()() const noexcept {
-            using namespace sml;
-            return make_transition_table(
-                // clang-format off
-                *state<BreatheUp>   + sml::on_entry<_>      / &Self::onBreatheUpEntry
-                ,state<HoldHigh>    + sml::on_entry<_>      / &Self::onHoldHighEntry
-                ,state<BreatheDown> + sml::on_entry<_>      / &Self::onBreatheDownEntry
-                ,state<HoldLow>     + sml::on_entry<_>      / &Self::onHoldLowEntry
-
-                ,state<_>           + event<CmdBreathe>     / &Self::setBreatheParams
-
-                ,state<BreatheUp>   + event<EvtFadeEnd>                                 = state<HoldHigh>
-                ,state<HoldHigh>    + event<EvtTimerEnd>                                = state<BreatheDown>
-                ,state<BreatheDown> + event<EvtFadeEnd>                                 = state<HoldLow>
-
-                ,state<HoldLow>     + event<EvtTimerEnd>    [ &Self::breathUpGuard ]    = state<BreatheUp>
-                ,state<HoldLow>     + event<EvtTimerEnd>    / &Self::finishBreathe      = state<Off>
-                // clang-format on
-            );
-        }
-    };
-
     struct Ready {
         auto operator()() const noexcept {
             using namespace sml;
             return make_transition_table(*state<Off> + sml::on_entry<_> / &Self::onEnterOff,
                 // clang-format off
-                *state<Off>      + event<CmdBreathe> / &Self::setBreatheParams   = state<Breathe>
-                ,state<On>       + event<CmdBreathe> / &Self::setBreatheParams   = state<Breathe>
-                ,state<Breathe>  + event<CmdBreathe> / &Self::setBreatheParams
-                ,state<_>        + event<CmdOff>                                 = state<Off>
-                ,state<_>        + event<CmdOn>      / &Self::onCmdOn            = state<On>
+                *state<Off>         + event<CmdBreathe>     / &Self::setBreatheParams   = state<BreatheUp>
+                ,state<On>          + event<CmdBreathe>     / &Self::setBreatheParams   = state<BreatheUp>
+                ,state<_>           + event<CmdBreathe>     / &Self::setBreatheParams
+                ,state<BreatheUp>   + event<EvtFadeEnd>                                 = state<HoldHigh>
+                ,state<HoldHigh>    + event<EvtTimerEnd>                                = state<BreatheDown>
+                ,state<BreatheDown> + event<EvtFadeEnd>                                 = state<HoldLow>
+                ,state<HoldLow>     + event<EvtTimerEnd>    [ &Self::breathUpGuard ]    = state<BreatheUp>
+                ,state<HoldLow>     + event<EvtTimerEnd>    / &Self::finishBreathe      = state<Off>
+
+                ,state<_>           + event<CmdOff>                                     = state<Off>
+                ,state<_>           + event<CmdOn>          / &Self::onCmdOn            = state<On>
+
+                ,state<BreatheUp>   + sml::on_entry<_>      / &Self::onBreatheUpEntry
+                ,state<HoldHigh>    + sml::on_entry<_>      / &Self::onHoldHighEntry
+                ,state<BreatheDown> + sml::on_entry<_>      / &Self::onBreatheDownEntry
+                ,state<HoldLow>     + sml::on_entry<_>      / &Self::onHoldLowEntry
+
                 // clang-format on
             );
         }

@@ -77,7 +77,7 @@ void FSM::boot() {
 void FSM::start() {
     SS_LOGI("Action: start -> broadcast CmdStart");
     // radarQ_.post(radar::CmdStart{});
-    // imuQ_.post(imu::CmdStart{});
+    imuQ_.post(imu::CmdStart{});
     driveOutput(profile::EventId::Start);
 }
 
@@ -165,7 +165,7 @@ void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
 
 void FSM::enterReady() {
     SS_LOGI("Entered Ready state");
-    radarQ_.post(radar::SetRangeCm());
+    // radarQ_.post(radar::SetRangeCm());
     driveOutput(profile::EventId::Ready);
 }
 
@@ -226,7 +226,7 @@ void FSM::driveOutput(profile::EventId ev) {
         return;
     }
 
-    // ── Audio ────────────────────────────────────────────────────────────────
+    // // ── Audio ────────────────────────────────────────────────────────────────
     audio::AudioPlaySpec audioPlaySpec;
     if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
         SS_LOGW("play audio");
