@@ -57,11 +57,17 @@ class FSM {
 
             // ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
 
-            ,state<_>        + event<EvtUiProfileUpdate>      / &Self::onUiProfileUpdate
-            ,state<_>        + event<EvtUiSessionMinsUpdate>  / &Self::onUiSessionMinsUpdate
-            ,state<_>        + event<EvtUiRangeCmUpdate>      / &Self::onUiRangeCmUpdate
-            ,state<_>        + event<EvtUiAudioVolUpdate>     / &Self::onUiAudioVolUpdate
-            ,state<_>        + event<EvtUiLedBrightUpdate>    / &Self::onUiLedBrightUpdate
+            ,state<Idle>        + event<EvtUiProfileUpdate>       / &Self::doNothing    
+            ,state<Idle>        + event<EvtUiSessionMinsUpdate>   / &Self::doNothing  
+            ,state<Idle>        + event<EvtUiRangeCmUpdate>       / &Self::doNothing  
+            ,state<Idle>        + event<EvtUiAudioVolUpdate>      / &Self::doNothing  
+            ,state<Idle>        + event<EvtUiLedBrightUpdate>     / &Self::doNothing  
+
+            ,state<_>           + event<EvtUiProfileUpdate>      / &Self::onUiProfileUpdate
+            ,state<_>           + event<EvtUiSessionMinsUpdate>  / &Self::onUiSessionMinsUpdate
+            ,state<_>           + event<EvtUiRangeCmUpdate>      / &Self::onUiRangeCmUpdate
+            ,state<_>           + event<EvtUiAudioVolUpdate>     / &Self::onUiAudioVolUpdate
+            ,state<_>           + event<EvtUiLedBrightUpdate>    / &Self::onUiLedBrightUpdate
 
             // ,state<_>        + event<EvtRadarError>                                 = state<Error>
             // ,state<_>        + event<EvtImuError>                                   = state<Error>
@@ -100,6 +106,7 @@ class FSM {
     void onUiAudioVolUpdate(const EvtUiAudioVolUpdate &);
     void onUiLedBrightUpdate(const EvtUiLedBrightUpdate &);
     void onError();
+    void doNothing() {}
 
     /*──────────── Helpers ─────────────────────────────────────────*/
     bool hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut);
