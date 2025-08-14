@@ -14,10 +14,12 @@ SmartSignage::SmartSignage(const UiHandles &uiHandles, const char *configJson)
     // clang-format off
     : ctrlQ_{}, radarQ_{}, imuQ_{}, ledQ_{}, audioQ_{}
     
-    , ui_{uiHandles, ctrlQ_}, configJson_{configJson}, profilesCfg_{}, ctrlTimer_{}
+    , ui_{uiHandles, ctrlQ_}, configJson_{configJson}
+    
+    , ctrlTimer_{}
     , storage_{kNVSNamespace}
     , profileCatalog_{}, profileSettings_{storage_}
-    , ctrlAo_{ctrlQ_, radarQ_, imuQ_, ledQ_, audioQ_, ctrlTimer_,profilesCfg_, ui_, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1}
+    , ctrlAo_{ctrlQ_, radarQ_, imuQ_, ledQ_, audioQ_, ctrlTimer_, profileCatalog_, profileSettings_, ui_, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1}
 
     , radarSerial_{1}
     , radarHal_{radarSerial_, RADAR_RX_PIN, RADAR_TX_PIN}

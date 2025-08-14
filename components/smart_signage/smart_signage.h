@@ -20,8 +20,6 @@
 #include "profile_config.h"
 #include "user_intf.h"
 #include "common.h"
-#include "profile/profile_catalog.h"
-#include "profile/profile_settings.h"
 #include "storage/nvs_storage.h"
 
 namespace esphome::smart_signage {

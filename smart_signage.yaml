@@ -79,7 +79,7 @@ select:
 
 number:
   - platform: template
-    name: "Session Period (mins)"
+    name: "Session Period (hrs)"
     id: sessionMins
     optimistic: true
     restore_value: true

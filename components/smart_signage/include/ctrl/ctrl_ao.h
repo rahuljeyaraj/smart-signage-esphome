@@ -12,11 +12,11 @@ namespace esphome::smart_signage::ctrl {
 class CtrlAO : public ActiveObject<Q, FSM> {
   public:
     explicit CtrlAO(Q &ownQ, radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ,
-        timer::ITimer &timer, ProfilesConfigT &cfg, UserIntfT &ui, const char *taskName,
-        uint32_t stackSize = 8192, UBaseType_t priority = tskIDLE_PRIORITY + 1,
-        BaseType_t coreId = tskNO_AFFINITY)
+        timer::ITimer &timer, profile::ProfileCatalog &catalog, profile::ProfileSettings &settings,
+        UserIntfT &ui, const char *taskName, uint32_t stackSize = 8192,
+        UBaseType_t priority = tskIDLE_PRIORITY + 1, BaseType_t coreId = tskNO_AFFINITY)
         : ActiveObject<Q, FSM>(ownQ, fsm_, s_logger, taskName, stackSize, priority, coreId),
-          fsm_(radarQ, imuQ, ledQ, audioQ, timer, cfg, ui), timer_(timer) {
+          fsm_(radarQ, imuQ, ledQ, audioQ, timer, catalog, settings, ui), timer_(timer) {
 
         if (!timer_.create(taskName, &CtrlAO::timerCbStatic, this)) {
             SS_LOGE("CtrlAO timer create failed");

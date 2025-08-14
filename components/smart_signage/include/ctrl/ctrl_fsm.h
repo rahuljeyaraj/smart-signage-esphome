@@ -13,7 +13,8 @@
 #include "audio/audio_q.h"
 #include "timer/itimer.h"
 #include "nvs_smart_signage.h"
-#include "profile_config.h"
+#include "profile/profile_catalog.h"
+#include "profile/profile_settings.h"
 #include "user_intf.h"
 #include "common.h"
 
@@ -28,7 +29,8 @@ class FSM {
 
   public:
     explicit FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ,
-        timer::ITimer &timer, ProfilesConfigT &cfg, UserIntfT &ui);
+        timer::ITimer &timer, profile::ProfileCatalog &catalog, profile::ProfileSettings &settings,
+        UserIntfT &ui);
 
     /*──────────────────────── State machine ────────────────────────*/
     auto operator()() noexcept {
@@ -89,16 +91,20 @@ class FSM {
     void onSessionEnd();
     void onError();
 
+    bool hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut);
+    void getDefaultCurrProfile(ProfileName &defultProfile);
+
     static constexpr char TAG[] = "ctrlFSM";
 
     /*──────────── Resources ────────────────────────────────────────────*/
-    radar::Q        &radarQ_;
-    imu::Q          &imuQ_;
-    led::Q          &ledQ_;
-    audio::Q        &audioQ_;
-    timer::ITimer   &timer_;
-    ProfilesConfigT &cfg_;
-    UserIntfT       &ui_;
+    radar::Q                 &radarQ_;
+    imu::Q                   &imuQ_;
+    led::Q                   &ledQ_;
+    audio::Q                 &audioQ_;
+    timer::ITimer            &timer_;
+    profile::ProfileCatalog  &catalog_;
+    profile::ProfileSettings &settings_;
+    UserIntfT                &ui_;
 
     /*──────────── Data ────────────────────────────────────────────*/
     uint32_t              sessionMins_{0};

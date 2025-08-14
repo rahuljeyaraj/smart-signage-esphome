@@ -60,7 +60,8 @@ class UserIntf {
 
     // Numbers: just publish (stateless); clamp where it makes sense
     void setSessionMins(uint32_t mins) {
-        if (ui_.sessionMins) suppressEvents_([&] { ui_.sessionMins->publish_state((float) mins); });
+        if (ui_.sessionMins)
+            suppressEvents_([&] { ui_.sessionMins->publish_state((float) mins / 60); });
         SS_LOGI("%s: session mins -> %u", TAG, mins);
     }
 
@@ -122,7 +123,7 @@ class UserIntf {
         if (ui_.sessionMins) {
             ui_.sessionMins->add_on_state_callback([this](float v) {
                 if (suppressing_) return;
-                uint32_t val = (v < 0.f) ? 0U : (uint32_t) v;
+                uint32_t val = (v < 0.f) ? 0U : (uint32_t) (v * 60);
                 ctrlQ_.post(ctrl::EvtUiSessionMinsUpdate{val});
                 SS_LOGI("%s: UI->CTRL SessionMinsUpdate %u", TAG, val);
             });
