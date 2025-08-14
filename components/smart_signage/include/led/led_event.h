@@ -9,10 +9,10 @@ namespace esphome::smart_signage::led {
 struct CmdSetup {};
 struct CmdTeardown {};
 struct CmdOff {};
-struct CmdOn {
-    uint32_t brightPct;
-    explicit CmdOn(uint32_t p = kDefaultBrightPct)
-        : brightPct(etl::clamp<uint32_t>(p, kMinBrightPct, kMaxBrightPct)) {}
+struct CmdOn {};
+struct SetBrightness {
+    uint8_t pct;
+    SetBrightness(uint8_t p) : pct(etl::clamp<uint32_t>(p, kMinBrightPct, kMaxBrightPct)) {}
 };
 
 /**
@@ -28,23 +28,23 @@ struct CmdOn {
  *          toHighMs          toLowMs
  */
 struct CmdBreathe {
-    uint32_t brightPct;  // target high level (%)
     uint16_t toHighMs;   // ramp low -> high
     uint16_t holdHighMs; // dwell at high
     uint16_t toLowMs;    // ramp high -> low
     uint16_t holdLowMs;  // dwell at low (cycle ends after this)
     uint16_t cnt;        // number of full cycles; 0 => infinite
 
-    CmdBreathe(uint32_t p, uint16_t tHigh, uint16_t hHigh, uint16_t tLow, uint16_t hLow, uint16_t n)
-        : brightPct(etl::clamp<uint32_t>(p, kMinBrightPct, kMaxBrightPct)), toHighMs(tHigh),
-          holdHighMs(hHigh), toLowMs(tLow), holdLowMs(hLow), cnt(n) {}
+    CmdBreathe() : toHighMs(0), holdHighMs(0), toLowMs(0), holdLowMs(0), cnt(0) {}
+
+    CmdBreathe(uint16_t tHigh, uint16_t hHigh, uint16_t tLow, uint16_t hLow, uint16_t n)
+        : toHighMs(tHigh), holdHighMs(hHigh), toLowMs(tLow), holdLowMs(hLow), cnt(n) {}
 };
 
 // Internal events
 struct EvtTimerEnd {};
 struct EvtFadeEnd {};
 
-using Event =
-    etl::variant<CmdSetup, CmdTeardown, CmdOn, CmdOff, CmdBreathe, EvtTimerEnd, EvtFadeEnd>;
+using Event = etl::variant<CmdSetup, CmdTeardown, CmdOn, CmdOff, SetBrightness, CmdBreathe,
+    EvtTimerEnd, EvtFadeEnd>;
 
 } // namespace esphome::smart_signage::led

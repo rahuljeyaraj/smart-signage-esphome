@@ -6,11 +6,11 @@
 #include <algorithm>
 #include <cstring>
 
-#include "log.h"                  // SS_LOGx (ASCII-only)
-#include "audio/audio_const.h"    // audio::kSourceStrLen, audio::kMaxPlaylist
-#include "audio/audio_event.h"    // audio::AudioPlaySpec
+#include "log.h"                   // SS_LOGx (ASCII-only)
+#include "audio/audio_const.h"     // audio::kSourceStrLen, audio::kMaxPlaylist
+#include "audio/audio_play_spec.h" // audio::AudioPlaySpec
 #include "profile/profile_defs.h" // SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL, ProfileName, ProfileNames
-#include "led/led_play_spec.h"    // led::LedPlaySpec, ledPatternFromCStr, ledPatternToCStr
+#include "led/led_pattern_spec.h" // led::LedPatternSpec, ledPatternFromCStr, ledPatternToCStr
 
 namespace esphome::smart_signage::profile {
 
@@ -213,7 +213,7 @@ class ProfileCatalogT {
                 // LED
                 if (auto ledObj = evObj["led"].as<ArduinoJson::JsonObjectConst>();
                     !ledObj.isNull()) {
-                    led::LedPlaySpec lspec{};
+                    led::LedPatternSpec lspec{};
                     lspec.pattern =
                         led::ledPatternFromCStr((const char *) (ledObj["pattern"] | ""));
                     uint32_t pms   = ledObj["periodMs"] | 0u;
@@ -268,7 +268,8 @@ class ProfileCatalogT {
         return true;
     }
 
-    bool getLedPlaySpec(const ProfileName &profileName, EventId ev, led::LedPlaySpec &out) const {
+    bool getLedPatternSpec(
+        const ProfileName &profileName, EventId ev, led::LedPatternSpec &out) const {
         const Key k{profileName, ev};
         auto      it = ledTable_.find(k);
         if (it == ledTable_.end()) {
@@ -337,7 +338,7 @@ class ProfileCatalogT {
     }
 
     etl::flat_map<Key, audio::AudioPlaySpec, MAX_EVENTS_TOTAL> audioTable_;
-    etl::flat_map<Key, led::LedPlaySpec, MAX_EVENTS_TOTAL>     ledTable_;
+    etl::flat_map<Key, led::LedPatternSpec, MAX_EVENTS_TOTAL>  ledTable_;
     ProfileNames                                               profileNames_;
 };
 

@@ -32,8 +32,8 @@ class FSM {
             *state<Idle>    + event<CmdSetup>         [ &Self::tryInitHal ]  / &Self::onSetupOk    = state<Ready>,
              state<Idle>    + event<CmdSetup>                                / &Self::onSetupFail  = state<Error>,
 
-             state<Ready>   + event<CmdSetVolume>                            / &Self::onSetVol,
-             state<Playing> + event<CmdSetVolume>                            / &Self::onSetVol,
+             state<Ready>   + event<SetVolume>                               / &Self::onSetVol,
+             state<Playing> + event<SetVolume>                               / &Self::onSetVol,
 
              state<Ready>   + event<CmdPlay>                                 / &Self::onPlay      = state<Playing>,
 
@@ -72,7 +72,7 @@ class FSM {
         ctrlQ_.post(ctrl::EvtAudioDone{}); // user stop => done
     }
 
-    void onSetVol(const CmdSetVolume &v) {
+    void onSetVol(const SetVolume &v) {
         SS_LOGI("volume=%hhu", v.volPct);
         hal_.setVolume(v.volPct);
     }

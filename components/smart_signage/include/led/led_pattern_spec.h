@@ -20,7 +20,7 @@ inline LedPattern ledPatternFromCStr(const char *s) {
     return LedPattern::Unknown;
 }
 
-struct LedPlaySpec {
+struct LedPatternSpec {
     LedPattern pattern{LedPattern::Unknown};
     uint16_t   periodMs{0}; // blink period
     uint16_t   cnt{0};      // 0 = infinite

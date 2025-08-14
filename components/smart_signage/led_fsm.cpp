@@ -35,8 +35,8 @@ void FSM::onError() {
 
 void FSM::onCmdOn(const CmdOn &cmd) {
     breath_ = BreathCfg{};
-    SS_LOGI("on %lu%%", cmd.brightPct);
-    hal_.setBrightness(static_cast<uint8_t>(cmd.brightPct));
+    SS_LOGI("on");
+    hal_.setBrightness(brightnessPct_);
 }
 
 void FSM::onEnterOff() {
@@ -45,7 +45,6 @@ void FSM::onEnterOff() {
 }
 
 void FSM::setBreatheParams(const CmdBreathe &cmd) {
-    breath_.brightPct  = static_cast<uint8_t>(cmd.brightPct);
     breath_.toHighMs   = cmd.toHighMs;
     breath_.holdHighMs = cmd.holdHighMs;
     breath_.toLowMs    = cmd.toLowMs;
@@ -53,8 +52,7 @@ void FSM::setBreatheParams(const CmdBreathe &cmd) {
     breath_.cntLeft    = cmd.cnt;
     breath_.finite     = cmd.cnt > 0;
 
-    SS_LOGI("breathe bright=%hhu%% toHigh=%hu holdHigh=%hu toLow=%hu holdLow=%hu cnt=%hu%s",
-        breath_.brightPct,
+    SS_LOGI("toHigh=%hu holdHigh=%hu toLow=%hu holdLow=%hu cnt=%hu%s",
         breath_.toHighMs,
         breath_.holdHighMs,
         breath_.toLowMs,
@@ -64,8 +62,8 @@ void FSM::setBreatheParams(const CmdBreathe &cmd) {
 }
 
 void FSM::onBreatheUpEntry() {
-    hal_.fadeTo(breath_.brightPct, breath_.toHighMs);
-    SS_LOGD("enter up -> %hhu%% in %hu ms", breath_.brightPct, breath_.toHighMs);
+    hal_.fadeTo(brightnessPct_, breath_.toHighMs);
+    SS_LOGD("enter up -> %hhu%% in %hu ms", brightnessPct_, breath_.toHighMs);
 }
 
 void FSM::onHoldHighEntry() {
@@ -91,5 +89,7 @@ void FSM::finishBreathe(const EvtTimerEnd &) {
     SS_LOGI("breathe done");
     breath_ = BreathCfg{};
 }
+
+void FSM::onSetBrightness(const SetBrightness &e) { brightnessPct_ = e.pct; }
 
 } // namespace esphome::smart_signage::led

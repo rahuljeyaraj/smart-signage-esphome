@@ -27,7 +27,6 @@ class FSM {
     struct HoldLow {};
 
     struct BreathCfg {
-        uint8_t  brightPct{100};
         uint16_t toHighMs{0};
         uint16_t holdHighMs{0};
         uint16_t toLowMs{0};
@@ -57,11 +56,13 @@ class FSM {
 
     void decCycleAfterHoldLow(const EvtTimerEnd &);
     void finishBreathe(const EvtTimerEnd &);
+    void onSetBrightness(const SetBrightness &);
 
     ctrl::Q       &ctrlQ_;
     hal::ILedHal  &hal_;
     timer::ITimer &timer_;
     BreathCfg      breath_;
+    uint8_t        brightnessPct_{kDefaultBrightPct};
 
     /**
      * Breath Waveform:
@@ -119,10 +120,11 @@ class FSM {
         using namespace sml;
         return make_transition_table(
             // clang-format off
-            *state<Idle>    + event<CmdSetup>    [ &Self::tryInitHal ]  / &Self::onSetupOk      = state<Ready>,
-            state<Idle>     + event<CmdSetup>                           / &Self::onSetupFail    = state<Error>,
-            state<Ready>    + event<CmdTeardown>                        / &Self::onTeardown     = state<Idle>,
-            state<Error>    + sml::on_entry<_>                          / &Self::onError
+            *state<Idle>    + event<CmdSetup> [ &Self::tryInitHal ] / &Self::onSetupOk          = state<Ready>
+            ,state<Idle>    + event<CmdSetup>                       / &Self::onSetupFail        = state<Error>
+            ,state<Ready>   + event<CmdTeardown>                    / &Self::onTeardown         = state<Idle>
+            ,state<_>       + event<SetBrightness>                  / &Self::onSetBrightness    = state<On>
+            ,state<Error>   + sml::on_entry<_>                      / &Self::onError
             // clang-format on
         );
     }

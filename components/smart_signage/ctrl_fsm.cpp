@@ -160,15 +160,22 @@ void FSM::onReady() {
     ProfileName          curr{};
     profile::EventId     ev = profile::EventId::SetupDone;
     audio::AudioPlaySpec audioPlaySpec;
-    led::LedPlaySpec     ledPlaySpec;
+    led::LedPatternSpec  ledPatternSpec;
     settings_.readCurrentProfile(curr);
     if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
-        SS_LOGI("Playing audio");
         audioQ_.post(audio::CmdPlay(audioPlaySpec));
     }
-    if (catalog_.getLedPlaySpec(curr, ev, ledPlaySpec)) {
-        SS_LOGI(
-            "Playing led:%d, %d, %d", ledPlaySpec.cnt, ledPlaySpec.pattern, ledPlaySpec.periodMs);
+    if (catalog_.getLedPatternSpec(curr, ev, ledPatternSpec)) {
+        led::CmdBreathe cmd;
+
+        uint16_t t = (ledPatternSpec.periodMs) / 2;
+        uint16_t n = ledPatternSpec.cnt;
+
+        switch (ledPatternSpec.pattern) {
+        case led::LedPattern::Square: ledQ_.post(led::CmdBreathe{0, t, 0, t, n}); break;
+        case led::LedPattern::Triangle: ledQ_.post(led::CmdBreathe{t, 0, t, 0, n}); break;
+        default: SS_LOGW("Unknown LED pattern");
+        }
     }
 }
 
