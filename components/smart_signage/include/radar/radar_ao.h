@@ -14,28 +14,28 @@ namespace esphome::smart_signage::radar {
 
 class RadarAO : public ActiveObject<Q, FSM> {
   public:
-    explicit RadarAO(Q &ownQ, ctrl::Q &ctrlQ, hal::IRadarHal &hal, timer::ITimer &timer,
-        const char *taskName, uint32_t stackSize = 8192,
-        UBaseType_t priority = tskIDLE_PRIORITY + 1, BaseType_t coreId = tskNO_AFFINITY)
-        : ActiveObject<Q, FSM>(ownQ, fsm_, s_logger, taskName, stackSize, priority, coreId),
-          fsm_(ctrlQ, hal, timer), timer_(timer) {
-        if (!timer_.create(taskName, &RadarAO::timerCbStatic, this)) {
-            SS_LOGE("Failed to create polling timer");
-        }
-    }
+    explicit RadarAO( // clang-format off
+      Q &ownQ,
+      FSM radarFsm,
+      FsmLogger radarFsmlogger,
+      const char *taskName,
+      uint32_t stackSize = 8192,
+      UBaseType_t priority = tskIDLE_PRIORITY + 1,
+      BaseType_t coreId = tskNO_AFFINITY
+    ) // clang-format on
+        : ActiveObject<Q, FSM>(
+              ownQ, radarFsm, radarFsmlogger, taskName, stackSize, priority, coreId) {}
+    // if (!timer_.create(taskName, &RadarAO::timerCbStatic, this)) {
+    //     SS_LOGE("Failed to create polling timer");
+    // }
+    // }
 
   private:
-    FSM            fsm_;
-    timer::ITimer &timer_;
+    // // static to member trampoline for ITimer
+    // static void timerCbStatic(void *arg) { static_cast<RadarAO *>(arg)->onTimerCb(); }
 
-    // single logger shared by all RadarAO instances
-    inline static FsmLogger s_logger{"RadarFSMLog"};
-
-    // static to member trampoline for ITimer
-    static void timerCbStatic(void *arg) { static_cast<RadarAO *>(arg)->onTimerCb(); }
-
-    // called in the timer task context: enqueue EvtTimerPoll on radar::Q
-    void onTimerCb() { queue_.post(EvtTimerPoll{}); }
+    // // called in the timer task context: enqueue EvtTimerPoll on radar::Q
+    // void onTimerCb() { queue_.post(EvtTimerPoll{}); }
 
     static constexpr char TAG[] = "RadarAO";
 };

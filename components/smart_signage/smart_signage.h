@@ -23,6 +23,8 @@
 #include "user_intf.h"
 #include "common.h"
 
+#include "radar/radar_fsm.h"
+
 namespace esphome::smart_signage {
 
 class SmartSignage : public Component {
@@ -50,30 +52,32 @@ class SmartSignage : public Component {
     HardwareSerial             radarSerial_;
     radar::hal::LD2410RadarHal radarHal_;
     timer::EspTimer            radarTimer_;
+    radar::FSM                 radarFsm_;
+    FsmLogger                  radarFsmlogger_;
     radar::RadarAO             radarAo_;
 
     /*──────  Imu ────*/
     MPU6500             imu_;
     imu::hal::I2cImuHal imuHal_;
     timer::EspTimer     imuTimer_;
-    imu::ImuAO          imuAo_;
+    // imu::ImuAO          imuAo_;
 
     /*──────  Led  ────*/
     led::hal::EspLedHal ledHal_;
     timer::EspTimer     ledTimer_;
-    led::LedAO          ledAo_;
+    // led::LedAO          ledAo_;
 
     /*──────  Audio  ────*/
     audio::hal::I2SAudioHal audioHal_;
     timer::EspTimer         audioTimer_;
-    audio::AO               audioAo_;
+    // audio::AO               audioAo_;
 
     /*──────  Ctrl / Settings ───────*/
-    storage::NvsStorage storage_;
-    ProfileCatalog      profileCatalog_;
-    ProfileSettings     profileSettings_;
-    timer::EspTimer     ctrlTimer_;
-    ctrl::CtrlAO        ctrlAo_;
+    // storage::NvsStorage storage_;
+    // ProfileCatalog      profileCatalog_;
+    // ProfileSettings     profileSettings_;
+    // timer::EspTimer     ctrlTimer_;
+    // ctrl::CtrlAO        ctrlAo_;
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";

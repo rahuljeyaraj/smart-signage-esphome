@@ -1,43 +1,43 @@
-#pragma once
+// #pragma once
+// #include "active_object.h"
+// #include "imu_q.h"
+// #include "imu_fsm.h"
+// #include "imu/hal/iimu_hal.h"
+// #include "timer/itimer.h"
+// #include "log.h"
 
-#include "active_object.h"
-#include "imu/imu_q.h"
-#include "ctrl/ctrl_q.h"
-#include "imu/imu_fsm.h"
-#include "timer/itimer.h"
-#include "fsm_logger.h"
-#include "log.h"
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+// namespace esphome::smart_signage::imu {
 
-namespace esphome::smart_signage::imu {
+// static const EvtTimerPoll kPollEvt{};
 
-class ImuAO : public ActiveObject<Q, FSM> {
-  public:
-    explicit ImuAO(Q &ownQ, ctrl::Q &ctrlQ, hal::IImuHal &hal, timer::ITimer &timer,
-        const char *taskName, uint32_t stackSize = 8192,
-        UBaseType_t priority = tskIDLE_PRIORITY + 1, BaseType_t coreId = tskNO_AFFINITY)
-        : ActiveObject<Q, FSM>(ownQ, fsm_, s_logger, taskName, stackSize, priority, coreId),
-          fsm_(ctrlQ, hal, timer), timer_(timer) {
-        if (!timer_.create(taskName, &ImuAO::timerCbStatic, this)) {
-            SS_LOGE("Failed to create polling timer");
-        }
-    }
+// class ImuAO : public ActiveObject<Q, FSM> {
+//   public:
+//     ImuAO(Q &ownQ, ctrl::Q &ctrlQ, hal::IImuHal &hal, timer::ITimer &timer,
+//         const char *taskName = "imu", uint32_t stack = 6144,
+//         UBaseType_t prio = tskIDLE_PRIORITY + 1, BaseType_t coreId = tskNO_AFFINITY)
+//         : ActiveObject<Q, FSM>(ownQ, fsm_, taskName, stack, prio), logger_{taskName},
+//           fsm_(ctrlQ, hal, timer), timer_(timer) {
 
-  private:
-    FSM            fsm_;
-    timer::ITimer &timer_;
+//         if (!timer_.create(taskName, &ImuAO::timerCbThunk, this)) {
+//             SS_LOGE("imu timer create fail");
+//         }
 
-    // single logger shared by all ImuAO instances
-    inline static FsmLogger s_logger{"ImuFSMLog"};
+//         this->start(logger_, coreId);
+//         SS_LOGI("ImuAO started");
+//     }
 
-    // static to member trampoline for ITimer
-    static void timerCbStatic(void *arg) { static_cast<ImuAO *>(arg)->onTimerCb(); }
+//   private:
+//     static void IRAM_ATTR timerCbThunk(void *arg) {
+//         auto      *self = static_cast<ImuAO *>(arg);
+//         BaseType_t hpw  = pdFALSE;
+//         self->queue_.postFromISR(kPollEvt, &hpw);
+//         if (hpw) portYIELD_FROM_ISR();
+//     }
 
-    // called in the timer task context: enqueue EvtTimerPoll on imu::Q
-    void onTimerCb() { queue_.post(EvtTimerPoll{}); }
+//     FsmLogger      logger_;
+//     FSM            fsm_;
+//     timer::ITimer &timer_;
 
-    static constexpr char TAG[] = "ImuAO";
-};
+//     static constexpr char TAG[] = "CtrlAO";
 
-} // namespace esphome::smart_signage::imu
+// } // namespace esphome::smart_signage::imu

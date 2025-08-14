@@ -97,66 +97,66 @@ class UserIntfT {
 
     // ─────────────── UI → CTRL wiring ───────────────
     void attachCallbacks_() {
-        // Start button
-        if (ui_.startButton) {
-            // prefer add_on_press_callback if available
-            ui_.startButton->add_on_press_callback([this]() {
-                if (suppressing_) return;
-                ctrlQ_.post(ctrl::CmdStart{});
-                SS_LOGI("UI->CTRL StartPressed");
-            });
-        }
+        // // Start button
+        // if (ui_.startButton) {
+        //     // prefer add_on_press_callback if available
+        //     ui_.startButton->add_on_press_callback([this]() {
+        //         if (suppressing_) return;
+        //         ctrlQ_.post(ctrl::CmdStart{});
+        //         SS_LOGI("UI->CTRL StartPressed");
+        //     });
+        // }
 
-        // Profile select — (value, index); we only use the value, which we truncate to ProfileName.
-        if (ui_.currProfile) {
-            ui_.currProfile->add_on_state_callback([this](std::string value, size_t /*index*/) {
-                if (suppressing_) return;
-                ctrlQ_.post(ctrl::EvtUiProfileUpdate{value.c_str()});
-                SS_LOGI("UI->CTRL ProfileUpdate value=\"%s\"", value.c_str());
-            });
-        }
+        // // Profile select — (value, index); we only use the value, which we truncate to
+        // ProfileName. if (ui_.currProfile) {
+        //     ui_.currProfile->add_on_state_callback([this](std::string value, size_t /*index*/) {
+        //         if (suppressing_) return;
+        //         ctrlQ_.post(ctrl::EvtUiProfileUpdate{});
+        //         SS_LOGI("UI->CTRL ProfileUpdate value=\"%s\"", value.c_str());
+        //     });
+        // }
 
-        // Session minutes
-        if (ui_.sessionMins) {
-            ui_.sessionMins->add_on_state_callback([this](float v) {
-                if (suppressing_) return;
-                uint32_t val = (v < 0.f) ? 0U : (uint32_t) v;
-                ctrlQ_.post(ctrl::EvtUiSessionMinsUpdate{val});
-                SS_LOGI("UI->CTRL SessionMinsUpdate %u", val);
-            });
-        }
+        // // Session minutes
+        // if (ui_.sessionMins) {
+        //     ui_.sessionMins->add_on_state_callback([this](float v) {
+        //         if (suppressing_) return;
+        //         uint32_t val = (v < 0.f) ? 0U : (uint32_t) v;
+        //         ctrlQ_.post(ctrl::EvtUiSessionMinsUpdate{val});
+        //         SS_LOGI("UI->CTRL SessionMinsUpdate %u", val);
+        //     });
+        // }
 
-        // Radar range cm
-        if (ui_.radarRangeCm) {
-            ui_.radarRangeCm->add_on_state_callback([this](float v) {
-                if (suppressing_) return;
-                uint32_t val = (v < 0.f) ? 0U : (uint32_t) v;
-                ctrlQ_.post(ctrl::EvtUiRangeCmUpdate{val});
-                SS_LOGI("UI->CTRL RangeCmUpdate %u", val);
-            });
-        }
+        // // Radar range cm
+        // if (ui_.radarRangeCm) {
+        //     ui_.radarRangeCm->add_on_state_callback([this](float v) {
+        //         if (suppressing_) return;
+        //         uint32_t val = (v < 0.f) ? 0U : (uint32_t) v;
+        //         ctrlQ_.post(ctrl::EvtUiRangeCmUpdate{val});
+        //         SS_LOGI("UI->CTRL RangeCmUpdate %u", val);
+        //     });
+        // }
 
-        // Audio volume pct (0..100 clamp)
-        if (ui_.audioVolPct) {
-            ui_.audioVolPct->add_on_state_callback([this](float v) {
-                if (suppressing_) return;
-                int iv = (v < 0.f) ? 0 : (int) v;
-                if (iv > 100) iv = 100;
-                ctrlQ_.post(ctrl::EvtUiAudioVolUpdate{(uint8_t) iv});
-                SS_LOGI("UI->CTRL AudioVolUpdate %hhu", (uint8_t) iv);
-            });
-        }
+        // // Audio volume pct (0..100 clamp)
+        // if (ui_.audioVolPct) {
+        //     ui_.audioVolPct->add_on_state_callback([this](float v) {
+        //         if (suppressing_) return;
+        //         int iv = (v < 0.f) ? 0 : (int) v;
+        //         if (iv > 100) iv = 100;
+        //         ctrlQ_.post(ctrl::EvtUiAudioVolUpdate{(uint8_t) iv});
+        //         SS_LOGI("UI->CTRL AudioVolUpdate %hhu", (uint8_t) iv);
+        //     });
+        // }
 
-        // LED brightness pct (0..100 clamp)
-        if (ui_.ledBrightPct) {
-            ui_.ledBrightPct->add_on_state_callback([this](float v) {
-                if (suppressing_) return;
-                int iv = (v < 0.f) ? 0 : (int) v;
-                if (iv > 100) iv = 100;
-                ctrlQ_.post(ctrl::EvtUiLedBrightUpdate{(uint8_t) iv});
-                SS_LOGI("UI->CTRL LedBrightUpdate %hhu", (uint8_t) iv);
-            });
-        }
+        // // LED brightness pct (0..100 clamp)
+        // if (ui_.ledBrightPct) {
+        //     ui_.ledBrightPct->add_on_state_callback([this](float v) {
+        //         if (suppressing_) return;
+        //         int iv = (v < 0.f) ? 0 : (int) v;
+        //         if (iv > 100) iv = 100;
+        //         ctrlQ_.post(ctrl::EvtUiLedBrightUpdate{(uint8_t) iv});
+        //         SS_LOGI("UI->CTRL LedBrightUpdate %hhu", (uint8_t) iv);
+        //     });
+        // }
     }
 };
 using UserIntf = UserIntfT<SS_MAX_PROFILES>;

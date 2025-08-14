@@ -1,50 +1,33 @@
-#pragma once
+// #pragma once
+// #include "active_object.h"
+// #include "audio_q.h"
+// #include "audio_fsm.h"
+// #include "audio/hal/iaudio_hal.h"
+// #include "timer/itimer.h"
+// #include "log.h"
 
-#include "active_object.h"
-#include "audio/audio_q.h"
-#include "ctrl/ctrl_q.h"
-#include "audio/audio_fsm.h"
-#include "audio/hal/iaudio_hal.h"
-#include "timer/itimer.h"
-#include "fsm_logger.h"
-#include "log.h"
+// namespace esphome::smart_signage::audio {
 
-namespace esphome::smart_signage::audio {
+// class AudioAO : public ActiveObject<Q, FSM> {
+//   public:
+//     AudioAO(Q &ownQ, ctrl::Q &ctrlQ, hal::IAudioHal &hal, timer::ITimer &timer,
+//         const char *taskName = "audio", uint32_t stack = 6144,
+//         UBaseType_t prio = tskIDLE_PRIORITY + 1, BaseType_t coreId = tskNO_AFFINITY)
+//         : ActiveObject<Q, FSM>(ownQ, fsm_, taskName, stack, prio), logger_{taskName},
+//           fsm_(ctrlQ, hal, timer), timer_(timer) {
 
-class AudioAO : public ActiveObject<Q, FSM> {
-  public:
-    AudioAO(Q &ownQ, ctrl::Q &ctrlQ, hal::IAudioHAL &hal, timer::ITimer &timer,
-        const char *taskName, uint32_t stackSize, UBaseType_t prio, BaseType_t core)
-        : ActiveObject<Q, FSM>(ownQ, fsm_, s_logger, taskName, stackSize, prio, core),
-          fsm_(ctrlQ, hal, timer), hal_(hal), timer_(timer) {
-        // HAL EOF -> post to our queue (task context; not ISR)
-        hal_.setPlaybackDoneCallback(&AudioAO::onHalDoneStatic, this);
-        // Timer callback posts EvtGapEnd (same pattern as LED AO)
-        if (!timer_.create(taskName, &AudioAO::timerCbStatic, this)) {
-            SS_LOGE("AudioAO: timer create failed");
-        }
-    }
+//         // hook audio HAL callbacks to our queue if exposed
 
-  private:
-    static void onHalDoneStatic(void *ctx) {
-        auto *self = static_cast<AudioAO *>(ctx);
-        self->queue_.post(EvtPlaybackDone{});
-    }
+//         this->start(logger_, coreId);
+//         SS_LOGI("AudioAO started");
+//     }
 
-    static void timerCbStatic(void *arg) {
-        auto *self = static_cast<AudioAO *>(arg);
-        self->queue_.post(EvtGapEnd{});
-    }
+//   private:
+//     FsmLogger      logger_;
+//     FSM            fsm_;
+//     timer::ITimer &timer_;
 
-    static constexpr char TAG[] = "AudioAO";
+//     static constexpr char TAG[] = "CtrlAO";
+// };
 
-    FSM             fsm_;
-    hal::IAudioHAL &hal_;
-    timer::ITimer  &timer_;
-
-    inline static FsmLogger s_logger{"AudioFSMLog"};
-};
-
-using AO = AudioAO;
-
-} // namespace esphome::smart_signage::audio
+// } // namespace esphome::smart_signage::audio

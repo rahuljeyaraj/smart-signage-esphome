@@ -15,7 +15,7 @@ struct CmdTeardown {};
 // UI -> Controller commands (no dynamic allocations)
 
 struct EvtUiProfileUpdate {
-    ProfileName profileName;
+    // ProfileName profileName;
 };
 struct EvtUiSessionMinsUpdate {
     uint32_t mins;
