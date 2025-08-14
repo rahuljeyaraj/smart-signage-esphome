@@ -243,6 +243,15 @@ class ProfileCatalogT {
             }
         }
 
+        if (profileNames_.empty()) {
+            SS_LOGW("No profiles found");
+        } else {
+            SS_LOGI("Available Profiles(cnt: %u):", (unsigned) profileNames_.size());
+            for (size_t i = 0; i < profileNames_.size(); ++i) {
+                SS_LOGI("\t%u: %s", (unsigned) i, profileNames_[i].c_str());
+            }
+        }
+
         // dumpAll_();
         return true;
     }

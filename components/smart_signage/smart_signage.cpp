@@ -39,11 +39,8 @@ SmartSignage::SmartSignage(const UiHandles &uiHandles, const char *configJson)
 // clang-format on
 
 void SmartSignage::setup() {
-    SS_LOGE("---------------3");
-    // if (!profilesCfg_.init(configJson_)) {
-    //     SS_LOGE("Config Json Parsing Failed.");
-    //     return;
-    // }
+    SS_LOGI("SmartSignage setup");
+    SS_LOGE("---------------4");
 
     if (!profileCatalog_.init(configJson_)) {
         SS_LOGE("Config Json Parsing Failed.");
@@ -55,60 +52,10 @@ void SmartSignage::setup() {
         return;
     }
 
-    const ProfileName name = "abcd";
-    profileSettings_.writeCurrentProfile(name);
-    ProfileName readname;
-    bool        ok = true;
-    ok             = profileSettings_.readCurrentProfile(readname);
-    SS_LOGI("readname: %d %s", ok, readname.c_str());
-
-    profile::ProfileValues val{};
-    val.audioVolPct  = 50;
-    val.ledBrightPct = 55;
-    val.sessionMins  = 60;
-    val.radarRangeCm = 300;
-    profileSettings_.writeProfileValues(name, val);
-    profile::ProfileValues newVal{};
-
-    ok = profileSettings_.readProfileValues(name, newVal);
-    SS_LOGI("readname: %d audioVolPct:%d, ledBrightPct: %d, sessionMins: %d, radarRangeCm:%d",
-        ok,
-        val.audioVolPct  = 50,
-        val.ledBrightPct = 55,
-        val.sessionMins  = 60,
-        val.radarRangeCm = 300);
-
-    ProfileNames names;
-    profileCatalog_.getProfileNames(names);
-    SS_LOGI("Found %u profile option(s)", (unsigned) names.size());
-    if (names.empty()) {
-        SS_LOGW("No profiles found");
-    } else {
-        for (size_t i = 0; i < names.size(); ++i) {
-            SS_LOGI("Option %u: %s", (unsigned) i, names[i].c_str());
-        }
+    if (!LittleFS.begin(true)) {
+        SS_LOGE("LittleFS mount failed");
+        return;
     }
-
-    // if (!NvsSmartSignage::initNvs()) {
-    //     SS_LOGE("NVS init failed");
-    //     return;
-    // }
-
-    // for (uint8_t i = 0; i < count; ++i) {
-    //     ProfileSummary summary{};
-    //     if (!profileDb_.get_summary(i, summary)) {
-    //         SS_LOGW("summary[%hhu] fetch failed", i);
-    //         continue;
-    //     }
-    //     SS_LOGI("summary[%hhu]: id='%s', name='%s'", i, summary.id, summary.name);
-    // }
-
-    // SS_LOGI("SmartSignage setup");
-
-    // if (!LittleFS.begin(true)) {
-    //     SS_LOGE("LittleFS mount failed");
-    //     return;
-    // }
 
     print_partition_table();
     list_all_files();
