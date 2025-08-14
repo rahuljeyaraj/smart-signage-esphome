@@ -103,7 +103,7 @@ class UserIntf {
             // prefer add_on_press_callback if available
             ui_.startButton->add_on_press_callback([this]() {
                 if (suppressing_) return;
-                ctrlQ_.post(ctrl::EvtUiStartPressed{});
+                ctrlQ_.post(ctrl::CmdStart{});
                 SS_LOGI("%s: UI->CTRL StartPressed", TAG);
             });
         }

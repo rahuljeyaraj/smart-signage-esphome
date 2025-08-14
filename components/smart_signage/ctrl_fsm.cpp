@@ -155,6 +155,23 @@ void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
     settings_.writeProfileValues(curr, values);
 }
 
+void FSM::onReady() {
+    SS_LOGI("Entered Ready state");
+    ProfileName          curr{};
+    profile::EventId     ev = profile::EventId::SetupDone;
+    audio::AudioPlaySpec audioPlaySpec;
+    led::LedPlaySpec     ledPlaySpec;
+    settings_.readCurrentProfile(curr);
+    if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
+        SS_LOGI("Playing audio");
+        audioQ_.post(audio::CmdPlay(audioPlaySpec));
+    }
+    if (catalog_.getLedPlaySpec(curr, ev, ledPlaySpec)) {
+        SS_LOGI(
+            "Playing led:%d, %d, %d", ledPlaySpec.cnt, ledPlaySpec.pattern, ledPlaySpec.periodMs);
+    }
+}
+
 void FSM::onError() { SS_LOGE("Entered Error state!"); }
 
 bool FSM::hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut) {

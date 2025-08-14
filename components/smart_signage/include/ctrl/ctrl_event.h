@@ -31,7 +31,6 @@ struct EvtUiAudioVolUpdate {
 struct EvtUiLedBrightUpdate {
     uint8_t pct;
 };
-struct EvtUiStartPressed {};
 
 struct EvtTimerEnd {};
 
@@ -61,7 +60,7 @@ using Event = etl::variant<
     CmdSetup, CmdStart, CmdStop, CmdTeardown,
     // UI commands
     EvtUiProfileUpdate, EvtUiSessionMinsUpdate, EvtUiRangeCmUpdate, EvtUiAudioVolUpdate,
-    EvtUiLedBrightUpdate, EvtUiStartPressed,
+    EvtUiLedBrightUpdate,
     // timer
     EvtTimerEnd,
     // radar events
