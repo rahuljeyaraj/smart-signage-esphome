@@ -20,6 +20,9 @@
 #include "profile_config.h"
 #include "user_intf.h"
 #include "common.h"
+#include "profile/profile_catalog.h"
+#include "profile/profile_settings.h"
+#include "storage/nvs_storage.h"
 
 namespace esphome::smart_signage {
 
@@ -68,8 +71,11 @@ class SmartSignage : public Component {
     audio::AO               audioAo_;
 
     /*──────  Ctrl ───────*/
-    timer::EspTimer ctrlTimer_;
-    ctrl::CtrlAO    ctrlAo_;
+    storage::NvsStorage      storage_;
+    profile::ProfileCatalog  profileCatalog_;
+    profile::ProfileSettings profileSettings_;
+    timer::EspTimer          ctrlTimer_;
+    ctrl::CtrlAO             ctrlAo_;
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";
