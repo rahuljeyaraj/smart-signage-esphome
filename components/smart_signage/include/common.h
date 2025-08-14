@@ -12,5 +12,6 @@
 namespace esphome::smart_signage {
 
 using ProfileName = etl::string<15>;
+using ProfileList = etl::array<ProfileName, SS_MAX_PROFILES>;
 
 } // namespace esphome::smart_signage

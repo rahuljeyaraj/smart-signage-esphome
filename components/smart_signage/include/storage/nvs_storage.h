@@ -10,6 +10,19 @@ class NvsStorage : public IStorage {
   public:
     explicit NvsStorage(const Namespace &ns) : ns_(ns) {}
 
+    bool init() {
+        esp_err_t err = nvs_flash_init();
+        if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            (void) nvs_flash_erase();
+            err = nvs_flash_init();
+        }
+        if (err != ESP_OK) {
+            SS_LOGE("nvs_flash_init failed err=%d", (int) err);
+            return false;
+        }
+        return true;
+    }
+
     // ───────── Scalars ─────────
     bool storeU32(const Key &key, uint32_t value) override {
         nvs_handle_t h;

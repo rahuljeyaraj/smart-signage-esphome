@@ -12,8 +12,7 @@
 #include "led/led_q.h"
 #include "audio/audio_q.h"
 #include "timer/itimer.h"
-#include "nvs_smart_signage.h"
-#include "profile_config.h"
+#include "profile_settings.h"
 #include "user_intf.h"
 #include "common.h"
 
@@ -28,7 +27,7 @@ class FSM {
 
   public:
     explicit FSM(radar::Q &radarQ, imu::Q &imuQ, led::Q &ledQ, audio::Q &audioQ,
-        timer::ITimer &timer, ProfilesConfigT &cfg, UserIntfT &ui);
+        timer::ITimer &timer, ProfileSettings &profiles, UserIntfT &ui);
 
     /*──────────────────────── State machine ────────────────────────*/
     auto operator()() noexcept {
@@ -111,7 +110,7 @@ class FSM {
     led::Q          &ledQ_;
     audio::Q        &audioQ_;
     timer::ITimer   &timer_;
-    ProfilesConfigT &cfg_;
+    ProfileSettings &profiles_;
     UserIntfT       &ui_;
 
     /*──────────── Data ────────────────────────────────────────────*/

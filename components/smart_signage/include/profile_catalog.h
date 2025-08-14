@@ -12,6 +12,7 @@
 #include "audio/audio_const.h" // audio::kSourceStrLen, audio::kMaxPlaylist
 #include "audio/audio_event.h" // audio::AudioPlaySpec
 #include "common.h"
+#include "led/led_play_spec.h"
 
 namespace esphome::smart_signage {
 
@@ -65,32 +66,6 @@ inline EventId eventFromCStr(const char *s) {
     return EventId::Unknown;
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// LED spec
-// ────────────────────────────────────────────────────────────────────────────
-enum class LedPattern : uint8_t { Unknown, Square, Triangle };
-
-inline const char *ledPatternToCStr(LedPattern p) {
-    switch (p) {
-    case LedPattern::Square: return "square";
-    case LedPattern::Triangle: return "triangle";
-    default: return "unknown";
-    }
-}
-
-inline LedPattern ledPatternFromCStr(const char *s) {
-    if (!s || s[0] == '\0') return LedPattern::Unknown;
-    if (std::strcmp(s, "square") == 0) return LedPattern::Square;
-    if (std::strcmp(s, "triangle") == 0) return LedPattern::Triangle;
-    return LedPattern::Unknown;
-}
-
-struct LedPlaySpec {
-    LedPattern pattern{LedPattern::Unknown};
-    uint16_t   periodMs{0}; // blink period
-    uint16_t   cnt{0};      // 0 = infinite
-};
-
 // Composite key: (profileName, event)
 struct Key {
     ProfileName name{};
@@ -104,11 +79,11 @@ struct Key {
 };
 
 template <size_t MAX_PROFILES, size_t MAX_EVENTS_TOTAL>
-class ProfilesConfig {
+class ProfileCatalogT {
   public:
-    static constexpr const char *TAG = "ProfilesConfig";
+    static constexpr const char *TAG = "ProfileCatalog";
 
-    ProfilesConfig() = default;
+    ProfileCatalogT() = default;
 
     bool init(const char *jsonUtf8) {
         clear();
@@ -234,8 +209,9 @@ class ProfilesConfig {
 
                 // LED
                 if (auto ledObj = evObj["led"].as<JsonObjectConst>(); !ledObj.isNull()) {
-                    LedPlaySpec lspec{};
-                    lspec.pattern  = ledPatternFromCStr((const char *) (ledObj["pattern"] | ""));
+                    led::LedPlaySpec lspec{};
+                    lspec.pattern =
+                        led::ledPatternFromCStr((const char *) (ledObj["pattern"] | ""));
                     uint32_t pms   = ledObj["periodMs"] | 0u;
                     uint32_t cnt   = ledObj["cnt"] | (ledObj["nt"] | 0u); // accept "nt"
                     lspec.periodMs = static_cast<uint16_t>(std::min<uint32_t>(pms, 0xFFFFu));
@@ -282,7 +258,7 @@ class ProfilesConfig {
         return true;
     }
 
-    bool getLedPlaySpec(const ProfileName &profileName, EventId ev, LedPlaySpec &out) const {
+    bool getLedPlaySpec(const ProfileName &profileName, EventId ev, led::LedPlaySpec &out) const {
         const Key k{profileName, ev};
         auto      it = ledTable_.find(k);
         if (it == ledTable_.end()) {
@@ -361,10 +337,10 @@ class ProfilesConfig {
     }
 
     etl::flat_map<Key, audio::AudioPlaySpec, MAX_EVENTS_TOTAL> audioTable_;
-    etl::flat_map<Key, LedPlaySpec, MAX_EVENTS_TOTAL>          ledTable_;
-    etl::array<ProfileName, MAX_PROFILES>                      profileNames_;
+    etl::flat_map<Key, led::LedPlaySpec, MAX_EVENTS_TOTAL>     ledTable_;
+    ProfileList                                                profileNames_;
 };
 
-using ProfilesConfigT = ProfilesConfig<SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL>;
+using ProfileCatalog = ProfileCatalogT<SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL>;
 
 } // namespace esphome::smart_signage

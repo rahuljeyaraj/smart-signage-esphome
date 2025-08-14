@@ -16,10 +16,10 @@
 #include "audio/audio_ao.h"
 
 #include "fsm_logger.h"
-#include "nvs_smart_signage.h"
-#include "profile_config.h"
 #include "storage/nvs_storage.h"
 #include "profile_settings.h"
+#include "config/app_config.h"
+#include "config/app_config_parser.h"
 #include "user_intf.h"
 #include "common.h"
 
@@ -34,7 +34,7 @@ class SmartSignage : public Component {
     void dump_config() override;
 
   private:
-    const char *configJson_;
+    const char *catalogJson_;
 
     /*────── Message queues ────────*/
     ctrl::Q  ctrlQ_;
@@ -43,9 +43,8 @@ class SmartSignage : public Component {
     led::Q   ledQ_;
     audio::Q audioQ_;
 
-    /*────── User inputs ────────*/
-    ProfilesConfigT profilesCfg_;
-    UserIntfT       ui_;
+    /*────── User UI ────────*/
+    UserIntfT ui_;
 
     /*──────  Radar  ────*/
     HardwareSerial             radarSerial_;
@@ -69,8 +68,9 @@ class SmartSignage : public Component {
     timer::EspTimer         audioTimer_;
     audio::AO               audioAo_;
 
-    /*──────  Ctrl ───────*/
+    /*──────  Ctrl / Settings ───────*/
     storage::NvsStorage storage_;
+    ProfileCatalog      profileCatalog_;
     ProfileSettings     profileSettings_;
     timer::EspTimer     ctrlTimer_;
     ctrl::CtrlAO        ctrlAo_;
