@@ -80,24 +80,15 @@ class ProfileSettings {
         if (!ok)
             SS_LOGE("writeBlob failed for key=\"%s\"", k.c_str());
         else
-            SS_LOGI("writed key=\"%s\"", k.c_str());
+            SS_LOGI("wrote values of key=\"%s\"", k.c_str());
         return ok;
     }
 
   private:
     // Build a sanitized key like "p_<lowercase_alnum_underscore>"
     static storage::Key makeProfileKey_(const ProfileName &name) {
-        storage::Key key;
-        key = "p_";
-        for (const char *p = name.c_str(); *p && key.size() < key.max_size(); ++p) {
-            char c = *p;
-            if (c >= 'A' && c <= 'Z') c = (char) (c - 'A' + 'a');
-            if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') {
-                if (key.size() + 1 < key.max_size()) key += c;
-            } else {
-                if (key.size() + 1 < key.max_size()) key += '_';
-            }
-        }
+        storage::Key key = name;
+        etl::to_lower_case(key);
         return key;
     }
 

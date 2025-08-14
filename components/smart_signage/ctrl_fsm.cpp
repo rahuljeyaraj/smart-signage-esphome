@@ -53,26 +53,17 @@ bool FSM::guardAudioReady(const EvtAudioReady &) {
 void FSM::onCmdSetup(const CmdSetup &) {
     SS_LOGI("Action: onCmdSetup");
     SS_LOGI("Setup dashboard");
-    ProfileNames  names;
-    ProfileName   currProfile;
-    ProfileValues values{};
+    ProfileNames names;
+    ProfileName  curr;
 
     catalog_.getProfileNames(names);
-
-    if (!hasValidCurrProfile(names, currProfile)) {
-        getDefaultCurrProfile(currProfile);
-        settings_.writeCurrentProfile(currProfile);
+    if (!hasValidCurrProfile(names, curr)) {
+        getDefaultCurrProfile(curr);
+        settings_.writeCurrentProfile(curr);
     }
-    if (!settings_.readProfileValues(currProfile, values)) {
-        settings_.writeProfileValues(currProfile, values);
-    }
-
     ui_.setProfileOptions(names);
-    ui_.setCurrentProfile(currProfile);
-    ui_.setSessionMins(values.sessionMins);
-    ui_.setRadarRangeCm(values.radarRangeCm);
-    ui_.setAudioVolPct(values.audioVolPct);
-    ui_.setLedBrightPct(values.ledBrightPct);
+    ui_.setCurrentProfile(curr);
+    updateValuesToUi(curr);
 
     SS_LOGI("broadcast CmdSetup");
     readyBits_.reset();
@@ -125,11 +116,44 @@ void FSM::onSessionEnd() {
     onCmdTeardown({});
 }
 
-void FSM::onUiProfileUpdate(const EvtUiProfileUpdate &e) {}
-void FSM::onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &e) {}
-void FSM::onUiRangeCmUpdate(const EvtUiRangeCmUpdate &e) {}
-void FSM::onUiAudioVolUpdate(const EvtUiAudioVolUpdate &e) {}
-void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {}
+void FSM::onUiProfileUpdate(const EvtUiProfileUpdate &e) {
+    ProfileName   curr = e.profileName;
+    ProfileValues values{};
+    settings_.writeCurrentProfile(curr);
+    updateValuesToUi(curr);
+}
+void FSM::onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &e) {
+    ProfileName   curr;
+    ProfileValues values;
+    settings_.readCurrentProfile(curr);
+    settings_.readProfileValues(curr, values);
+    values.sessionMins = e.mins;
+    settings_.writeProfileValues(curr, values);
+}
+void FSM::onUiRangeCmUpdate(const EvtUiRangeCmUpdate &e) {
+    ProfileName   curr;
+    ProfileValues values;
+    settings_.readCurrentProfile(curr);
+    settings_.readProfileValues(curr, values);
+    values.radarRangeCm = e.cm;
+    settings_.writeProfileValues(curr, values);
+}
+void FSM::onUiAudioVolUpdate(const EvtUiAudioVolUpdate &e) {
+    ProfileName   curr;
+    ProfileValues values;
+    settings_.readCurrentProfile(curr);
+    settings_.readProfileValues(curr, values);
+    values.audioVolPct = e.pct;
+    settings_.writeProfileValues(curr, values);
+}
+void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
+    ProfileName   curr;
+    ProfileValues values;
+    settings_.readCurrentProfile(curr);
+    settings_.readProfileValues(curr, values);
+    values.ledBrightPct = e.pct;
+    settings_.writeProfileValues(curr, values);
+}
 
 void FSM::onError() { SS_LOGE("Entered Error state!"); }
 
@@ -159,6 +183,18 @@ void FSM::getDefaultCurrProfile(ProfileName &defultProfile) {
 
     SS_LOGI("Setting default profile: \"%s\" ", defultProfile.c_str());
     return;
+}
+
+void FSM::updateValuesToUi(ProfileName &curr) {
+    ProfileValues values{};
+    if (!settings_.readProfileValues(curr, values)) settings_.writeProfileValues(curr, values);
+
+    ui_.setSessionMins(values.sessionMins);
+    ui_.setRadarRangeCm(values.radarRangeCm);
+    ui_.setAudioVolPct(values.audioVolPct);
+    ui_.setLedBrightPct(values.ledBrightPct);
+
+    SS_LOGI("UI updated for profile \"%s\"", curr.c_str());
 }
 
 } // namespace esphome::smart_signage::ctrl

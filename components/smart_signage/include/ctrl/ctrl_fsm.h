@@ -101,8 +101,10 @@ class FSM {
     void onUiLedBrightUpdate(const EvtUiLedBrightUpdate &);
     void onError();
 
+    /*──────────── Helpers ─────────────────────────────────────────*/
     bool hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut);
     void getDefaultCurrProfile(ProfileName &defultProfile);
+    void updateValuesToUi(ProfileName &curr);
 
     static constexpr char TAG[] = "ctrlFSM";
 
@@ -119,7 +121,6 @@ class FSM {
     /*──────────── Data ────────────────────────────────────────────*/
     uint32_t              sessionMins_{0};
     etl::bitset<kIntfCnt> readyBits_{};
-    // ProfileName           currProfile_;
 
     /*──────────── State tags (no data) ────────────────────────────*/
     struct Idle {};
