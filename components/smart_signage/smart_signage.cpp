@@ -14,7 +14,7 @@ SmartSignage::SmartSignage(const UiHandles &uiHandles, const char *configJson)
     // clang-format off
     : ctrlQ_{}, radarQ_{}, imuQ_{}, ledQ_{}, audioQ_{}
     
-    , ui_{uiHandles, ctrlQ_}, configJson_{configJson}, profilesCfg_{}, ctrlTimer_{}
+    , ui_{uiHandles, ctrlQ_}, configJson_{configJson}, profilesCfg_{}, ctrlTimer_{}, profileSettings_{} 
     , ctrlAo_{ctrlQ_, radarQ_, imuQ_, ledQ_, audioQ_, ctrlTimer_,profilesCfg_, ui_, "ctrlTask", 8192, tskIDLE_PRIORITY + 2, 1}
 
     , radarSerial_{1}
@@ -37,6 +37,7 @@ SmartSignage::SmartSignage(const UiHandles &uiHandles, const char *configJson)
 // clang-format on
 
 void SmartSignage::setup() {
+    pin_current_boot_partition_if_factory();
 
     if (!profilesCfg_.init(configJson_)) {
         SS_LOGE("Config Json Parsing Failed.");
@@ -48,25 +49,17 @@ void SmartSignage::setup() {
         return;
     }
 
-    // for (uint8_t i = 0; i < count; ++i) {
-    //     ProfileSummary summary{};
-    //     if (!profileDb_.get_summary(i, summary)) {
-    //         SS_LOGW("summary[%hhu] fetch failed", i);
-    //         continue;
-    //     }
-    //     SS_LOGI("summary[%hhu]: id='%s', name='%s'", i, summary.id, summary.name);
-    // }
+    if (!LittleFS.begin(true)) {
+        SS_LOGE("LittleFS mount failed");
+        return;
+    }
 
-    // SS_LOGI("SmartSignage setup");
+    // For debug
+    print_partition_table();
+    list_all_files();
 
-    // if (!LittleFS.begin(true)) {
-    //     SS_LOGE("LittleFS mount failed");
-    //     return;
-    // }
-
-    // print_partition_table();
-    // list_all_files();
-    // ctrlQ_.post(ctrl::CmdSetup{});
+    SS_LOGI("Kicking Ctrl to start");
+    ctrlQ_.post(ctrl::CmdSetup{});
 }
 
 void SmartSignage::loop() {

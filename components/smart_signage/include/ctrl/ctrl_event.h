@@ -8,9 +8,7 @@ namespace esphome::smart_signage::ctrl {
 
 // From upper layer
 struct CmdSetup {};
-struct CmdStart {
-    uint32_t sessionMins = kDefaultSessionMins;
-};
+struct CmdStart {};
 struct CmdStop {};
 struct CmdTeardown {};
 
@@ -61,7 +59,7 @@ using Event = etl::variant<
     CmdSetup, CmdStart, CmdStop, CmdTeardown,
     // UI commands
     EvtUiProfileUpdate, EvtUiSessionMinsUpdate, EvtUiRangeCmUpdate, EvtUiAudioVolUpdate,
-    EvtUiLedBrightUpdate, EvtUiStartPressed,
+    EvtUiLedBrightUpdate,
     // timer
     EvtTimerEnd,
     // radar events

@@ -33,7 +33,7 @@ class UserIntf {
 
     explicit UserIntf(const UiHandles &ui, ctrl::Q &ctrlQ) : ui_(ui), ctrlQ_(ctrlQ) {
         attachCallbacks_();
-        SS_LOGD("%s: constructed", TAG);
+        SS_LOGD("constructed");
     }
 
     // ─────────────── CTRL → UI (no echo back) ───────────────
@@ -47,39 +47,39 @@ class UserIntf {
         if (ui_.currProfile) {
             suppressEvents_([&] { ui_.currProfile->traits.set_options(stdOpts); });
         }
-        SS_LOGI("%s: profile options set, count=%u", TAG, (unsigned) opts.size());
+        SS_LOGI("profile options set, count=%u", (unsigned) opts.size());
     }
 
     // Select a profile by ProfileName
     void setCurrentProfile(const ProfileName &name) {
         if (ui_.currProfile) {
             suppressEvents_([&] { ui_.currProfile->publish_state(name.c_str()); });
-            SS_LOGI("%s: current profile -> \"%s\"", TAG, name.c_str());
+            SS_LOGI("current profile -> \"%s\"", name.c_str());
         }
     }
 
     // Numbers: just publish (stateless); clamp where it makes sense
     void setSessionMins(uint32_t mins) {
         if (ui_.sessionMins) suppressEvents_([&] { ui_.sessionMins->publish_state((float) mins); });
-        SS_LOGI("%s: session mins -> %u", TAG, mins);
+        SS_LOGI("session mins -> %u", mins);
     }
 
     void setRadarRangeCm(uint32_t cm) {
         if (ui_.radarRangeCm) suppressEvents_([&] { ui_.radarRangeCm->publish_state((float) cm); });
-        SS_LOGI("%s: radar range cm -> %u", TAG, cm);
+        SS_LOGI("radar range cm -> %u", cm);
     }
 
     void setAudioVolPct(uint8_t pct) {
         if (pct > 100) pct = 100;
         if (ui_.audioVolPct) suppressEvents_([&] { ui_.audioVolPct->publish_state((float) pct); });
-        SS_LOGI("%s: audio vol pct -> %hhu", TAG, pct);
+        SS_LOGI("audio vol pct -> %hhu", pct);
     }
 
     void setLedBrightPct(uint8_t pct) {
         if (pct > 100) pct = 100;
         if (ui_.ledBrightPct)
             suppressEvents_([&] { ui_.ledBrightPct->publish_state((float) pct); });
-        SS_LOGI("%s: led bright pct -> %hhu", TAG, pct);
+        SS_LOGI("led bright pct -> %hhu", pct);
     }
 
   private:
@@ -102,8 +102,8 @@ class UserIntf {
             // prefer add_on_press_callback if available
             ui_.startButton->add_on_press_callback([this]() {
                 if (suppressing_) return;
-                ctrlQ_.post(ctrl::EvtUiStartPressed{});
-                SS_LOGI("%s: UI->CTRL StartPressed", TAG);
+                ctrlQ_.post(ctrl::CmdStart{});
+                SS_LOGI("UI->CTRL StartPressed");
             });
         }
 
@@ -111,10 +111,8 @@ class UserIntf {
         if (ui_.currProfile) {
             ui_.currProfile->add_on_state_callback([this](std::string value, size_t /*index*/) {
                 if (suppressing_) return;
-                ctrl::EvtUiProfileUpdate ev{};
-                ev.profileName = value.c_str(); // converts + truncates to 15 char ProfileName
-                ctrlQ_.post(ev);
-                SS_LOGI("%s: UI->CTRL ProfileUpdate value=\"%s\"", TAG, value.c_str());
+                ctrlQ_.post(ctrl::EvtUiProfileUpdate{value.c_str()});
+                SS_LOGI("UI->CTRL ProfileUpdate value=\"%s\"", value.c_str());
             });
         }
 
@@ -124,7 +122,7 @@ class UserIntf {
                 if (suppressing_) return;
                 uint32_t val = (v < 0.f) ? 0U : (uint32_t) v;
                 ctrlQ_.post(ctrl::EvtUiSessionMinsUpdate{val});
-                SS_LOGI("%s: UI->CTRL SessionMinsUpdate %u", TAG, val);
+                SS_LOGI("UI->CTRL SessionMinsUpdate %u", val);
             });
         }
 
@@ -134,7 +132,7 @@ class UserIntf {
                 if (suppressing_) return;
                 uint32_t val = (v < 0.f) ? 0U : (uint32_t) v;
                 ctrlQ_.post(ctrl::EvtUiRangeCmUpdate{val});
-                SS_LOGI("%s: UI->CTRL RangeCmUpdate %u", TAG, val);
+                SS_LOGI("UI->CTRL RangeCmUpdate %u", val);
             });
         }
 
@@ -145,7 +143,7 @@ class UserIntf {
                 int iv = (v < 0.f) ? 0 : (int) v;
                 if (iv > 100) iv = 100;
                 ctrlQ_.post(ctrl::EvtUiAudioVolUpdate{(uint8_t) iv});
-                SS_LOGI("%s: UI->CTRL AudioVolUpdate %hhu", TAG, (uint8_t) iv);
+                SS_LOGI("UI->CTRL AudioVolUpdate %hhu", (uint8_t) iv);
             });
         }
 
@@ -156,7 +154,7 @@ class UserIntf {
                 int iv = (v < 0.f) ? 0 : (int) v;
                 if (iv > 100) iv = 100;
                 ctrlQ_.post(ctrl::EvtUiLedBrightUpdate{(uint8_t) iv});
-                SS_LOGI("%s: UI->CTRL LedBrightUpdate %hhu", TAG, (uint8_t) iv);
+                SS_LOGI("UI->CTRL LedBrightUpdate %hhu", (uint8_t) iv);
             });
         }
     }

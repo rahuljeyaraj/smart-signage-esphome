@@ -37,31 +37,37 @@ class FSM {
             // clang-format off
             *state<Idle>     + event<CmdSetup>          / &Self::onCmdSetup         = state<Setup>
 
-            // // For future, if any interface hangs on setup command we need a timeout (currently not used)
-            // ,state<Setup>    + event<EvtTimerEnd>   / &Self::onSetupTimeout     = state<Error>
+            // For future, if any interface hangs on setup command we need a timeout (currently not used)
+            ,state<Setup>    + event<EvtTimerEnd>   / &Self::onSetupTimeout     = state<Error>
 
-            // // TODO: Try to make it with just one guard function
-            // ,state<Setup>    + event<EvtRadarReady>     [ &Self::guardRadarReady ]  = state<Ready>
-            // ,state<Setup>    + event<EvtImuReady>       [ &Self::guardImuReady   ]  = state<Ready>
-            // ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]  = state<Ready>
-            // ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]  = state<Ready>
+            // TODO: Try to make it with just one guard function
+            ,state<Setup>    + event<EvtRadarReady>     [ &Self::guardRadarReady ]  = state<Ready>
+            ,state<Setup>    + event<EvtImuReady>       [ &Self::guardImuReady   ]  = state<Ready>
+            ,state<Setup>    + event<EvtLedReady>       [ &Self::guardLedReady   ]  = state<Ready>
+            ,state<Setup>    + event<EvtAudioReady>     [ &Self::guardAudioReady ]  = state<Ready>
 
-            // ,state<Ready>    + event<CmdStart>          / &Self::onCmdStart         = state<Active>
-            // ,state<Ready>    + event<CmdTeardown>       / &Self::onCmdTeardown      = state<Idle>
+            ,state<Ready>    + event<CmdStart>          / &Self::onCmdStart         = state<Active>
+            ,state<Ready>    + event<CmdTeardown>       / &Self::onCmdTeardown      = state<Idle>
 
-            // ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData
-            // ,state<Active>   + event<CmdStop>           / &Self::onCmdStop          = state<Ready>
-            // ,state<Active>   + event<EvtTimerEnd>       / &Self::onSessionEnd       = state<Idle>
-            // ,state<Active>   + event<EvtImuFell>        / &Self::onEvtImuFell       = state<Fallen>
+            ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData
+            ,state<Active>   + event<CmdStop>           / &Self::onCmdStop          = state<Ready>
+            ,state<Active>   + event<EvtTimerEnd>       / &Self::onSessionEnd       = state<Idle>
+            ,state<Active>   + event<EvtImuFell>        / &Self::onEvtImuFell       = state<Fallen>
 
-            // ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
+            ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
 
-            // ,state<_>        + event<EvtRadarError>                                 = state<Error>
-            // ,state<_>        + event<EvtImuError>                                   = state<Error>
-            // ,state<_>        + event<EvtLedError>                                   = state<Error>
-            // ,state<_>        + event<EvtAudioError>                                 = state<Error>
+            ,state<_>        + event<EvtUiProfileUpdate>      / &Self::onUiProfileUpdate
+            ,state<_>        + event<EvtUiSessionMinsUpdate>  / &Self::onUiSessionMinsUpdate
+            ,state<_>        + event<EvtUiRangeCmUpdate>      / &Self::onUiRangeCmUpdate
+            ,state<_>        + event<EvtUiAudioVolUpdate>     / &Self::onUiAudioVolUpdate
+            ,state<_>        + event<EvtUiLedBrightUpdate>    / &Self::onUiLedBrightUpdate
 
-            // ,state<Error>    + on_entry<_>              / &Self::onError
+            ,state<_>        + event<EvtRadarError>                                 = state<Error>
+            ,state<_>        + event<EvtImuError>                                   = state<Error>
+            ,state<_>        + event<EvtLedError>                                   = state<Error>
+            ,state<_>        + event<EvtAudioError>                                 = state<Error>
+
+            ,state<Error>    + on_entry<_>              / &Self::onError
             // clang-format on
         );
     }
@@ -87,7 +93,15 @@ class FSM {
     void onEvtImuRose(const EvtImuRose &);
     void onSetupTimeout();
     void onSessionEnd();
+    void onUiProfileUpdate(const EvtUiProfileUpdate &);
+    void onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &);
+    void onUiRangeCmUpdate(const EvtUiRangeCmUpdate &);
+    void onUiAudioVolUpdate(const EvtUiAudioVolUpdate &);
+    void onUiLedBrightUpdate(const EvtUiLedBrightUpdate &);
     void onError();
+
+    /*──────────── Helper ─────────────────────────────────────────*/
+    ProfileName resolveActiveProfile_();
 
     static constexpr char TAG[] = "ctrlFSM";
 

@@ -18,6 +18,8 @@
 #include "fsm_logger.h"
 #include "nvs_smart_signage.h"
 #include "profile_config.h"
+#include "storage/nvs_storage.h"
+#include "profile_settings.h"
 #include "user_intf.h"
 #include "common.h"
 
@@ -68,8 +70,10 @@ class SmartSignage : public Component {
     audio::AO               audioAo_;
 
     /*──────  Ctrl ───────*/
-    timer::EspTimer ctrlTimer_;
-    ctrl::CtrlAO    ctrlAo_;
+    storage::NvsStorage storage_;
+    ProfileSettings     profileSettings_;
+    timer::EspTimer     ctrlTimer_;
+    ctrl::CtrlAO        ctrlAo_;
 
     static constexpr char kNVSNamespace[] = "SmartSignage";
     static constexpr char TAG[]           = "SmartSignage";

@@ -155,6 +155,18 @@ class NvsSmartSignage {
         return true;
     }
 
+    static bool loadCurrentVal(ProfileValues &valsOut) {
+        ProfileName name;
+        getCurrentProfile(name);
+        return loadProfile(name, valsOut);
+    }
+
+    static bool storeCurrentVal(ProfileValues vals) {
+        ProfileName name;
+        getCurrentProfile(name);
+        return saveProfile(name, vals);
+    }
+
     static bool loadCurrentOrDefault(
         const ProfileName &defaultName, ProfileName &nameOut, ProfileValues &valsOut) {
         getCurrentProfile(nameOut);
