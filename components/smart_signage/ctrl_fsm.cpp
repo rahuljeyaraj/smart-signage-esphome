@@ -157,26 +157,7 @@ void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
 
 void FSM::onReady() {
     SS_LOGI("Entered Ready state");
-    ProfileName          curr{};
-    profile::EventId     ev = profile::EventId::SetupDone;
-    audio::AudioPlaySpec audioPlaySpec;
-    led::LedPatternSpec  ledPatternSpec;
-    settings_.readCurrentProfile(curr);
-    if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
-        audioQ_.post(audio::CmdPlay(audioPlaySpec));
-    }
-    if (catalog_.getLedPatternSpec(curr, ev, ledPatternSpec)) {
-        led::CmdBreathe cmd;
-
-        uint16_t t = (ledPatternSpec.periodMs) / 2;
-        uint16_t n = ledPatternSpec.cnt;
-
-        switch (ledPatternSpec.pattern) {
-        case led::LedPattern::Square: ledQ_.post(led::CmdBreathe{0, t, 0, t, n}); break;
-        case led::LedPattern::Triangle: ledQ_.post(led::CmdBreathe{t, 0, t, 0, n}); break;
-        default: SS_LOGW("Unknown LED pattern");
-        }
-    }
+    driveOutput(profile::EventId::Ready);
 }
 
 void FSM::onError() { SS_LOGE("Entered Error state!"); }
@@ -219,6 +200,41 @@ void FSM::updateValuesToUi(ProfileName &curr) {
     ui_.setLedBrightPct(values.ledBrightPct);
 
     SS_LOGI("UI updated for profile \"%s\"", curr.c_str());
+}
+
+void FSM::driveOutput(profile::EventId ev) {
+    ProfileName curr{};
+    if (!settings_.readCurrentProfile(curr)) {
+        SS_LOGW("readCurrentProfile failed");
+        return;
+    }
+
+    // ── Audio ────────────────────────────────────────────────────────────────
+    audio::AudioPlaySpec audioPlaySpec;
+    if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
+        audioQ_.post(audio::CmdPlay(audioPlaySpec));
+    }
+
+    // ── LED ─────────────────────────────────────────────────────────────────
+    led::LedPatternSpec ledPatternSpec;
+    if (catalog_.getLedPatternSpec(curr, ev, ledPatternSpec)) {
+        uint16_t t = static_cast<uint16_t>(ledPatternSpec.periodMs / 2u);
+        uint16_t n = ledPatternSpec.cnt;
+
+        switch (ledPatternSpec.pattern) {
+        case led::LedPattern::Square:
+            // immediate high, hold t; immediate low, hold t
+            ledQ_.post(led::CmdBreathe{0, t, 0, t, n});
+            break;
+
+        case led::LedPattern::Triangle:
+            // ramp up t, no high hold; ramp down t, no low hold
+            ledQ_.post(led::CmdBreathe{t, 0, t, 0, n});
+            break;
+
+        default: SS_LOGW("unknown led pattern"); break;
+        }
+    }
 }
 
 } // namespace esphome::smart_signage::ctrl

@@ -67,7 +67,7 @@ smart_signage:
   startButton:    startButton
 
   
-  profileConfig:  !include config.yaml
+  profileCatalog:  !include profile_catalog.yaml
 # ───────────────────────────── Dashboard entities ──────────────────────────
 select:
   - platform: template

@@ -1,7 +1,7 @@
 profiles:
   - name: WetFloor
     events:
-      SetupDone:
+      Ready:
         audio: { playCnt: 1, playList: [ { src: /test/welcome_1.mp3, delayMs: 0 } ] }
         led:   { pattern: square, periodMs: 800, cnt: 2 }
       Error:
@@ -36,7 +36,7 @@ profiles:
 
   - name: Halloween
     events:
-      SetupDone:
+      Ready:
         audio: { playCnt: 1, playList: [ { src: /test/welcome_2.mp3, delayMs: 0 } ] }
         led:   { pattern: triangle, periodMs: 600, cnt: 2 }
       Error:
@@ -71,7 +71,7 @@ profiles:
 
   - name: LunchBreak
     events:
-      SetupDone:
+      Ready:
         audio: { playCnt: 1, playList: [ { src: /test/welcome_3.mp3, delayMs: 0 } ] }
         led:   { pattern: square, periodMs: 1000, cnt: 1 }
       Error:

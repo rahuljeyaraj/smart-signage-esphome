@@ -13,12 +13,12 @@ CONF_RADAR_RANGE_CM  = "radarRangeCm"
 CONF_AUDIO_VOL_PCT   = "audioVolPct"
 CONF_LED_BRIGHT_PCT  = "ledBrightPct"
 CONF_START_BUTTON    = "startButton"
-CONF_PROFILE_CONFIG  = "profileConfig" 
+CONF_PROFILE_CATALOG  = "profileCatalog" 
 
 smart_ns     = cg.esphome_ns.namespace("smart_signage")
 SmartSignage = smart_ns.class_("SmartSignage", cg.Component)
 
-PROFILE_CFG_SCHEMA = vol.Schema({}, extra=vol.ALLOW_EXTRA) 
+PROFILE_CATALOG_SCHEMA = vol.Schema({}, extra=vol.ALLOW_EXTRA) 
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID():                 cv.declare_id(SmartSignage),
@@ -30,7 +30,7 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Required(CONF_LED_BRIGHT_PCT):cv.use_id(number.Number),
     cv.Required(CONF_START_BUTTON):  cv.use_id(button.Button),
 
-    cv.Required(CONF_PROFILE_CONFIG): PROFILE_CFG_SCHEMA,
+    cv.Required(CONF_PROFILE_CATALOG): PROFILE_CATALOG_SCHEMA,
 }).extend(cv.COMPONENT_SCHEMA)
 
 def to_code(config):
@@ -50,9 +50,9 @@ def to_code(config):
         f"{startButton}}} "
     )
 
-    profile_cfg   = config[CONF_PROFILE_CONFIG]
-    json_literal  = json.dumps(profile_cfg)
-    json_literal  = f'R"({json_literal})"' 
+    profile_catalog = config[CONF_PROFILE_CATALOG]
+    json_literal    = json.dumps(profile_catalog)
+    json_literal    = f'R"({json_literal})"' 
 
     var = cg.new_Pvariable(
         config[CONF_ID],

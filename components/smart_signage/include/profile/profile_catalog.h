@@ -18,7 +18,7 @@ namespace esphome::smart_signage::profile {
 // Events (camelCase)
 // ────────────────────────────────────────────────────────────────────────────
 enum class EventId : uint8_t {
-    SetupDone,
+    Ready,
     Error,
     Start,
     Stop,
@@ -33,7 +33,7 @@ enum class EventId : uint8_t {
 
 inline const char *eventToCStr(EventId e) {
     switch (e) {
-    case EventId::SetupDone: return "SetupDone";
+    case EventId::Ready: return "Ready";
     case EventId::Error: return "Error";
     case EventId::Start: return "Start";
     case EventId::Stop: return "Stop";
@@ -51,7 +51,7 @@ inline bool streq_(const char *a, const char *b) { return std::strcmp(a, b) == 0
 
 inline EventId eventFromCStr(const char *s) {
     if (!s || s[0] == '\0') return EventId::Unknown;
-    if (streq_(s, "SetupDone")) return EventId::SetupDone;
+    if (streq_(s, "Ready")) return EventId::Ready;
     if (streq_(s, "Error")) return EventId::Error;
     if (streq_(s, "Start")) return EventId::Start;
     if (streq_(s, "Stop")) return EventId::Stop;

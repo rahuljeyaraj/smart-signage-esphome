@@ -115,6 +115,7 @@ class FSM {
     bool hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut);
     void getDefaultCurrProfile(ProfileName &defultProfile);
     void updateValuesToUi(ProfileName &curr);
+    void driveOutput(profile::EventId ev);
 
     static constexpr char TAG[] = "ctrlFSM";
 
