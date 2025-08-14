@@ -55,7 +55,7 @@ void FSM::onCmdSetup(const CmdSetup &) {
 
     // // Build the profile list from ProfileSettings and push to UI
     // etl::vector<ProfileName, SS_MAX_PROFILES> profiles;
-    // profiles_.getProfileList(profiles);
+    // profiles_.getProfileNames(profiles);
     // ui_.setProfileOptions(profiles);
 
     // // Load current (or default=first) and publish its values

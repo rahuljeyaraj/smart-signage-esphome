@@ -114,43 +114,19 @@ class ProfileSettings {
         return ok;
     }
 
-    // —— Spec accessors by (profile, event name) ——
-    bool getAudioPlaySpec(
-        const ProfileName &profile, const char *eventName, audio::AudioPlaySpec &out) const {
-        return catalog_.getAudioPlaySpec(profile, eventName, out);
-    }
-    bool getLedPlaySpec(
-        const ProfileName &profile, const char *eventName, led::LedPlaySpec &out) const {
-        return catalog_.getLedPlaySpec(profile, eventName, out);
-    }
-
-    // Names for UI
-    const ProfileList &profileNames() const { return catalog_.profileNames; }
-
     // ── Small compatibility helpers (keep existing call sites compiling) ──
     bool loadCurrentVal(ProfileValues &out) {
         ProfileName tmp;
         return loadCurrentSettings(tmp, out);
     }
     void getCurrentProfile(ProfileName &out) { (void) loadCurrentProfileName_(out); }
-    template <size_t N>
-    void getProfileList(etl::vector<ProfileName, N> &out) const {
-        out.clear();
-        for (const auto &n : catalog_.profileNames) {
-            if (!n.empty()) {
-                if (out.full()) break;
-                out.push_back(n);
-            }
-        }
-    }
 
   private:
     // Choose default profile name only when needed (no caching in members)
     ProfileName pickDefaultName_() const {
-        for (const auto &n : catalog_.profileNames) {
-            if (!n.empty()) return n;
-        }
-        return ProfileName{"profile"};
+        ProfileNames names;
+        catalog_.getProfileNames(names);
+        return names[0];
     }
 
     // Build a sanitized key like "p_<lowercase_alnum_underscore>"
@@ -186,10 +162,7 @@ class ProfileSettings {
         storage::Key k{"CurrProfile"};
         char         buf[64] = {0};
         size_t       cap     = sizeof(buf);
-        if (!st_.loadString(k, buf, cap)) {
-            out.clear();
-            return false;
-        }
+        if (!st_.loadString(k, buf, cap)) { return false; }
         out = buf;
         return true;
     }

@@ -278,7 +278,7 @@ class ProfileCatalogT {
         for (size_t i = 0; i < MAX_PROFILES; ++i) profileNames_[i].clear();
     }
 
-    void getProfileList(etl::vector<ProfileName, MAX_PROFILES> &out) const {
+    void getProfileNames(ProfileNames &out) const {
         out.clear();
         for (uint32_t i = 0; i < MAX_PROFILES; ++i) {
             if (!profileNames_[i].empty()) {
@@ -338,7 +338,7 @@ class ProfileCatalogT {
 
     etl::flat_map<Key, audio::AudioPlaySpec, MAX_EVENTS_TOTAL> audioTable_;
     etl::flat_map<Key, led::LedPlaySpec, MAX_EVENTS_TOTAL>     ledTable_;
-    ProfileList                                                profileNames_;
+    ProfileNames                                               profileNames_;
 };
 
 using ProfileCatalog = ProfileCatalogT<SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL>;
