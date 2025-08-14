@@ -16,10 +16,8 @@
 #include "audio/audio_ao.h"
 
 #include "fsm_logger.h"
-#include "nvs_smart_signage.h"
-#include "profile_config.h"
 #include "user_intf.h"
-#include "common.h"
+#include "profile/profile_defs.h"
 #include "storage/nvs_storage.h"
 
 namespace esphome::smart_signage {
@@ -43,8 +41,7 @@ class SmartSignage : public Component {
     audio::Q audioQ_;
 
     /*────── User inputs ────────*/
-    ProfilesConfigT profilesCfg_;
-    UserIntfT       ui_;
+    UserIntfT ui_;
 
     /*──────  Radar  ────*/
     HardwareSerial             radarSerial_;

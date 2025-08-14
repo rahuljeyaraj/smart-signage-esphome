@@ -53,9 +53,9 @@ bool FSM::guardAudioReady(const EvtAudioReady &) {
 void FSM::onCmdSetup(const CmdSetup &) {
     SS_LOGI("Action: onCmdSetup");
     SS_LOGI("Setup dashboard");
-    ProfileNames           names;
-    ProfileName            currProfile;
-    profile::ProfileValues values{};
+    ProfileNames  names;
+    ProfileName   currProfile;
+    ProfileValues values{};
 
     catalog_.getProfileNames(names);
 
@@ -124,6 +124,12 @@ void FSM::onSessionEnd() {
     onCmdStop({});
     onCmdTeardown({});
 }
+
+void FSM::onUiProfileUpdate(const EvtUiProfileUpdate &e) {}
+void FSM::onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &e) {}
+void FSM::onUiRangeCmUpdate(const EvtUiRangeCmUpdate &e) {}
+void FSM::onUiAudioVolUpdate(const EvtUiAudioVolUpdate &e) {}
+void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {}
 
 void FSM::onError() { SS_LOGE("Entered Error state!"); }
 

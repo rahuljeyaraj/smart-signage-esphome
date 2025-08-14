@@ -10,22 +10,10 @@
 #include <etl/string.h>
 
 #include "log.h"
-#include "common.h"
-#include "radar/radar_const.h"
-#include "audio/audio_const.h"
-#include "led/led_const.h"
-#include "ctrl/ctrl_const.h"
-
+#include "profile/profile_defs.h"
 #include "storage/istorage.h"
 
 namespace esphome::smart_signage::profile {
-
-struct ProfileValues {
-    uint32_t sessionMins{ctrl::kDefaultSessionMins};
-    uint32_t radarRangeCm{radar::kDefaultRangeCm};
-    uint8_t  audioVolPct{audio::kDefaultVolPct};
-    uint8_t  ledBrightPct{led::kDefaultBrightPct};
-};
 
 struct ProfileBlob {
     uint16_t      version;

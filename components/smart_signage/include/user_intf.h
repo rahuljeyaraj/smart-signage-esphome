@@ -12,7 +12,7 @@
 #include "esphome/components/number/number.h"
 #include "esphome/components/button/button.h"
 
-#include "common.h"
+#include "profile/profile_defs.h"
 #include "ctrl/ctrl_q.h" // ctrl::Q with post(...)
 
 namespace esphome::smart_signage {

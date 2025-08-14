@@ -2,7 +2,7 @@
 #include <etl/variant.h>
 #include <freertos/FreeRTOS.h>
 #include "ctrl/ctrl_const.h"
-#include "common.h"
+#include "profile/profile_defs.h"
 
 namespace esphome::smart_signage::ctrl {
 

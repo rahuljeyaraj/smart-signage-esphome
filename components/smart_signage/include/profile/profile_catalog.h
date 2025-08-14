@@ -1,4 +1,3 @@
-// profiles_config_flat.h  (aka profile_config.h)
 #pragma once
 
 #include <ArduinoJson.h> // ArduinoJson v7
@@ -7,11 +6,11 @@
 #include <algorithm>
 #include <cstring>
 
-#include "log.h"               // SS_LOGx (ASCII-only)
-#include "audio/audio_const.h" // audio::kSourceStrLen, audio::kMaxPlaylist
-#include "audio/audio_event.h" // audio::AudioPlaySpec
-#include "common.h"            // SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL, ProfileName, ProfileNames
-#include "led/led_play_spec.h" // led::LedPlaySpec, ledPatternFromCStr, ledPatternToCStr
+#include "log.h"                  // SS_LOGx (ASCII-only)
+#include "audio/audio_const.h"    // audio::kSourceStrLen, audio::kMaxPlaylist
+#include "audio/audio_event.h"    // audio::AudioPlaySpec
+#include "profile/profile_defs.h" // SS_MAX_PROFILES, SS_MAX_EVENTS_TOTAL, ProfileName, ProfileNames
+#include "led/led_play_spec.h"    // led::LedPlaySpec, ledPatternFromCStr, ledPatternToCStr
 
 namespace esphome::smart_signage::profile {
 

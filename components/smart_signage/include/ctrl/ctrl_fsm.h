@@ -12,11 +12,10 @@
 #include "led/led_q.h"
 #include "audio/audio_q.h"
 #include "timer/itimer.h"
-#include "nvs_smart_signage.h"
 #include "profile/profile_catalog.h"
 #include "profile/profile_settings.h"
 #include "user_intf.h"
-#include "common.h"
+#include "profile/profile_defs.h"
 
 namespace radar = esphome::smart_signage::radar;
 namespace imu   = esphome::smart_signage::imu;
@@ -58,6 +57,12 @@ class FSM {
 
             // ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
 
+            ,state<_>        + event<EvtUiProfileUpdate>      / &Self::onUiProfileUpdate
+            ,state<_>        + event<EvtUiSessionMinsUpdate>  / &Self::onUiSessionMinsUpdate
+            ,state<_>        + event<EvtUiRangeCmUpdate>      / &Self::onUiRangeCmUpdate
+            ,state<_>        + event<EvtUiAudioVolUpdate>     / &Self::onUiAudioVolUpdate
+            ,state<_>        + event<EvtUiLedBrightUpdate>    / &Self::onUiLedBrightUpdate
+
             // ,state<_>        + event<EvtRadarError>                                 = state<Error>
             // ,state<_>        + event<EvtImuError>                                   = state<Error>
             // ,state<_>        + event<EvtLedError>                                   = state<Error>
@@ -89,6 +94,11 @@ class FSM {
     void onEvtImuRose(const EvtImuRose &);
     void onSetupTimeout();
     void onSessionEnd();
+    void onUiProfileUpdate(const EvtUiProfileUpdate &);
+    void onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &);
+    void onUiRangeCmUpdate(const EvtUiRangeCmUpdate &);
+    void onUiAudioVolUpdate(const EvtUiAudioVolUpdate &);
+    void onUiLedBrightUpdate(const EvtUiLedBrightUpdate &);
     void onError();
 
     bool hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut);
@@ -109,6 +119,7 @@ class FSM {
     /*──────────── Data ────────────────────────────────────────────*/
     uint32_t              sessionMins_{0};
     etl::bitset<kIntfCnt> readyBits_{};
+    // ProfileName           currProfile_;
 
     /*──────────── State tags (no data) ────────────────────────────*/
     struct Idle {};
