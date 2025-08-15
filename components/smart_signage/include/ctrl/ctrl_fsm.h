@@ -57,15 +57,12 @@ class FSM {
 
             ,state<Fallen>   + event<EvtImuRose>        / &Self::onEvtImuRose       = state<Active>
 
-            ,state<Idle>        + event<EvtUiProfileUpdate>       / &Self::doNothing    
-            ,state<Idle>        + event<EvtUiSessionMinsUpdate>   / &Self::doNothing  
-            ,state<Idle>        + event<EvtUiRangeCmUpdate>       / &Self::doNothing  
+            ,state<Ready>       + event<EvtUiProfileUpdate>       / &Self::onUiProfileUpdate   
+            ,state<Ready>       + event<EvtUiSessionMinsUpdate>   / &Self::onUiSessionMinsUpdate
+            ,state<Ready>       + event<EvtUiRangeCmUpdate>       / &Self::onUiRangeCmUpdate 
             ,state<Idle>        + event<EvtUiAudioVolUpdate>      / &Self::doNothing  
             ,state<Idle>        + event<EvtUiLedBrightUpdate>     / &Self::doNothing  
-
-            ,state<_>           + event<EvtUiProfileUpdate>      / &Self::onUiProfileUpdate
-            ,state<_>           + event<EvtUiSessionMinsUpdate>  / &Self::onUiSessionMinsUpdate
-            ,state<_>           + event<EvtUiRangeCmUpdate>      / &Self::onUiRangeCmUpdate
+    
             ,state<_>           + event<EvtUiAudioVolUpdate>     / &Self::onUiAudioVolUpdate
             ,state<_>           + event<EvtUiLedBrightUpdate>    / &Self::onUiLedBrightUpdate
 

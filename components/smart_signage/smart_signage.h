@@ -58,6 +58,7 @@ class SmartSignage : public Component {
     /*──────  Led  ────*/
     led::hal::EspLedHal ledHal_;
     timer::EspTimer     ledTimer_;
+    timer::EspTimer     ledFadeTimer_; // Workardound for isr crash
     led::LedAO          ledAo_;
 
     /*──────  Audio  ────*/

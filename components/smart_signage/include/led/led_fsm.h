@@ -14,7 +14,7 @@ class FSM {
     using Self = FSM;
 
   public:
-    FSM(ctrl::Q &ctrlQ, hal::ILedHal &hal, timer::ITimer &timer);
+    FSM(ctrl::Q &ctrlQ, hal::ILedHal &hal, timer::ITimer &timer, timer::ITimer &fadeTimer);
 
   private:
     struct Idle {};
@@ -60,6 +60,7 @@ class FSM {
     ctrl::Q       &ctrlQ_;
     hal::ILedHal  &hal_;
     timer::ITimer &timer_;
+    timer::ITimer &fadeTimer_;
     BreathCfg      breath_;
     uint8_t        brightnessPct_{kDefaultBrightPct};
 
@@ -116,7 +117,8 @@ class FSM {
         );
     }
 
-    static constexpr char TAG[] = "LedFsm";
+    static constexpr uint16_t kBufferMs = 10;
+    static constexpr char     TAG[]     = "LedFsm";
 };
 
 } // namespace esphome::smart_signage::led

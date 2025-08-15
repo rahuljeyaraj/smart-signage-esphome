@@ -3,7 +3,7 @@ profiles:
     events:
       Ready:
         audio: { playCnt: 2, playList: [ { src: /test/ready_1.mp3, delayMs: 100 } ] }
-        led:   { pattern: blink, periodMs: 800, cnt: 2 }
+        led:   { pattern: blink, periodMs: 800, cnt: 1 }
       Error:
         audio: { playCnt: 1, playList: [ { src: /test/error_1.mp3, delayMs: 0 } ] }
         led:   { pattern: blink, periodMs: 150, cnt: 0 }   # rapid infinite blink
@@ -31,10 +31,10 @@ profiles:
           playList:
             - { src: /test/fallen_1.mp3, delayMs: 5000 }
             - { src: /test/fallen_2.mp3, delayMs: 5000 }
-        led:   { pattern: blink, periodMs: 300, cnt: 5 }
+        led:   { pattern: blink, periodMs: 300, cnt: 0 }
       Rose:
         audio: { playCnt: 1, playList: [ { src: /test/ready_3.mp3, delayMs: 0 } ] }
-        led:   { pattern: blink, periodMs: 500, cnt: 3 }
+        led:   { pattern: twinkle, periodMs: 1000, cnt: 2 }
       SessionEnd:
         audio: { playCnt: 1, playList: [ { src: /common/session_end.mp3, delayMs: 0 } ] }
         led:   { pattern: twinkle, periodMs: 800, cnt: 2 }

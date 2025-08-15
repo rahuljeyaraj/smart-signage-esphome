@@ -2,8 +2,8 @@
 
 namespace esphome::smart_signage::led {
 
-FSM::FSM(ctrl::Q &ctrlQ, hal::ILedHal &hal, timer::ITimer &timer)
-    : ctrlQ_(ctrlQ), hal_(hal), timer_(timer) {}
+FSM::FSM(ctrl::Q &ctrlQ, hal::ILedHal &hal, timer::ITimer &timer, timer::ITimer &fadeTimer)
+    : ctrlQ_(ctrlQ), hal_(hal), timer_(timer), fadeTimer_(fadeTimer) {}
 
 bool FSM::tryInitHal(const CmdSetup &) { return hal_.init(); }
 
@@ -63,7 +63,9 @@ void FSM::setBreatheParams(const CmdBreathe &cmd) {
 
 void FSM::onBreatheUpEntry() {
     hal_.fadeTo(brightnessPct_, breath_.toHighMs);
-    SS_LOGD("enter up -> %hhu%% in %hu ms", brightnessPct_, breath_.toHighMs);
+    const uint64_t us = static_cast<uint64_t>(breath_.toHighMs + kBufferMs) * 1000ULL;
+    fadeTimer_.startOnce(us);
+    SS_LOGD("enter up -> %hhu%% in %hu ms", brightnessPct_, breath_.toHighMs + kBufferMs);
 }
 
 void FSM::onHoldHighEntry() {
@@ -74,7 +76,9 @@ void FSM::onHoldHighEntry() {
 
 void FSM::onBreatheDownEntry() {
     hal_.fadeTo(0, breath_.toLowMs);
-    SS_LOGD("enter down -> 0 in %hu ms", breath_.toLowMs);
+    const uint64_t us = static_cast<uint64_t>(breath_.toLowMs + kBufferMs) * 1000ULL;
+    fadeTimer_.startOnce(us);
+    SS_LOGD("enter down -> 0 in %hu ms", breath_.toLowMs + kBufferMs);
 }
 
 void FSM::onHoldLowEntry() {

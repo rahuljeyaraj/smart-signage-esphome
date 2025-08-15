@@ -137,6 +137,7 @@ void FSM::onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &e) {
     settings_.readProfileValues(curr, values);
     values.sessionMins = e.mins;
     settings_.writeProfileValues(curr, values);
+    sessionMins_ = e.mins;
 }
 void FSM::onUiRangeCmUpdate(const EvtUiRangeCmUpdate &e) {
     ProfileName   curr;
@@ -145,6 +146,7 @@ void FSM::onUiRangeCmUpdate(const EvtUiRangeCmUpdate &e) {
     settings_.readProfileValues(curr, values);
     values.radarRangeCm = e.cm;
     settings_.writeProfileValues(curr, values);
+    ui_.setRadarRangeCm(values.radarRangeCm);
 }
 void FSM::onUiAudioVolUpdate(const EvtUiAudioVolUpdate &e) {
     ProfileName   curr;
@@ -153,6 +155,7 @@ void FSM::onUiAudioVolUpdate(const EvtUiAudioVolUpdate &e) {
     settings_.readProfileValues(curr, values);
     values.audioVolPct = e.pct;
     settings_.writeProfileValues(curr, values);
+    ui_.setAudioVolPct(values.audioVolPct);
 }
 void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
     ProfileName   curr;
@@ -161,6 +164,7 @@ void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
     settings_.readProfileValues(curr, values);
     values.ledBrightPct = e.pct;
     settings_.writeProfileValues(curr, values);
+    ui_.setLedBrightPct(values.ledBrightPct);
 }
 
 void FSM::enterReady() {

@@ -25,8 +25,9 @@ class EspLedHal : public ILedHal {
           fadeEndCbCtx_(nullptr) {}
 
     void setFadeEndCallback(FadeEndCb cb, void *cbCtx) override {
-        fadeEndCb_    = cb;
-        fadeEndCbCtx_ = cbCtx;
+        // fadeEndCb_    = cb;
+        // fadeEndCbCtx_ = cbCtx;
+        // workarounf for isr crash, disabled for now
     }
 
     bool init() override {

@@ -32,8 +32,8 @@ SmartSignage::SmartSignage(const UiHandles &uiHandles, const char *configJson)
     , imuAo_{imuQ_, ctrlQ_, imuHal_, imuTimer_, "imuTask", 8192, tskIDLE_PRIORITY + 2, 1}
 
     , ledHal_{LED0_PIN}
-    , ledTimer_{}
-    , ledAo_{ledQ_, ctrlQ_, ledHal_, ledTimer_, "ledTask", 8192, tskIDLE_PRIORITY + 2, 1}
+    , ledTimer_{}, ledFadeTimer_{}
+    , ledAo_{ledQ_, ctrlQ_, ledHal_, ledTimer_, ledFadeTimer_, "ledTask", 8192, tskIDLE_PRIORITY + 2, 1}
 
     , audioHal_{I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DATA_PIN}
     , audioTimer_{} 
