@@ -2,7 +2,7 @@ profiles:
   - name: WetFloor
     events:
       Ready:
-        audio: { playCnt: 2, playList: [ { src: /test/ready_1.mp3, delayMs: 100 } ] }
+        audio: { playCnt: 1, playList: [ { src: /test/ready_1.mp3, delayMs: 100 } ] }
         led:   { pattern: blink, periodMs: 800, cnt: 1 }
       Error:
         audio: { playCnt: 1, playList: [ { src: /test/error_1.mp3, delayMs: 0 } ] }
@@ -22,8 +22,9 @@ profiles:
             - { src: /test/warning_1.mp3, delayMs: 5000 }
             - { src: /test/warning_2.mp3, delayMs: 5000 }
             - { src: /test/warning_3.mp3, delayMs: 5000 }
+      DetectedDistanceMax:
         led: { pattern: twinkle, periodMs: 2000, cnt: 0 }
-      Detected0Cm:
+      DetectedDistanceMin:
         led: { pattern: twinkle, periodMs: 120, cnt: 0 }   # very close -> fast blink
       Fell:
         audio:

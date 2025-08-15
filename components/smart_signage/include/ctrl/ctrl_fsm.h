@@ -50,7 +50,10 @@ class FSM {
             ,state<Ready>    + event<CmdStart>          / &Self::start         = state<Active>
             ,state<Ready>    + event<CmdTeardown>       / &Self::teardown      = state<Idle>
 
-            ,state<Active>   + event<EvtRadarData>      / &Self::onEvtRadarData
+            ,state<Active>   + event<EvtRadarClear>     / &Self::onEvtRadarClear
+            ,state<Active>   + event<EvtRadarDetected>  / &Self::onEvtRadarDetected
+            ,state<Active>   + event<EvtRadarDistance>  / &Self::onEvtRadarDistance
+
             ,state<Active>   + event<CmdStop>           / &Self::stop          = state<Ready>
             ,state<Active>   + event<EvtTimerEnd>       / &Self::onSessionEnd       = state<Idle>
             ,state<Active>   + event<EvtImuFell>        / &Self::onEvtImuFell       = state<Fallen>
@@ -94,7 +97,9 @@ class FSM {
     void start();
     void stop();
     void teardown();
-    void onEvtRadarData(const EvtRadarData &);
+    void onEvtRadarClear();
+    void onEvtRadarDetected();
+    void onEvtRadarDistance(const EvtRadarDistance &);
     void onEvtImuFell();
     void onEvtImuRose();
     void onSetupTimeout();
@@ -111,8 +116,9 @@ class FSM {
     /*──────────── Helpers ─────────────────────────────────────────*/
     bool hasValidCurrProfile(ProfileNames &names, ProfileName &nameOut);
     void getDefaultCurrProfile(ProfileName &defultProfile);
-    void updateValuesToAll(ProfileName &curr);
-    void driveOutput(profile::EventId ev);
+    void updateValuesToUi(ProfileName &curr);
+    void updateValuesToIntf(ProfileName &curr);
+    void driveOutput(profile::EventId ev, bool driveAudio = true, bool driveLed = true);
 
     static constexpr char TAG[] = "ctrlFSM";
 

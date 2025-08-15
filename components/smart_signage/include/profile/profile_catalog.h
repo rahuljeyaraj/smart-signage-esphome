@@ -23,8 +23,10 @@ enum class EventId : uint8_t {
     Start,
     Stop,
     UiUpdate,
+    Clear,
     Detected,
-    Detected0Cm,
+    DetectedDistanceMax,
+    DetectedDistanceMin,
     Fell,
     Rose,
     SessionEnd,
@@ -38,8 +40,10 @@ inline const char *eventToCStr(EventId e) {
     case EventId::Start: return "Start";
     case EventId::Stop: return "Stop";
     case EventId::UiUpdate: return "UiUpdate";
+    case EventId::Clear: return "Clear";
     case EventId::Detected: return "Detected";
-    case EventId::Detected0Cm: return "Detected0Cm";
+    case EventId::DetectedDistanceMax: return "DetectedDistanceMax";
+    case EventId::DetectedDistanceMin: return "DetectedDistanceMin";
     case EventId::Fell: return "Fell";
     case EventId::Rose: return "Rose";
     case EventId::SessionEnd: return "SessionEnd";
@@ -56,8 +60,10 @@ inline EventId eventFromCStr(const char *s) {
     if (streq_(s, "Start")) return EventId::Start;
     if (streq_(s, "Stop")) return EventId::Stop;
     if (streq_(s, "UiUpdate")) return EventId::UiUpdate;
+    if (streq_(s, "Clear")) return EventId::Clear;
     if (streq_(s, "Detected")) return EventId::Detected;
-    if (streq_(s, "Detected0Cm")) return EventId::Detected0Cm;
+    if (streq_(s, "DetectedDistanceMax")) return EventId::DetectedDistanceMax;
+    if (streq_(s, "DetectedDistanceMin")) return EventId::DetectedDistanceMin;
     if (streq_(s, "Fell")) return EventId::Fell;
     if (streq_(s, "Rose")) return EventId::Rose;
     if (streq_(s, "SessionEnd")) return EventId::SessionEnd;

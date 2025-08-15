@@ -37,8 +37,9 @@ struct EvtTimerEnd {};
 // TODO: move these to respective intf headers
 struct EvtRadarError {};
 struct EvtRadarReady {};
-struct EvtRadarData {
-    bool       detected       = false;
+struct EvtRadarDetected {};
+struct EvtRadarClear {};
+struct EvtRadarDistance {
     uint16_t   distanceCm     = 0;
     TickType_t timestampTicks = 0;
 };
@@ -64,7 +65,7 @@ using Event = etl::variant<
     // timer
     EvtTimerEnd,
     // radar events
-    EvtRadarError, EvtRadarReady, EvtRadarData,
+    EvtRadarError, EvtRadarReady, EvtRadarDistance, EvtRadarClear, EvtRadarDetected,
     // imu events
     EvtImuError, EvtImuReady, EvtImuFell, EvtImuRose,
     // led events

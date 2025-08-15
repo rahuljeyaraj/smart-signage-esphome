@@ -64,7 +64,7 @@ void FSM::boot() {
     }
     ui_.setProfileOptions(names);
     ui_.setCurrentProfile(curr);
-    updateValuesToAll(curr);
+    updateValuesToUi(curr);
 
     SS_LOGI("broadcast CmdSetup");
     readyBits_.reset();
@@ -76,8 +76,8 @@ void FSM::boot() {
 
 void FSM::start() {
     SS_LOGI("Action: start -> broadcast CmdStart");
-    // radarQ_.post(radar::CmdStart{});
-    imuQ_.post(imu::CmdStart{});
+    radarQ_.post(radar::CmdStart{});
+    // imuQ_.post(imu::CmdStart{});
     driveOutput(profile::EventId::Start);
 }
 
@@ -96,13 +96,21 @@ void FSM::teardown() {
     audioQ_.post(audio::CmdTeardown{});
 }
 
-void FSM::onEvtRadarData(const EvtRadarData &e) {
-    SS_LOGI("Data: Radar detected=%s, distance=%u cm, timestamp=%u",
-        e.detected ? "YES" : "NO",
+void FSM::onEvtRadarDistance(const EvtRadarDistance &e) {
+    SS_LOGI("Data: distance=%u cm, timestamp=%u",
         static_cast<unsigned>(e.distanceCm),
         static_cast<unsigned>(e.timestampTicks));
+    // driveOutputForRadarData();
 }
-
+void FSM::onEvtRadarClear() {
+    SS_LOGI("Event: Radar reports clear");
+    // driveOutput(profile::EventId::Clear, true, false);
+    audioQ_.post(audio::CmdStop{});
+}
+void FSM::onEvtRadarDetected() {
+    SS_LOGI("Event: Radar reports detected");
+    driveOutput(profile::EventId::Detected, true, false);
+}
 void FSM::onEvtImuFell() {
     SS_LOGI("Event: IMU reports a fall detected!");
     driveOutput(profile::EventId::Fell);
@@ -127,7 +135,8 @@ void FSM::onUiProfileUpdate(const EvtUiProfileUpdate &e) {
     ProfileName   curr = e.profileName;
     ProfileValues values{};
     settings_.writeCurrentProfile(curr);
-    updateValuesToAll(curr);
+    updateValuesToUi(curr);
+    updateValuesToIntf(curr);
     enterReady();
 }
 void FSM::onUiSessionMinsUpdate(const EvtUiSessionMinsUpdate &e) {
@@ -206,7 +215,7 @@ void FSM::getDefaultCurrProfile(ProfileName &defultProfile) {
     return;
 }
 
-void FSM::updateValuesToAll(ProfileName &curr) {
+void FSM::updateValuesToUi(ProfileName &curr) {
     ProfileValues values{};
     if (!settings_.readProfileValues(curr, values)) settings_.writeProfileValues(curr, values);
 
@@ -215,15 +224,22 @@ void FSM::updateValuesToAll(ProfileName &curr) {
     ui_.setAudioVolPct(values.audioVolPct);
     ui_.setLedBrightPct(values.ledBrightPct);
 
-    // sessionMins_ = values.sessionMins;
-    // radarQ_.post(radar::SetRangeCm(values.radarRangeCm));
-    // audioQ_.post(audio::SetVolume(values.audioVolPct));
-    // ledQ_.post(led::SetBrightness(values.ledBrightPct));
+    SS_LOGI("UI updated for profile \"%s\"", curr.c_str());
+}
+
+void FSM::updateValuesToIntf(ProfileName &curr) {
+    ProfileValues values{};
+    if (!settings_.readProfileValues(curr, values)) settings_.writeProfileValues(curr, values);
+
+    sessionMins_ = values.sessionMins;
+    radarQ_.post(radar::SetRangeCm(values.radarRangeCm));
+    audioQ_.post(audio::SetVolume(values.audioVolPct));
+    ledQ_.post(led::SetBrightness(values.ledBrightPct));
 
     SS_LOGI("UI updated for profile \"%s\"", curr.c_str());
 }
 
-void FSM::driveOutput(profile::EventId ev) {
+void FSM::driveOutput(profile::EventId ev, bool driveAudio, bool driveLed) {
     ProfileName curr{};
     if (!settings_.readCurrentProfile(curr)) {
         SS_LOGW("readCurrentProfile failed");
@@ -231,31 +247,35 @@ void FSM::driveOutput(profile::EventId ev) {
     }
 
     // // ── Audio ────────────────────────────────────────────────────────────────
-    audio::AudioPlaySpec audioPlaySpec;
-    if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
-        SS_LOGW("play audio");
-        audioQ_.post(audio::CmdPlay(audioPlaySpec));
+    if (driveAudio) {
+        audio::AudioPlaySpec audioPlaySpec;
+        if (catalog_.getAudioPlaySpec(curr, ev, audioPlaySpec)) {
+            SS_LOGW("play audio");
+            audioQ_.post(audio::CmdPlay(audioPlaySpec));
+        }
     }
 
     // ── LED ─────────────────────────────────────────────────────────────────
-    led::LedPatternSpec ledPatternSpec;
-    if (catalog_.getLedPatternSpec(curr, ev, ledPatternSpec)) {
-        SS_LOGW("play led");
-        uint16_t t = static_cast<uint16_t>(ledPatternSpec.periodMs / 2u);
-        uint16_t n = ledPatternSpec.cnt;
+    if (driveLed) {
+        led::LedPatternSpec ledPatternSpec;
+        if (catalog_.getLedPatternSpec(curr, ev, ledPatternSpec)) {
+            SS_LOGW("play led");
+            uint16_t t = static_cast<uint16_t>(ledPatternSpec.periodMs / 2u);
+            uint16_t n = ledPatternSpec.cnt;
 
-        switch (ledPatternSpec.pattern) {
-        case led::LedPattern::Blink:
-            // immediate high, hold t; immediate low, hold t
-            ledQ_.post(led::CmdBreathe{0, t, 0, t, n});
-            break;
+            switch (ledPatternSpec.pattern) {
+            case led::LedPattern::Blink:
+                // immediate high, hold t; immediate low, hold t
+                ledQ_.post(led::CmdBreathe{0, t, 0, t, n});
+                break;
 
-        case led::LedPattern::Twinkle:
-            // ramp up t, no high hold; ramp down t, no low hold
-            ledQ_.post(led::CmdBreathe{t, 0, t, 0, n});
-            break;
+            case led::LedPattern::Twinkle:
+                // ramp up t, no high hold; ramp down t, no low hold
+                ledQ_.post(led::CmdBreathe{t, 0, t, 0, n});
+                break;
 
-        default: SS_LOGW("unknown led pattern"); break;
+            default: SS_LOGW("unknown led pattern"); break;
+            }
         }
     }
 }
