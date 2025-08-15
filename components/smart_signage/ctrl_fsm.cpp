@@ -159,7 +159,7 @@ void FSM::onUiRangeCmUpdate(const EvtUiRangeCmUpdate &e) {
     settings_.readProfileValues(curr, values);
     values.radarRangeCm = e.cm;
     settings_.writeProfileValues(curr, values);
-    ui_.setRadarRangeCm(values.radarRangeCm);
+    radarQ_.post(radar::SetRangeCm{e.cm});
 }
 void FSM::onUiAudioVolUpdate(const EvtUiAudioVolUpdate &e) {
     ProfileName   curr;
@@ -168,7 +168,7 @@ void FSM::onUiAudioVolUpdate(const EvtUiAudioVolUpdate &e) {
     settings_.readProfileValues(curr, values);
     values.audioVolPct = e.pct;
     settings_.writeProfileValues(curr, values);
-    ui_.setAudioVolPct(values.audioVolPct);
+    audioQ_.post(audio::SetVolume{e.pct});
 }
 void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
     ProfileName   curr;
@@ -177,7 +177,7 @@ void FSM::onUiLedBrightUpdate(const EvtUiLedBrightUpdate &e) {
     settings_.readProfileValues(curr, values);
     values.ledBrightPct = e.pct;
     settings_.writeProfileValues(curr, values);
-    ui_.setLedBrightPct(values.ledBrightPct);
+    ledQ_.post(led::SetBrightness{e.pct});
 }
 
 void FSM::enterReady() {

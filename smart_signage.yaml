@@ -77,6 +77,17 @@ select:
     options:
       - "__placeholder__"
 
+  - platform: template
+    name: "Knob Function"
+    id: knobFn
+    optimistic: true
+    restore_value: true
+    options:
+      - "Session Period (hrs)"
+      - "Detection Radius (m)"
+      - "Speaker Volume (%)"
+      - "LED Brightness (%)"
+
 number:
   - platform: template
     name: "Session Period (hrs)"
