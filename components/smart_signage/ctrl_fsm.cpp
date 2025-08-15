@@ -66,6 +66,8 @@ void FSM::boot() {
     ui_.setCurrentProfile(curr);
     updateValuesToUi(curr);
 
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+
     SS_LOGI("broadcast CmdSetup");
     readyBits_.reset();
     radarQ_.post(radar::CmdSetup{});
@@ -75,10 +77,11 @@ void FSM::boot() {
 }
 
 void FSM::start() {
+    driveOutput(profile::EventId::Start);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
     SS_LOGI("Action: start -> broadcast CmdStart");
     radarQ_.post(radar::CmdStart{});
-    // imuQ_.post(imu::CmdStart{});
-    driveOutput(profile::EventId::Start);
+    imuQ_.post(imu::CmdStart{});
 }
 
 void FSM::stop() {
@@ -100,12 +103,13 @@ void FSM::onEvtRadarDistance(const EvtRadarDistance &e) {
     SS_LOGI("Data: distance=%u cm, timestamp=%u",
         static_cast<unsigned>(e.distanceCm),
         static_cast<unsigned>(e.timestampTicks));
-    // driveOutputForRadarData();
+    driveOutputForRadarDistance(e);
 }
 void FSM::onEvtRadarClear() {
     SS_LOGI("Event: Radar reports clear");
     // driveOutput(profile::EventId::Clear, true, false);
     audioQ_.post(audio::CmdStop{});
+    ledQ_.post(led::CmdOff{});
 }
 void FSM::onEvtRadarDetected() {
     SS_LOGI("Event: Radar reports detected");
@@ -257,7 +261,7 @@ void FSM::driveOutput(profile::EventId ev, bool driveAudio, bool driveLed) {
 
     // ── LED ─────────────────────────────────────────────────────────────────
     if (driveLed) {
-        led::LedPatternSpec ledPatternSpec;
+        led::LedPatternSpec ledPatternSpec{};
         if (catalog_.getLedPatternSpec(curr, ev, ledPatternSpec)) {
             SS_LOGW("play led");
             uint16_t t = static_cast<uint16_t>(ledPatternSpec.periodMs / 2u);
@@ -279,5 +283,75 @@ void FSM::driveOutput(profile::EventId ev, bool driveAudio, bool driveLed) {
         }
     }
 }
+
+void FSM::driveOutputForRadarDistance(const EvtRadarDistance &e) {
+    ProfileName   curr{};
+    ProfileValues values{};
+    if (!settings_.readCurrentProfile(curr)) {
+        SS_LOGW("readCurrentProfile failed");
+        return;
+    }
+    if (!settings_.readProfileValues(curr, values)) {
+        SS_LOGW("readProfileValues failed");
+        return;
+    }
+
+    led::LedPatternSpec max{};
+    led::LedPatternSpec min{};
+    if (!catalog_.getLedPatternSpec(curr, profile::EventId::DetectedDistanceMax, max)) { return; }
+    if (!catalog_.getLedPatternSpec(curr, profile::EventId::DetectedDistanceMin, min)) { return; }
+
+    const uint16_t range = values.radarRangeCm;
+    const uint16_t dist  = e.distanceCm;
+    // const uint16_t period = mapLinearClampedU16(dist, range, max.periodMs, 0u, min.periodMs);
+
+    // uint16_t period = mapRange(dist, 0, 600, 2000, 200);
+    uint16_t period = dist * 3;
+    // SS_LOGD("radar dist=%u cm -> period=%u ms (min=%u max=%u range=%u)",
+    //     dist,
+    //     period,
+    //     min.periodMs,
+    //     max.periodMs,
+    //     range);
+
+    SS_LOGD("radar period=%u", period);
+
+    uint16_t t = static_cast<uint16_t>(period / 2u);
+    uint16_t n = 0;
+    ledQ_.post(led::CmdBreathe{t, 0, t, 0, n});
+}
+uint16_t FSM::mapRange(
+    uint16_t value, uint16_t inMin, uint16_t inMax, uint16_t outMin, uint16_t outMax) {
+    // Normalize the input value to a 0-1 range (using float for intermediate calculations to avoid
+    // truncation)
+    float normalizedValue = static_cast<float>(value - inMin) / (inMax - inMin);
+
+    // Scale and shift the normalized value to the output range (using float and then casting back
+    // to uint16_t)
+    return static_cast<uint16_t>(outMin + normalizedValue * (outMax - outMin));
+}
+// uint16_t FSM::mapLinearClampedU16(uint16_t x, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+// {
+//     // clamp x to [min(x0,x1), max(x0,x1)]
+//     uint16_t lo = (x0 < x1) ? x0 : x1;
+//     uint16_t hi = (x0 < x1) ? x1 : x0;
+//     uint16_t xc = x;
+//     if (xc < lo) xc = lo;
+//     if (xc > hi) xc = hi;
+
+//     int32_t dx = (int32_t) x1 - (int32_t) x0; // can be negative
+//     if (dx == 0) return y0;                   // degenerate, pick y0
+//     int32_t dy  = (int32_t) y1 - (int32_t) y0;
+//     int32_t num = (int32_t) (xc - x0) * dy; // signed
+//     int32_t den = dx;
+
+//     // round to nearest (works for ±den)
+//     int32_t adj = ((den > 0 ? den : -den) >> 1);
+//     int32_t y   = (int32_t) y0 + (num + (num >= 0 ? adj : -adj)) / den;
+
+//     if (y < 0) y = 0;
+//     if (y > 0xFFFF) y = 0xFFFF;
+//     return (uint16_t) y;
+// }
 
 } // namespace esphome::smart_signage::ctrl

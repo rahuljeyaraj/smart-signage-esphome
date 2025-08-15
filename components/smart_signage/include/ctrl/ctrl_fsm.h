@@ -119,6 +119,10 @@ class FSM {
     void updateValuesToUi(ProfileName &curr);
     void updateValuesToIntf(ProfileName &curr);
     void driveOutput(profile::EventId ev, bool driveAudio = true, bool driveLed = true);
+    void driveOutputForRadarDistance(const EvtRadarDistance &e);
+    // uint16_t mapLinearClampedU16(uint16_t x, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
+    uint16_t mapRange(
+        uint16_t value, uint16_t inMin, uint16_t inMax, uint16_t outMin, uint16_t outMax);
 
     static constexpr char TAG[] = "ctrlFSM";
 
